@@ -1,5 +1,4 @@
 /* -*- mode: c; indent-tabs-mode: nil; -*- */
-/* -*- mode: c; indent-tabs-mode: nil; -*- */
 /*
  * This file is part of Neuland.
  *
