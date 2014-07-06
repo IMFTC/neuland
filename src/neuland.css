@@ -41,7 +41,7 @@
     border-style: none;
 }
 
-/* Don't know why we need this */
-.me-status-button .dim-label {
+/* Don't know why we need to re-define this, it used to work without */
+.dim-label {
     color: gray;
 }

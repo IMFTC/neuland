@@ -33,12 +33,13 @@ Author: Volker Sobek <reklov@live.com>
     <property name="can_focus">False</property>
     <property name="margin_start">2</property>
     <property name="margin_end">2</property>
-    <property name="margin_top">2</property>
-    <property name="margin_bottom">2</property>
+    <property name="spacing">12</property>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="halign">center</property>
+        <property name="valign">start</property>
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkImage" id="status_image">
@@ -70,7 +71,7 @@ Author: Volker Sobek <reklov@live.com>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">start</property>
-            <property name="margin_start">10</property>
+            <property name="valign">start</property>
             <property name="label" translatable="yes">Tox User</property>
             <property name="ellipsize">end</property>
             <property name="single_line_mode">True</property>
@@ -90,13 +91,13 @@ Author: Volker Sobek <reklov@live.com>
             <property name="label" translatable="yes">Status</property>
             <property name="ellipsize">end</property>
             <property name="single_line_mode">True</property>
-            <property name="max_width_chars">10</property>
+            <property name="max_width_chars">25</property>
             <style>
               <class name="dim-label"/>
             </style>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">1</property>
           </packing>
@@ -105,7 +106,6 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="padding">4</property>
         <property name="position">1</property>
       </packing>
     </child>
