@@ -39,14 +39,14 @@ typedef struct _NeulandContactWidgetClass   NeulandContactWidgetClass;
 
 struct _NeulandContactWidget
 {
-  GtkListBoxRow parent_instance;
+  GtkBox parent_instance;
 
   NeulandContactWidgetPrivate *priv;
 };
 
 struct _NeulandContactWidgetClass
 {
-  GtkListBoxRowClass parent_class;
+  GtkBoxClass parent_class;
 };
 
 GType
