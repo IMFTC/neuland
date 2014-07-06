@@ -28,3 +28,20 @@
     -GtkPaned-handle-size: 0;
 }
 
+.contacs-frame {
+    border-width: 0 1px 0 0;
+    border-color: alpha(@borders, 0.5);
+}
+
+/* TODO: See what happens in GTK+ and check this again */
+.me-status-button,
+.me-status-button:hover,
+.me-status-button:active {
+    border-radius: 0px;
+    border-style: none;
+}
+
+/* Don't know why we need this */
+.me-status-button .dim-label {
+    color: gray;
+}

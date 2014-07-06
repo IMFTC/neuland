@@ -69,8 +69,6 @@ Author: Volker Sobek <reklov@live.com>
       <object class="GtkScrolledWindow" id="scrolledwindow1">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="margin_bottom">4</property>
-        <property name="shadow_type">in</property>
         <child>
           <object class="GtkTextView" id="text_view">
             <property name="visible">True</property>
@@ -88,19 +86,28 @@ Author: Volker Sobek <reklov@live.com>
       </packing>
     </child>
     <child>
+      <object class="GtkSeparator" id="separator1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkScrolledWindow" id="scrolledwindow2">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="margin_left">4</property>
-        <property name="margin_right">4</property>
-        <property name="margin_bottom">4</property>
+        <property name="margin_start">4</property>
+        <property name="margin_end">4</property>
         <property name="vscrollbar_policy">never</property>
         <property name="shadow_type">in</property>
         <child>
           <object class="GtkTextView" id="entry_text_view">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="hexpand">True</property>
             <property name="vscroll_policy">natural</property>
             <property name="wrap_mode">word-char</property>
             <property name="buffer">entry_text_buffer</property>
@@ -111,7 +118,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </template>

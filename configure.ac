@@ -17,7 +17,7 @@ AM_PROG_CC_C_O
 
 
 PKG_CHECK_MODULES(NEULAND,
-        gtk+-3.0 >= 3.12
+        gtk+-3.0 >= 3.13
         glib-2.0 >= 2.40
         libtoxcore);
 

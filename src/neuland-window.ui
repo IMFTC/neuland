@@ -142,51 +142,71 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-paned"/>
             </style>
             <child>
-              <object class="GtkBox" id="box3">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
+              <!-- We need this frame for setting the border in
+                   CSS. For a GtkBox that doesn't work -->
+              <object class="GtkFrame" id="frame1">
+                <style>
+                  <class name="contacs-frame"/>
+                </style>
                 <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow1">
+                  <object class="GtkBox" id="box3">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="margin_bottom">4</property>
-                    <property name="shadow_type">in</property>
-                    <property name="hscrollbar_policy">never</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkListBox" id="contacts_list_box">
+                      <object class="GtkScrolledWindow" id="scrolledwindow1">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <signal name="row-activated" handler="contacts_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
+                        <property name="can_focus">True</property>
+                        <property name="hscrollbar_policy">never</property>
+                        <child>
+                          <object class="GtkListBox" id="contacts_list_box">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <signal name="row-activated" handler="contacts_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
                       </object>
                       <packing>
                         <property name="expand">True</property>
+                        <property name="fill">True</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkMenuButton" id="me_status_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="direction">up</property>
-                    <property name="use_popover">True</property>
                     <child>
-                      <placeholder/>
+                      <object class="GtkSeparator">
+                        <property name="orientation">horizontal</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkMenuButton" id="me_status_button">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="direction">up</property>
+                        <property name="use_popover">True</property>
+                        <style>
+                          <class name="me-status-button"/>
+                          <class name="flat"/>
+                          <class name="menu-button"/>
+                        </style>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
                     </child>
                   </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
                 </child>
               </object>
               <packing>
