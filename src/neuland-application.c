@@ -109,10 +109,11 @@ neuland_application_new_window (GApplication *app, gchar *data_path)
   window = neuland_window_new(ntox);
   g_object_unref (ntox); // window now holds the only reference to ntox
 
-  gtk_application_add_accelerator (GTK_APPLICATION (app), "<Primary>n", "app.new", NULL);
-  gtk_application_add_accelerator (GTK_APPLICATION (app), "<Primary>q", "app.quit", NULL);
-  gtk_application_add_accelerator (GTK_APPLICATION (app), "<Primary>p", "win.selection-state", NULL);
-  gtk_application_add_accelerator (GTK_APPLICATION (app), "<Primary>t", "app.tox_info", NULL);
+  const gchar* app_new_accels[] = {"<Primary>n", NULL};
+  const gchar* app_quit_accels[] = {"<Primary>q", NULL};
+
+  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.new", app_new_accels);
+  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.quit", app_quit_accels);
 
   gtk_application_add_window (GTK_APPLICATION (app), GTK_WINDOW (window));
   gtk_widget_show_all (GTK_WIDGET (window));
