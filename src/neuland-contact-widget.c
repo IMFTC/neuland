@@ -29,7 +29,7 @@ struct _NeulandContactWidgetPrivate {
   GtkImage *status_image;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE(NeulandContactWidget, neuland_contact_widget, GTK_TYPE_BOX)
+G_DEFINE_TYPE_WITH_PRIVATE (NeulandContactWidget, neuland_contact_widget, GTK_TYPE_GRID)
 
 enum {
   NOTEBOOK_PAGE_COUNTER,
