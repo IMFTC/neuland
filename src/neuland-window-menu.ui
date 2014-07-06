@@ -1,0 +1,10 @@
+<interface>
+  <menu id='win-menu'>
+    <section>
+      <item>
+        <attribute name='label' translatable='yes'>Menu not implemented yet</attribute>
+        <attribute name='action'>non-existent-action</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

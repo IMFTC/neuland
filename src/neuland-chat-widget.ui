@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 
+
+Copyright (C) Volker Sobek <reklov@live.com>
+
+This file is part of Neuland.
+
+Neuland is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Neuland is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
+
+Author: Volker Sobek <reklov@live.com>
+
+-->
+<interface>
+  <requires lib="gtk+" version="3.12"/>
+  <!-- interface-license-type gplv3 -->
+  <!-- interface-name Neuland -->
+  <!-- interface-copyright Volker Sobek <reklov@live.com> -->
+  <!-- interface-authors Volker Sobek <reklov@live.com> -->
+  <object class="GtkTextBuffer" id="entry_text_buffer"/>
+  <object class="GtkTextTagTable" id="texttagtable1">
+    <child type="tag">
+      <object class="GtkTextTag" id="is_typing_tag">
+        <property name="foreground_rgba">rgb(211,215,207)</property>
+        <property name="font">Normal</property>
+        <property name="style">oblique</property>
+        <property name="editable">False</property>
+      </object>
+    </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="action_tag">
+        <property name="font">Normal</property>
+        <property name="style">italic</property>
+      </object>
+    </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="my_name_tag">
+        <property name="foreground_rgba">rgb(252,175,62)</property>
+        <property name="font">Normal</property>
+        <property name="weight">700</property>
+      </object>
+    </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="contact_name_tag">
+        <property name="foreground_rgba">rgb(114,159,207)</property>
+        <property name="font">Normal</property>
+        <property name="weight">700</property>
+      </object>
+    </child>
+  </object>
+  <object class="GtkTextBuffer" id="text_buffer">
+    <property name="tag_table">texttagtable1</property>
+  </object>
+  <template class="NeulandChatWidget" parent="GtkBox">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolledwindow1">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="margin_bottom">4</property>
+        <property name="shadow_type">in</property>
+        <child>
+          <object class="GtkTextView" id="text_view">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="editable">False</property>
+            <property name="wrap_mode">word-char</property>
+            <property name="buffer">text_buffer</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolledwindow2">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="margin_left">4</property>
+        <property name="margin_right">4</property>
+        <property name="margin_bottom">4</property>
+        <property name="vscrollbar_policy">never</property>
+        <property name="shadow_type">in</property>
+        <child>
+          <object class="GtkTextView" id="entry_text_view">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="vscroll_policy">natural</property>
+            <property name="wrap_mode">word-char</property>
+            <property name="buffer">entry_text_buffer</property>
+            <signal name="key-press-event" handler="entry_text_view_key_press_event_cb" swapped="yes"/>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+  </template>
+</interface>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/tox/neuland">
+    <file preprocess="xml-stripblanks">neuland-window.ui</file>
+    <file preprocess="xml-stripblanks">neuland-window-menu.ui</file>
+    <file preprocess="xml-stripblanks">neuland-application-menu.ui</file>
+    <file preprocess="xml-stripblanks">neuland-contact-widget.ui</file>
+    <file preprocess="xml-stripblanks">neuland-chat-widget.ui</file>
+    <file preprocess="xml-stripblanks">neuland-me-status-menu.ui</file>
+    <file>neuland.css</file>
+  </gresource>
+</gresources>
