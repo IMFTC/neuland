@@ -99,4 +99,7 @@ neuland_contact_get_last_online (NeulandContact *contact);
 void
 neuland_contact_set_connected (NeulandContact *contact, gboolean connected);
 
+gboolean
+neuland_contact_get_connected (NeulandContact *contact);
+
 #endif /* __NEULAND_CONTACT_H__ */

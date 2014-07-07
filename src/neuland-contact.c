@@ -109,6 +109,12 @@ neuland_contact_get_has_chat_widget (NeulandContact *contact)
   return contact->priv->has_chat_widget;
 }
 
+gboolean
+neuland_contact_get_connected (NeulandContact *contact)
+{
+  return contact->priv->connected;
+}
+
 guint64
 neuland_contact_get_last_connected_change (NeulandContact *contact)
 {
