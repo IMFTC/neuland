@@ -21,7 +21,7 @@
 #ifndef __NEULAND_APPLICATION_H__
 #define __NEULAND_APPLICATION_H__
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 
 #define NEULAND_TYPE_APPLICATION            (neuland_application_get_type ())
 #define NEULAND_APPLICATION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), NEULAND_TYPE_APPLICATION, NeulandApplication))

@@ -21,7 +21,6 @@
 #ifndef __NEULAND_CHAT_WIDGET__
 #define __NEULAND_CHAT_WIDGET__
 
-#include <glib-object.h>
 #include <gtk/gtk.h>
 
 #include "neuland-tox.h"

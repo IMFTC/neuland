@@ -21,7 +21,6 @@
 #ifndef __NEULAND_CONTACT_WIDGET__
 #define __NEULAND_CONTACT_WIDGET__
 
-#include <glib-object.h>
 #include <gtk/gtk.h>
 
 #include "neuland-contact.h"

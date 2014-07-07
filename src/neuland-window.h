@@ -21,10 +21,10 @@
 #ifndef __NEULAND_WINDOW__
 #define __NEULAND_WINDOW__
 
+#include <gtk/gtk.h>
+
 #include "neuland-tox.h"
 #include "neuland-contact-widget.h"
-#include <glib-object.h>
-#include <gtk/gtk.h>
 
 #define NEULAND_TYPE_WINDOW            (neuland_window_get_type ())
 #define NEULAND_WINDOW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), NEULAND_TYPE_WINDOW, NeulandWindow))
