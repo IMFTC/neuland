@@ -66,7 +66,6 @@ neuland_chat_widget_finalize (GObject *object)
 static gboolean
 neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *self)
 {
-  g_message ("neuland_chat_widget_scroll_to_bottom ...");
   NeulandChatWidgetPrivate *priv = self->priv;
   GtkTextIter iter;
   GtkTextMark *mark = priv->scroll_mark;
