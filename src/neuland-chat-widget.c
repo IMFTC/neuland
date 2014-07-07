@@ -222,7 +222,6 @@ static void
 neuland_chat_widget_show_not_connected_info (NeulandChatWidget *self,
                                              gboolean show)
 {
-  g_message ("neuland_chat_widget_show_not_connected_info: %i", show);
   gtk_widget_set_visible (GTK_WIDGET (self->priv->info_bar),
                           show);
 }
