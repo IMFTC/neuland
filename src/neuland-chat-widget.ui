@@ -98,9 +98,9 @@ Author: Volker Sobek <reklov@live.com>
     </child>
     <child>
       <object class="GtkInfoBar" id="info_bar">
-        <property name="visible">True</property>
         <property name="app_paintable">True</property>
         <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="infobar-action_area1">
             <property name="can_focus">False</property>

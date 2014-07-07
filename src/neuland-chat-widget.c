@@ -220,6 +220,15 @@ on_incoming_action_cb (NeulandChatWidget *widget,
 }
 
 static void
+neuland_chat_widget_show_not_connected_info (NeulandChatWidget *self,
+                                             gboolean show)
+{
+  g_message ("neuland_chat_widget_show_not_connected_info: %i", show);
+  gtk_widget_set_visible (GTK_WIDGET (self->priv->info_bar),
+                          show);
+}
+
+static void
 neuland_handle_input (NeulandChatWidget *widget, gchar *string)
 {
   NeulandChatWidgetPrivate *priv = widget->priv;
@@ -264,18 +273,23 @@ entry_text_view_key_press_event_cb (NeulandChatWidget *widget,
       gchar *string;
       gchar *new_nick = NULL;
       gchar *new_message = NULL;
+      gboolean contact_is_connected;
       gtk_text_buffer_get_bounds (priv->entry_text_buffer, &start_iter, &end_iter);
       string = gtk_text_buffer_get_text (priv->entry_text_buffer, &start_iter, &end_iter, FALSE);
 
+      contact_is_connected = neuland_contact_get_connected (priv->contact);
       if (strlen (string) == 0)
         {
           g_message ("Ignoring empty message.");
         }
-      else if (neuland_contact_get_connected (priv->contact))
+      else if (contact_is_connected)
         {
           neuland_handle_input (widget, string);
           gtk_text_buffer_delete (priv->entry_text_buffer, &start_iter, &end_iter);
         }
+      else
+        neuland_chat_widget_show_not_connected_info (widget, !contact_is_connected);
+
       g_free (string);
 
       return TRUE;
@@ -332,22 +346,21 @@ neuland_chat_widget_is_typing_cb (GObject *obj,
 }
 
 static void
-neuland_chat_widget_set_connected (NeulandChatWidget *self,
-                                   gboolean connected)
-{
-  gtk_widget_set_visible (GTK_WIDGET (self->priv->info_bar),
-                          !connected);
-}
-
-static void
 on_connected_changed (GObject *obj,
                       GParamSpec *pspec,
                       gpointer user_data)
 {
-  NeulandContact *contact = NEULAND_CONTACT (obj);
-  NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (user_data);
-  neuland_chat_widget_set_connected (widget,
-                                     neuland_contact_get_connected (contact));
+  NeulandContact    *contact   = NEULAND_CONTACT (obj);
+  NeulandChatWidget *widget    = NEULAND_CHAT_WIDGET (user_data);
+  gboolean           connected = neuland_contact_get_connected (contact);
+
+  /* Make sure we hide the info bar when a contact comes online but
+     don't show it automatically when a contact goes offline since
+     that clutters the UI. We only show it once the user actually
+     tries to send a message.
+  */
+  if (connected)
+    neuland_chat_widget_show_not_connected_info (widget, FALSE);
 }
 
 GtkWidget *
@@ -370,8 +383,9 @@ neuland_chat_widget_new (NeulandTox *ntox,
                     "swapped-signal::outgoing-message", on_outgoing_message_cb, ncw,
                     "swapped-signal::outgoing-action", on_outgoing_action_cb, ncw,
                     NULL);
-  neuland_chat_widget_set_connected (ncw, neuland_contact_get_connected (contact));
+
   gtk_widget_set_size_request (GTK_WIDGET (priv->entry_text_view), -1, text_entry_min_height);
   neuland_contact_set_has_chat_widget (contact, TRUE);
+
   return GTK_WIDGET (ncw);
 }
