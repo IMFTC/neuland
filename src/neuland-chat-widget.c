@@ -218,12 +218,6 @@ on_incoming_action_cb (NeulandChatWidget *widget,
   insert_action (widget, action, CHAT_DIRECTION_INCOMING);
 }
 
-static gboolean
-string_is_action (gchar *string)
-{
-  return (g_ascii_strncasecmp (string, "/me ", 4) == 0);
-}
-
 static void
 neuland_handle_input (NeulandChatWidget *widget, gchar *string)
 {
@@ -250,33 +244,6 @@ neuland_handle_input (NeulandChatWidget *widget, gchar *string)
     }
   else
     neuland_contact_send_message (priv->contact, string);
-}
-
-
-static gboolean
-string_is_nick_change (gchar *string, gchar **new_nick)
-{
-  if (g_ascii_strncasecmp (string, "/nick ", 6) == 0)
-    {
-      *new_nick = g_strdup (string + 6);
-      g_strstrip(*new_nick);
-      if (strlen (*new_nick) > 0)
-        return TRUE;
-    }
-  return FALSE;
-}
-
-static gboolean
-string_is_message_change (gchar *string, gchar **new_message)
-{
-  if (g_ascii_strncasecmp (string, "/message ", 9) == 0)
-    {
-      *new_message = g_strdup (string + 9);
-      g_strstrip(*new_message);
-      if (strlen (*new_message) > 0)
-        return TRUE;
-    }
-  return FALSE;
 }
 
 static gboolean
