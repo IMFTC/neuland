@@ -41,9 +41,6 @@ struct _NeulandTox
 {
   GObject parent;
 
-  gchar *name;
-  gboolean running;
-
   NeulandToxPrivate *priv;
 };
 
