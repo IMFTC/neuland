@@ -185,7 +185,7 @@ Author: Volker Sobek <reklov@live.com>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkMenuButton" id="me_status_button">
+                      <object class="GtkMenuButton" id="me_button">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>

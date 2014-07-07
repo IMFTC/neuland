@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 
+<!-- Generated with glade 3.18.1 
 
 Copyright (C) Volker Sobek <reklov@live.com>
 
@@ -97,27 +97,18 @@ Author: Volker Sobek <reklov@live.com>
       </packing>
     </child>
     <child>
-      <object class="GtkScrolledWindow" id="scrolledwindow2">
+      <object class="GtkTextView" id="entry_text_view">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="margin_start">4</property>
-        <property name="margin_end">4</property>
-        <property name="vscrollbar_policy">never</property>
-        <property name="shadow_type">in</property>
-        <child>
-          <object class="GtkTextView" id="entry_text_view">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="vscroll_policy">natural</property>
-            <property name="wrap_mode">word-char</property>
-            <property name="buffer">entry_text_buffer</property>
-            <signal name="key-press-event" handler="entry_text_view_key_press_event_cb" swapped="yes"/>
-          </object>
-        </child>
+        <property name="border_width">6</property>
+        <property name="vscroll_policy">natural</property>
+        <property name="wrap_mode">word-char</property>
+        <property name="buffer">entry_text_buffer</property>
+        <signal name="key-press-event" handler="entry_text_view_key_press_event_cb" swapped="yes"/>
       </object>
       <packing>
         <property name="expand">False</property>
-        <property name="fill">True</property>
+        <property name="fill">False</property>
         <property name="position">2</property>
       </packing>
     </child>

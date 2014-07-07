@@ -359,15 +359,17 @@ neuland_chat_widget_is_typing_cb (GObject *obj,
 }
 
 GtkWidget *
-neuland_chat_widget_new (NeulandTox *ntox, NeulandContact *contact)
+neuland_chat_widget_new (NeulandTox *ntox,
+                         NeulandContact *contact,
+                         gint text_entry_min_height)
 {
   g_debug ("neuland_chat_widget_new");
   g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
   g_return_val_if_fail (NEULAND_IS_TOX (ntox), NULL);
-  NeulandChatWidget *ncw;
-  ncw = NEULAND_CHAT_WIDGET (g_object_new (NEULAND_TYPE_CHAT_WIDGET, NULL));
-  ncw->priv->ntox = g_object_ref (ntox);
-  ncw->priv->contact = contact;
+  NeulandChatWidget *ncw = NEULAND_CHAT_WIDGET (g_object_new (NEULAND_TYPE_CHAT_WIDGET, NULL));
+  NeulandChatWidgetPrivate *priv = ncw->priv;
+  priv->ntox = g_object_ref (ntox);
+  priv->contact = contact;
   g_object_connect (contact,
                     "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, ncw,
                     "swapped-signal::incoming-message", on_incoming_message_cb, ncw,
@@ -376,6 +378,7 @@ neuland_chat_widget_new (NeulandTox *ntox, NeulandContact *contact)
                     "swapped-signal::outgoing-action", on_outgoing_action_cb, ncw,
                     NULL);
 
+  gtk_widget_set_size_request (GTK_WIDGET (priv->entry_text_view), -1, text_entry_min_height);
   neuland_contact_set_has_chat_widget (contact, TRUE);
   return GTK_WIDGET (ncw);
 }

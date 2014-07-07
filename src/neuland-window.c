@@ -26,7 +26,7 @@
 struct _NeulandWindowPrivate
 {
   NeulandTox      *ntox;
-  GtkWidget       *me_status_button;
+  GtkWidget       *me_button;
   GtkWidget       *me_widget;
   GtkListBox      *contacts_list_box;
   GtkHeaderBar    *right_header_bar;
@@ -36,6 +36,7 @@ struct _NeulandWindowPrivate
   GHashTable      *chat_widgets;
   GtkButton       *gear_button;
   GtkToggleButton *select_button;
+  gint             me_button_height;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -78,7 +79,7 @@ neuland_window_get_chat_widget_for_contact (NeulandWindow *window,
     return chat_widget;
 
   g_debug ("Creating new chat widget for contact '%s'", neuland_contact_get_name (contact));
-  chat_widget = neuland_chat_widget_new (priv->ntox, contact);
+  chat_widget = neuland_chat_widget_new (priv->ntox, contact, priv->me_button_height);
   g_hash_table_insert (priv->chat_widgets, contact, chat_widget);
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), chat_widget);
 
@@ -409,7 +410,7 @@ neuland_window_class_init (NeulandWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-window.ui");
 
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, me_status_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, me_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, contacts_list_box);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, chat_stack);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, right_header_bar);
@@ -473,10 +474,11 @@ neuland_window_init (NeulandWindow *self)
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget), "...");
   neuland_contact_widget_set_status (NEULAND_CONTACT_WIDGET (priv->me_widget), NEULAND_CONTACT_STATUS_NONE);
 
-  gtk_container_add (GTK_CONTAINER (priv->me_status_button), priv->me_widget);
-  gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (priv->me_status_button),
+  gtk_container_add (GTK_CONTAINER (priv->me_button), priv->me_widget);
+  gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (priv->me_button),
                                   (GMenuModel*) gtk_builder_get_object (builder, "me-status-menu"));
 
+  gtk_widget_get_preferred_height (priv->me_button, NULL, &priv->me_button_height);
   gtk_list_box_set_header_func (priv->contacts_list_box, contacts_list_box_header_func, NULL, NULL);
 }
 

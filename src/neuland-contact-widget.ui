@@ -31,8 +31,8 @@ Author: Volker Sobek <reklov@live.com>
   <template class="NeulandContactWidget" parent="GtkGrid">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="margin_left">6</property>
-    <property name="margin_right">6</property>
+    <property name="margin_start">6</property>
+    <property name="margin_end">6</property>
     <property name="margin_top">6</property>
     <property name="margin_bottom">6</property>
     <child>
@@ -99,7 +99,6 @@ Author: Volker Sobek <reklov@live.com>
             <property name="receives_default">False</property>
             <property name="halign">center</property>
             <property name="valign">center</property>
-            <property name="xalign">0.5</property>
             <property name="draw_indicator">True</property>
             <child>
               <placeholder/>
@@ -131,7 +130,7 @@ Author: Volker Sobek <reklov@live.com>
         <property name="can_focus">False</property>
         <property name="halign">start</property>
         <property name="valign">start</property>
-        <property name="margin_right">12</property>
+        <property name="margin_end">12</property>
         <property name="icon_name">user-offline</property>
         <property name="icon_size">1</property>
       </object>
@@ -146,7 +145,7 @@ Author: Volker Sobek <reklov@live.com>
         <property name="can_focus">False</property>
         <property name="halign">start</property>
         <property name="valign">start</property>
-        <property name="margin_right">12</property>
+        <property name="margin_end">12</property>
         <property name="hexpand">True</property>
         <property name="label" translatable="yes">Tox User</property>
         <property name="ellipsize">end</property>
@@ -164,7 +163,7 @@ Author: Volker Sobek <reklov@live.com>
         <property name="can_focus">False</property>
         <property name="halign">start</property>
         <property name="valign">end</property>
-        <property name="margin_right">12</property>
+        <property name="margin_end">12</property>
         <property name="label" translatable="yes">Status</property>
         <property name="ellipsize">end</property>
         <property name="single_line_mode">True</property>
