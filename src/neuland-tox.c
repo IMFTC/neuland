@@ -155,7 +155,7 @@ on_connection_status_idle (gpointer user_data)
 
   free_data_integer (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -181,7 +181,7 @@ on_user_status_idle (gpointer user_data)
 
   g_free (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -205,7 +205,7 @@ on_name_change_idle (gpointer user_data)
 
   free_data_str (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -232,7 +232,7 @@ on_status_message_idle (gpointer user_data)
 
   free_data_str (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -256,7 +256,7 @@ on_contact_message_idle (gpointer user_data)
   neuland_contact_signal_incoming_message (contact, data->str);
   free_data_str (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -280,7 +280,7 @@ on_contact_action_idle (gpointer user_data)
   neuland_contact_signal_incoming_action (contact, data->str);
   free_data_str (data);
 
-  return FALSE;
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -303,6 +303,8 @@ on_typing_change_idle (gpointer user_data)
 
   if (contact != NULL)
     g_object_set (contact, "is-typing", data->integer, NULL);
+
+  return G_SOURCE_REMOVE;
 }
 
 static void
