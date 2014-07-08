@@ -227,17 +227,36 @@ neuland_chat_widget_show_not_connected_info (NeulandChatWidget *self,
 }
 
 static void
-neuland_handle_input (NeulandChatWidget *widget, gchar *string)
+neuland_chat_widget_process_input (NeulandChatWidget *widget)
 {
   NeulandChatWidgetPrivate *priv = widget->priv;
+  gboolean connected = neuland_contact_get_connected (priv->contact);
+  gboolean clear_entry = TRUE;
+  GtkTextIter start_iter;
+  GtkTextIter end_iter;
+  gchar *string;
 
-  if (g_ascii_strncasecmp (string, "/", 1) == 0 &&
-      g_ascii_strncasecmp (string, "//", 2) != 0)
+  gtk_text_buffer_get_bounds (priv->entry_text_buffer, &start_iter, &end_iter);
+  string = gtk_text_buffer_get_text (priv->entry_text_buffer, &start_iter, &end_iter, FALSE);
+
+  /* String is empty */
+  if (strlen (string) == 0) {
+    g_debug ("Ignoring empty message.");
+  }
+  /* String contains Commands */
+  else if (g_ascii_strncasecmp (string, "/", 1) == 0 &&
+           g_ascii_strncasecmp (string, "//", 2) != 0)
     {
       if (g_ascii_strncasecmp (string, "/me ", 4) == 0)
         {
           g_debug ("/me command recognized");
-          neuland_contact_send_action (priv->contact, string+4);
+          if (connected)
+            neuland_contact_send_action (priv->contact, string+4);
+          else
+            {
+              neuland_chat_widget_show_not_connected_info (widget, TRUE);
+              clear_entry = FALSE;
+            }
         }
       else if (g_ascii_strncasecmp (string, "/message ", 9) == 0)
         {
@@ -249,9 +268,23 @@ neuland_handle_input (NeulandChatWidget *widget, gchar *string)
           g_debug ("/nick command recognized");
           neuland_tox_set_name (priv->ntox, g_strchug(string+6));
         }
+      else
+        g_message ("Unknown command: %s", string);
     }
+  /* String contains normal message */
+  else if (connected)
+    if (g_ascii_strncasecmp (string, "//", 2) == 0)
+      neuland_contact_send_message (priv->contact, string+1);
+    else
+      neuland_contact_send_message (priv->contact, string);
   else
-    neuland_contact_send_message (priv->contact, string);
+    {
+      neuland_chat_widget_show_not_connected_info (widget, TRUE);
+      clear_entry = FALSE;
+    }
+
+  if (clear_entry)
+    gtk_text_buffer_delete (priv->entry_text_buffer, &start_iter, &end_iter);
 }
 
 static gboolean
@@ -266,30 +299,7 @@ entry_text_view_key_press_event_cb (NeulandChatWidget *widget,
        event->keyval == GDK_KEY_KP_Enter) &&
       !(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
     {
-      GtkTextIter start_iter;
-      GtkTextIter end_iter;
-      gchar *string;
-      gchar *new_nick = NULL;
-      gchar *new_message = NULL;
-      gboolean contact_is_connected;
-      gtk_text_buffer_get_bounds (priv->entry_text_buffer, &start_iter, &end_iter);
-      string = gtk_text_buffer_get_text (priv->entry_text_buffer, &start_iter, &end_iter, FALSE);
-
-      contact_is_connected = neuland_contact_get_connected (priv->contact);
-      if (strlen (string) == 0)
-        {
-          g_message ("Ignoring empty message.");
-        }
-      else if (contact_is_connected)
-        {
-          neuland_handle_input (widget, string);
-          gtk_text_buffer_delete (priv->entry_text_buffer, &start_iter, &end_iter);
-        }
-      else
-        neuland_chat_widget_show_not_connected_info (widget, !contact_is_connected);
-
-      g_free (string);
-
+      neuland_chat_widget_process_input (widget);
       return TRUE;
     }
 
