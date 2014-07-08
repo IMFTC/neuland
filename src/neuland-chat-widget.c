@@ -40,9 +40,16 @@ struct _NeulandChatWidgetPrivate {
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandChatWidget, neuland_chat_widget, GTK_TYPE_BOX)
 
 typedef enum {
-  CHAT_DIRECTION_INCOMING,
-  CHAT_DIRECTION_OUTGOING
-} ChatTextDirection;
+  INCOMING,
+  OUTGOING
+} MessageDirection;
+
+typedef enum {
+  TEXT,
+  ACTION
+} MessageType;
+
+
 
 static void
 neuland_chat_widget_dispose (GObject *object)
@@ -112,9 +119,10 @@ neuland_chat_widget_set_is_typing (NeulandChatWidget *self, gboolean is_typing)
 }
 
 static void
-insert_message (NeulandChatWidget *widget,
-                gchar* message,
-                ChatTextDirection direction)
+insert_text (NeulandChatWidget *widget,
+             gchar* message,
+             MessageDirection direction,
+             MessageType type)
 {
   NeulandChatWidgetPrivate *priv = widget->priv;
   GtkTextBuffer *text_buffer = priv->text_buffer;
@@ -122,64 +130,58 @@ insert_message (NeulandChatWidget *widget,
   NeulandContact *contact = priv->contact;
   GtkTextIter iter;
   const gchar *name;
+  gchar *prefix;
   GtkTextTag *name_tag;
 
   switch (direction)
     {
-    case CHAT_DIRECTION_INCOMING:
+    case INCOMING:
       name = neuland_contact_get_name (contact);
       name_tag = priv->contact_name_tag;
       break;
-    case CHAT_DIRECTION_OUTGOING:
+    case OUTGOING:
       name = neuland_tox_get_name (ntox);
       name_tag = priv->my_name_tag;
       break;
     }
 
   neuland_chat_widget_set_is_typing (widget, FALSE);
-  gchar *prefix = g_strdup_printf ("%s: ", name);
+
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
-  gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
-                                    name_tag, NULL);
-  gtk_text_buffer_insert (text_buffer, &iter, message, -1);
-  gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
+  if (type == ACTION)
+    {
+      prefix = g_strdup_printf ("* %s %s", name, message);
+      gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
+                                        priv->action_tag,
+                                        NULL);
+    }
+  else
+    {
+      prefix = g_strdup_printf ("%s: ", name);
+      gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
+                                        name_tag, NULL);
+      gtk_text_buffer_insert (text_buffer, &iter, message, -1);
+    }
+
   g_free (prefix);
+  gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
   neuland_chat_widget_scroll_to_bottom (widget);
 }
 
 static void
-insert_action (NeulandChatWidget *widget,
-               gchar* action,
-               ChatTextDirection direction)
+insert_message (NeulandChatWidget *widget,
+                gchar* message,
+                MessageDirection direction)
 {
-  NeulandChatWidgetPrivate *priv = widget->priv;
-  GtkTextBuffer *text_buffer = priv->text_buffer;
-  NeulandTox *ntox = priv->ntox;
-  NeulandContact *contact = priv->contact;
-  GtkTextIter iter;
-  const gchar *name;
-  GtkTextTag *name_tag;
+  insert_text (widget, message, direction, TEXT);
+}
 
-  switch (direction)
-    {
-    case CHAT_DIRECTION_INCOMING:
-      name = neuland_contact_get_name (contact);
-      name_tag = priv->contact_name_tag;
-      break;
-    case CHAT_DIRECTION_OUTGOING:
-      name = neuland_tox_get_name (ntox);
-      name_tag = priv->my_name_tag;
-      break;
-    }
-
-  neuland_chat_widget_set_is_typing (widget, FALSE);
-  gchar *action_string = g_strdup_printf ("* %s %s\n", name, action);
-  gtk_text_buffer_get_end_iter (text_buffer, &iter);
-  gtk_text_buffer_insert_with_tags (text_buffer, &iter, action_string, -1,
-                                    priv->action_tag,
-                                    NULL);
-  g_free (action_string);
-  neuland_chat_widget_scroll_to_bottom (widget);
+static void
+insert_action (NeulandChatWidget *widget,
+               gchar* message,
+               MessageDirection direction)
+{
+  insert_text (widget, message, direction, ACTION);
 }
 
 static void
@@ -188,7 +190,7 @@ on_outgoing_message_cb (NeulandChatWidget *widget,
                         gpointer user_data)
 {
   g_debug ("on_outgoing_message_cb");
-  insert_message (widget, message, CHAT_DIRECTION_OUTGOING);
+  insert_message (widget, message, OUTGOING);
 }
 
 static void
@@ -197,7 +199,7 @@ on_outgoing_action_cb (NeulandChatWidget *widget,
                        gpointer user_data)
 {
   g_debug ("on_outgoing_action_cb");
-  insert_action (widget, action, CHAT_DIRECTION_OUTGOING);
+  insert_action (widget, action, OUTGOING);
 }
 
 static void
@@ -206,7 +208,7 @@ on_incoming_message_cb (NeulandChatWidget *widget,
                         gpointer user_data)
 {
   g_debug ("on_incoming_message_cb");
-  insert_message (widget, message, CHAT_DIRECTION_INCOMING);
+  insert_message (widget, message, INCOMING);
 }
 
 static void
@@ -215,9 +217,8 @@ on_incoming_action_cb (NeulandChatWidget *widget,
                        gpointer user_data)
 {
   g_debug ("on_incoming_action_cb");
-  insert_action (widget, action, CHAT_DIRECTION_INCOMING);
+  insert_action (widget, action, INCOMING);
 }
-
 
 static gboolean
 hide_offline_info (gpointer user_data)
@@ -231,7 +232,7 @@ hide_offline_info (gpointer user_data)
 
 static void
 neuland_chat_widget_show_offline_info (NeulandChatWidget *self,
-                                             gboolean show)
+                                       gboolean show)
 {
   static gint id;
   gtk_widget_set_visible (GTK_WIDGET (self->priv->info_bar),
@@ -387,11 +388,11 @@ on_connected_changed (GObject *obj,
   */
   if (connected)
     {
-    neuland_chat_widget_show_offline_info (widget, FALSE);
-    insert_action (widget, "is now online", CHAT_DIRECTION_INCOMING);
-  }
+      neuland_chat_widget_show_offline_info (widget, FALSE);
+      insert_action (widget, "is now online", INCOMING);
+    }
   else
-    insert_action (widget, "is now offline", CHAT_DIRECTION_INCOMING);
+    insert_action (widget, "is now offline", INCOMING);
 }
 
 GtkWidget *
