@@ -220,7 +220,7 @@ on_incoming_action_cb (NeulandChatWidget *widget,
 
 
 static gboolean
-hide_not_connected_info (gpointer user_data)
+hide_offline_info (gpointer user_data)
 {
   NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (user_data);
   gtk_widget_set_visible (GTK_WIDGET (widget->priv->info_bar),
@@ -230,7 +230,7 @@ hide_not_connected_info (gpointer user_data)
 }
 
 static void
-neuland_chat_widget_show_not_connected_info (NeulandChatWidget *self,
+neuland_chat_widget_show_offline_info (NeulandChatWidget *self,
                                              gboolean show)
 {
   static gint id;
@@ -239,7 +239,7 @@ neuland_chat_widget_show_not_connected_info (NeulandChatWidget *self,
 
   g_source_remove_by_user_data (self);
   if (show)
-    g_timeout_add_seconds (6, hide_not_connected_info, self);
+    g_timeout_add_seconds (6, hide_offline_info, self);
 }
 
 static void
@@ -270,7 +270,7 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
             neuland_contact_send_action (priv->contact, string+4);
           else
             {
-              neuland_chat_widget_show_not_connected_info (widget, TRUE);
+              neuland_chat_widget_show_offline_info (widget, TRUE);
               clear_entry = FALSE;
             }
         }
@@ -295,7 +295,7 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
       neuland_contact_send_message (priv->contact, string);
   else
     {
-      neuland_chat_widget_show_not_connected_info (widget, TRUE);
+      neuland_chat_widget_show_offline_info (widget, TRUE);
       clear_entry = FALSE;
     }
 
@@ -387,7 +387,7 @@ on_connected_changed (GObject *obj,
   */
   if (connected)
     {
-    neuland_chat_widget_show_not_connected_info (widget, FALSE);
+    neuland_chat_widget_show_offline_info (widget, FALSE);
     insert_action (widget, "is now online", CHAT_DIRECTION_INCOMING);
   }
   else
