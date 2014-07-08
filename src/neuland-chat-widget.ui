@@ -57,6 +57,12 @@ Author: Volker Sobek <reklov@live.com>
         <property name="weight">700</property>
       </object>
     </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="timestamp_tag">
+        <property name="foreground_rgba">rgb(186,189,182)</property>
+        <property name="font">Normal</property>
+      </object>
+    </child>
   </object>
   <object class="GtkTextBuffer" id="text_buffer">
     <property name="tag_table">texttagtable1</property>

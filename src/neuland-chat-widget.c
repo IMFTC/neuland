@@ -34,6 +34,7 @@ struct _NeulandChatWidgetPrivate {
   GtkTextTag *my_name_tag;
   GtkTextTag *is_typing_tag;
   GtkTextTag *action_tag;
+  GtkTextTag *timestamp_tag;
   GtkTextMark *scroll_mark; // owned by text_buffer, don't free in finalize!
 };
 
@@ -133,6 +134,9 @@ insert_text (NeulandChatWidget *widget,
   gchar *prefix;
   GtkTextTag *name_tag;
 
+  GDateTime *gdt = g_date_time_new_now_local ();
+  gchar *time_string = g_date_time_format (gdt, "(%R) ");
+
   switch (direction)
     {
     case INCOMING:
@@ -148,6 +152,8 @@ insert_text (NeulandChatWidget *widget,
   neuland_chat_widget_set_is_typing (widget, FALSE);
 
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
+  gtk_text_buffer_insert_with_tags (text_buffer, &iter, time_string, -1,
+                                    priv->timestamp_tag, NULL);
   if (type == ACTION)
     {
       prefix = g_strdup_printf ("* %s %s", name, message);
@@ -164,6 +170,9 @@ insert_text (NeulandChatWidget *widget,
     }
 
   g_free (prefix);
+  g_free (time_string);
+  g_date_time_unref(gdt);
+
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
   neuland_chat_widget_scroll_to_bottom (widget);
 }
@@ -341,6 +350,7 @@ neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, contact_name_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, my_name_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, timestamp_tag);
   gtk_widget_class_bind_template_callback (widget_class, entry_text_view_key_press_event_cb);
 
   gobject_class->dispose = neuland_chat_widget_dispose;
