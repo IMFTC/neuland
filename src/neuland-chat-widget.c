@@ -285,6 +285,8 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
 
   if (clear_entry)
     gtk_text_buffer_delete (priv->entry_text_buffer, &start_iter, &end_iter);
+
+  g_free (string);
 }
 
 static gboolean
