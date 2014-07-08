@@ -218,12 +218,28 @@ on_incoming_action_cb (NeulandChatWidget *widget,
   insert_action (widget, action, CHAT_DIRECTION_INCOMING);
 }
 
+
+static gboolean
+hide_not_connected_info (gpointer user_data)
+{
+  NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (user_data);
+  gtk_widget_set_visible (GTK_WIDGET (widget->priv->info_bar),
+                          FALSE);
+
+  return G_SOURCE_REMOVE;
+}
+
 static void
 neuland_chat_widget_show_not_connected_info (NeulandChatWidget *self,
                                              gboolean show)
 {
+  static gint id;
   gtk_widget_set_visible (GTK_WIDGET (self->priv->info_bar),
                           show);
+
+  g_source_remove_by_user_data (self);
+  if (show)
+    g_timeout_add_seconds (6, hide_not_connected_info, self);
 }
 
 static void
