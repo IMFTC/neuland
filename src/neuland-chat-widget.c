@@ -368,7 +368,12 @@ on_connected_changed (GObject *obj,
      tries to send a message.
   */
   if (connected)
+    {
     neuland_chat_widget_show_not_connected_info (widget, FALSE);
+    insert_action (widget, "is now online", CHAT_DIRECTION_INCOMING);
+  }
+  else
+    insert_action (widget, "is now offline", CHAT_DIRECTION_INCOMING);
 }
 
 GtkWidget *
