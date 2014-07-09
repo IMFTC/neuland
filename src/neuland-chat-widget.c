@@ -54,6 +54,7 @@ struct _NeulandChatWidgetPrivate {
 
   GDateTime *last_insert_time;
   MessageDirection last_direction;
+  MessageType last_type;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandChatWidget, neuland_chat_widget, GTK_TYPE_BOX)
@@ -145,19 +146,9 @@ insert_text (NeulandChatWidget *widget,
   gchar *time_string;
   gchar *prefix;
   gboolean insert_time_stamp;
+  gboolean insert_nick;
 
   GDateTime *time_now = g_date_time_new_now_local ();
-
-  if (priv->last_insert_time == NULL)
-    insert_time_stamp = TRUE;
-  else
-    {
-      GTimeSpan time_span = g_date_time_difference (time_now, priv->last_insert_time);
-      insert_time_stamp = (time_span >= MIN_TIME_INTERVAL)
-        || direction != priv->last_direction;
-    }
-
-  priv->last_direction = direction;
 
   switch (direction)
     {
@@ -169,6 +160,18 @@ insert_text (NeulandChatWidget *widget,
       name = neuland_tox_get_name (ntox);
       name_tag = priv->my_name_tag;
       break;
+    }
+
+  if (priv->last_insert_time == NULL)
+    {
+      insert_time_stamp = TRUE;
+      insert_nick = TRUE;
+    }
+  else
+    {
+      GTimeSpan time_span = g_date_time_difference (time_now, priv->last_insert_time);
+      insert_time_stamp = (time_span >= MIN_TIME_INTERVAL) || direction != priv->last_direction;
+      insert_nick = (direction != priv->last_direction) || (priv->last_type == TYPE_ACTION);
     }
 
   neuland_chat_widget_set_is_typing (widget, FALSE);
@@ -193,17 +196,25 @@ insert_text (NeulandChatWidget *widget,
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
                                         priv->action_tag,
                                         NULL);
+      g_free (prefix);
     }
   else
     {
-      prefix = g_strdup_printf ("%s: ", name);
-      gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
-                                        name_tag, NULL);
+      if (insert_nick)
+        {
+          prefix = g_strdup_printf ("%s: ", name);
+          gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
+                                            name_tag, NULL);
+          g_free (prefix);
+        }
+
       gtk_text_buffer_insert (text_buffer, &iter, message, -1);
     }
 
-  g_free (prefix);
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
+
+  priv->last_direction = direction;
+  priv->last_type = type;
   neuland_chat_widget_scroll_to_bottom (widget);
 }
 
