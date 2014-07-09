@@ -441,9 +441,9 @@ neuland_chat_widget_init (NeulandChatWidget *self)
   gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);
   priv->scroll_mark = gtk_text_buffer_create_mark (priv->text_buffer, "scroll", &iter, TRUE);
   priv->tmp_time_string_start_mark =
-    gtk_text_buffer_create_mark (priv->text_buffer, "tmp_time_string_start_mark", &iter, TRUE);
+    gtk_text_buffer_create_mark (priv->text_buffer, NULL, &iter, TRUE);
   priv->tmp_time_string_end_mark =
-    gtk_text_buffer_create_mark (priv->text_buffer, "tmp_time_string_end_mark", &iter, TRUE);
+    gtk_text_buffer_create_mark (priv->text_buffer, NULL, &iter, TRUE);
   priv->last_insert_time = NULL;
 }
 
