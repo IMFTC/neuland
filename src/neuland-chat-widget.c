@@ -40,7 +40,12 @@ struct _NeulandChatWidgetPrivate {
 
   GtkTextView *text_view;
   GtkTextBuffer *text_buffer;
-  GtkTextMark *scroll_mark; // owned by text_buffer, don't free in finalize!
+
+  // owned by text_buffer, don't free in finalize!
+  GtkTextMark *scroll_mark;
+  GtkTextMark *tmp_time_string_start_mark;
+  GtkTextMark *tmp_time_string_end_mark;
+
   GtkTextTag *contact_name_tag;
   GtkTextTag *my_name_tag;
   GtkTextTag *is_typing_tag;
@@ -144,11 +149,24 @@ insert_text (NeulandChatWidget *widget,
   GtkTextTag *name_tag;
   const gchar *name;
   gchar *time_string;
+  gchar *tmp_time_string;
   gchar *prefix;
   gboolean insert_time_stamp;
   gboolean insert_nick;
 
   GDateTime *time_now = g_date_time_new_now_local ();
+
+  /* Remove tmp detailed time stamp */
+  GtkTextIter start_iter;
+  GtkTextIter end_iter;
+  gtk_text_buffer_get_iter_at_mark (priv->text_buffer,
+                                    &start_iter,
+                                    priv->tmp_time_string_start_mark);
+  gtk_text_buffer_get_iter_at_mark (priv->text_buffer,
+                                    &end_iter,
+                                    priv->tmp_time_string_end_mark);
+  gtk_text_buffer_delete (priv->text_buffer, &start_iter, &end_iter);
+
 
   switch (direction)
     {
@@ -169,14 +187,16 @@ insert_text (NeulandChatWidget *widget,
     }
   else
     {
-      GTimeSpan time_span = g_date_time_difference (time_now, priv->last_insert_time);
-      insert_time_stamp = (time_span >= MIN_TIME_INTERVAL) || direction != priv->last_direction;
-      insert_nick = (direction != priv->last_direction) || (priv->last_type == TYPE_ACTION);
+      GTimeSpan time_span = g_date_time_difference (time_now,
+                                                    priv->last_insert_time);
+      insert_time_stamp = (time_span >= MIN_TIME_INTERVAL)
+        || direction != priv->last_direction;
+      insert_nick = (direction != priv->last_direction)
+        || (priv->last_type == TYPE_ACTION);
     }
 
   neuland_chat_widget_set_is_typing (widget, FALSE);
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
-
 
   if (insert_time_stamp)
     {
@@ -212,6 +232,17 @@ insert_text (NeulandChatWidget *widget,
     }
 
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
+
+  /* Insert a temporary, more detailed time stamp below the last
+     message. It will move down with every new message.
+  */
+  tmp_time_string = g_date_time_format (time_now, "%X\n");
+  gtk_text_buffer_move_mark (priv->text_buffer, priv->tmp_time_string_start_mark, &iter);
+
+  gtk_text_buffer_insert_with_tags (text_buffer, &iter,
+                                    tmp_time_string, -1, priv->timestamp_tag, NULL);
+  gtk_text_buffer_move_mark (priv->text_buffer, priv->tmp_time_string_end_mark, &iter);
+  g_free (tmp_time_string);
 
   priv->last_direction = direction;
   priv->last_type = type;
@@ -408,6 +439,10 @@ neuland_chat_widget_init (NeulandChatWidget *self)
   GtkTextIter iter;
   gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);
   priv->scroll_mark = gtk_text_buffer_create_mark (priv->text_buffer, "scroll", &iter, TRUE);
+  priv->tmp_time_string_start_mark =
+    gtk_text_buffer_create_mark (priv->text_buffer, "tmp_time_string_start_mark", &iter, TRUE);
+  priv->tmp_time_string_end_mark =
+    gtk_text_buffer_create_mark (priv->text_buffer, "tmp_time_string_end_mark", &iter, TRUE);
   priv->last_insert_time = NULL;
 }
 
