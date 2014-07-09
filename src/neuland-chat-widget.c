@@ -100,8 +100,20 @@ neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *self)
   gtk_text_view_scroll_mark_onscreen (priv->text_view, mark);
 }
 
+/*
+ * Returns TRUE when the '<contact> is typing ...' text is visible,
+ * FALSE if not.
+ */
+static gboolean
+neuland_chat_widget_get_show_is_typing (NeulandChatWidget *self)
+{
+  NeulandChatWidgetPrivate *priv = self->priv;
+
+  return (gtk_text_buffer_get_mark (priv->text_buffer, "is-typing-start") != NULL);
+}
+
 static void
-neuland_chat_widget_set_is_typing (NeulandChatWidget *self, gboolean is_typing)
+neuland_chat_widget_set_show_is_typing (NeulandChatWidget *self, gboolean is_typing)
 {
   NeulandChatWidgetPrivate *priv = self->priv;
   GtkTextBuffer *buffer = priv->text_buffer;
@@ -153,6 +165,7 @@ insert_text (NeulandChatWidget *widget,
   gchar *prefix;
   gboolean insert_time_stamp;
   gboolean insert_nick;
+  gboolean show_is_typing;
 
   GDateTime *time_now = g_date_time_new_now_local ();
 
@@ -195,7 +208,9 @@ insert_text (NeulandChatWidget *widget,
         || (priv->last_type == TYPE_ACTION);
     }
 
-  neuland_chat_widget_set_is_typing (widget, FALSE);
+  show_is_typing = neuland_chat_widget_get_show_is_typing (widget);
+  neuland_chat_widget_set_show_is_typing (widget, FALSE);
+
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
 
   if (insert_time_stamp)
@@ -244,6 +259,8 @@ insert_text (NeulandChatWidget *widget,
                                     tmp_time_string, -1, priv->timestamp_tag, NULL);
   gtk_text_buffer_move_mark (priv->text_buffer, priv->tmp_time_string_end_mark, &iter);
   g_free (tmp_time_string);
+
+  neuland_chat_widget_set_show_is_typing (widget, show_is_typing);
 
   priv->last_direction = direction;
   priv->last_type = type;
@@ -457,7 +474,7 @@ neuland_chat_widget_is_typing_cb (GObject *obj,
   gboolean is_typing;
 
   g_object_get (contact, "is-typing", &is_typing, NULL);
-  neuland_chat_widget_set_is_typing (chat_widget, is_typing);
+  neuland_chat_widget_set_show_is_typing (chat_widget, is_typing);
 }
 
 static void
