@@ -204,7 +204,8 @@ insert_text (NeulandChatWidget *widget,
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, time_string, -1,
                                         priv->timestamp_tag, NULL);
 
-      g_date_time_unref (priv->last_insert_time);
+      if (priv->last_insert_time)
+        g_date_time_unref (priv->last_insert_time);
       priv->last_insert_time = time_now;
 
       g_free (time_string);
