@@ -22,35 +22,41 @@
 
 #include <string.h>
 
+#define MIN_TIME_INTERVAL (5 * G_TIME_SPAN_MINUTE)
+
+typedef enum {
+  DIRECTION_IN,
+  DIRECTION_OUT,
+} MessageDirection;
+
+typedef enum {
+  TYPE_TEXT,
+  TYPE_ACTION,
+} MessageType;
+
 struct _NeulandChatWidgetPrivate {
   NeulandTox *ntox;
   NeulandContact *contact;
+
   GtkTextView *text_view;
-  GtkTextView *entry_text_view;
   GtkTextBuffer *text_buffer;
-  GtkInfoBar *info_bar;
-  GtkTextBuffer *entry_text_buffer;
+  GtkTextMark *scroll_mark; // owned by text_buffer, don't free in finalize!
   GtkTextTag *contact_name_tag;
   GtkTextTag *my_name_tag;
   GtkTextTag *is_typing_tag;
   GtkTextTag *action_tag;
   GtkTextTag *timestamp_tag;
-  GtkTextMark *scroll_mark; // owned by text_buffer, don't free in finalize!
+
+  GtkTextView *entry_text_view;
+  GtkTextBuffer *entry_text_buffer;
+
+  GtkInfoBar *info_bar;
+
+  GDateTime *last_insert_time;
+  MessageDirection last_direction;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandChatWidget, neuland_chat_widget, GTK_TYPE_BOX)
-
-typedef enum {
-  INCOMING,
-  OUTGOING
-} MessageDirection;
-
-typedef enum {
-  TEXT,
-  ACTION
-} MessageType;
-
-
 
 static void
 neuland_chat_widget_dispose (GObject *object)
@@ -68,6 +74,10 @@ neuland_chat_widget_finalize (GObject *object)
 {
   g_debug ("neuland_chat_widget_finalize (%p)", object);
   NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (object);
+
+  if (widget->priv->last_insert_time != NULL)
+    g_date_time_unref (widget->priv->last_insert_time);
+
   G_OBJECT_CLASS (neuland_chat_widget_parent_class)->finalize (object);
 }
 
@@ -130,31 +140,54 @@ insert_text (NeulandChatWidget *widget,
   NeulandTox *ntox = priv->ntox;
   NeulandContact *contact = priv->contact;
   GtkTextIter iter;
-  const gchar *name;
-  gchar *prefix;
   GtkTextTag *name_tag;
+  const gchar *name;
+  gchar *time_string;
+  gchar *prefix;
+  gboolean insert_time_stamp;
 
-  GDateTime *gdt = g_date_time_new_now_local ();
-  gchar *time_string = g_date_time_format (gdt, "(%R) ");
+  GDateTime *time_now = g_date_time_new_now_local ();
+
+  if (priv->last_insert_time == NULL)
+    insert_time_stamp = TRUE;
+  else
+    {
+      GTimeSpan time_span = g_date_time_difference (time_now, priv->last_insert_time);
+      insert_time_stamp = (time_span >= MIN_TIME_INTERVAL)
+        || direction != priv->last_direction;
+    }
+
+  priv->last_direction = direction;
 
   switch (direction)
     {
-    case INCOMING:
+    case DIRECTION_IN:
       name = neuland_contact_get_name (contact);
       name_tag = priv->contact_name_tag;
       break;
-    case OUTGOING:
+    case DIRECTION_OUT:
       name = neuland_tox_get_name (ntox);
       name_tag = priv->my_name_tag;
       break;
     }
 
   neuland_chat_widget_set_is_typing (widget, FALSE);
-
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
-  gtk_text_buffer_insert_with_tags (text_buffer, &iter, time_string, -1,
-                                    priv->timestamp_tag, NULL);
-  if (type == ACTION)
+
+
+  if (insert_time_stamp)
+    {
+      time_string = g_date_time_format (time_now, "%R\n");
+      gtk_text_buffer_insert_with_tags (text_buffer, &iter, time_string, -1,
+                                        priv->timestamp_tag, NULL);
+
+      g_date_time_unref (priv->last_insert_time);
+      priv->last_insert_time = time_now;
+
+      g_free (time_string);
+    }
+
+  if (type == TYPE_ACTION)
     {
       prefix = g_strdup_printf ("* %s %s", name, message);
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
@@ -170,9 +203,6 @@ insert_text (NeulandChatWidget *widget,
     }
 
   g_free (prefix);
-  g_free (time_string);
-  g_date_time_unref(gdt);
-
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
   neuland_chat_widget_scroll_to_bottom (widget);
 }
@@ -182,7 +212,7 @@ insert_message (NeulandChatWidget *widget,
                 gchar* message,
                 MessageDirection direction)
 {
-  insert_text (widget, message, direction, TEXT);
+  insert_text (widget, message, direction, TYPE_TEXT);
 }
 
 static void
@@ -190,7 +220,7 @@ insert_action (NeulandChatWidget *widget,
                gchar* message,
                MessageDirection direction)
 {
-  insert_text (widget, message, direction, ACTION);
+  insert_text (widget, message, direction, TYPE_ACTION);
 }
 
 static void
@@ -199,7 +229,7 @@ on_outgoing_message_cb (NeulandChatWidget *widget,
                         gpointer user_data)
 {
   g_debug ("on_outgoing_message_cb");
-  insert_message (widget, message, OUTGOING);
+  insert_message (widget, message, DIRECTION_OUT);
 }
 
 static void
@@ -208,7 +238,7 @@ on_outgoing_action_cb (NeulandChatWidget *widget,
                        gpointer user_data)
 {
   g_debug ("on_outgoing_action_cb");
-  insert_action (widget, action, OUTGOING);
+  insert_action (widget, action, DIRECTION_OUT);
 }
 
 static void
@@ -217,7 +247,7 @@ on_incoming_message_cb (NeulandChatWidget *widget,
                         gpointer user_data)
 {
   g_debug ("on_incoming_message_cb");
-  insert_message (widget, message, INCOMING);
+  insert_message (widget, message, DIRECTION_IN);
 }
 
 static void
@@ -226,7 +256,7 @@ on_incoming_action_cb (NeulandChatWidget *widget,
                        gpointer user_data)
 {
   g_debug ("on_incoming_action_cb");
-  insert_action (widget, action, INCOMING);
+  insert_action (widget, action, DIRECTION_IN);
 }
 
 static gboolean
@@ -367,6 +397,7 @@ neuland_chat_widget_init (NeulandChatWidget *self)
   GtkTextIter iter;
   gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);
   priv->scroll_mark = gtk_text_buffer_create_mark (priv->text_buffer, "scroll", &iter, TRUE);
+  priv->last_insert_time = NULL;
 }
 
 static void
@@ -399,10 +430,10 @@ on_connected_changed (GObject *obj,
   if (connected)
     {
       neuland_chat_widget_show_offline_info (widget, FALSE);
-      insert_action (widget, "is now online", INCOMING);
+      insert_action (widget, "is now online", DIRECTION_IN);
     }
   else
-    insert_action (widget, "is now offline", INCOMING);
+    insert_action (widget, "is now offline", DIRECTION_IN);
 }
 
 GtkWidget *

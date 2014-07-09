@@ -61,6 +61,7 @@ Author: Volker Sobek <reklov@live.com>
       <object class="GtkTextTag" id="timestamp_tag">
         <property name="foreground_rgba">rgb(186,189,182)</property>
         <property name="font">Normal</property>
+        <property name="justification">right</property>
       </object>
     </child>
   </object>
@@ -79,6 +80,7 @@ Author: Volker Sobek <reklov@live.com>
           <object class="GtkTextView" id="text_view">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="border_width">3</property>
             <property name="editable">False</property>
             <property name="wrap_mode">word-char</property>
             <property name="buffer">text_buffer</property>
@@ -161,7 +163,7 @@ Author: Volker Sobek <reklov@live.com>
       <object class="GtkTextView" id="entry_text_view">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="border_width">6</property>
+        <property name="border_width">3</property>
         <property name="vscroll_policy">natural</property>
         <property name="wrap_mode">word-char</property>
         <property name="buffer">entry_text_buffer</property>
