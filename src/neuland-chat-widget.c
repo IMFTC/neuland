@@ -123,7 +123,7 @@ neuland_chat_widget_set_is_typing (NeulandChatWidget *self, gboolean is_typing)
   if (is_typing && (is_typing_start_mark == NULL))
     {
       gtk_text_buffer_create_mark (buffer, "is-typing-start", &end_iter, TRUE);
-      string = g_strdup_printf ("%s is typing ...\n", name);
+      string = g_strdup_printf ("%s is typing...", name);
       gtk_text_buffer_insert_with_tags (buffer, &end_iter, string, -1, priv->is_typing_tag, NULL);
       g_free (string);
     }
