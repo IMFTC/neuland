@@ -102,4 +102,10 @@ neuland_contact_set_connected (NeulandContact *contact, gboolean connected);
 gboolean
 neuland_contact_get_connected (NeulandContact *contact);
 
+void
+neuland_contact_set_is_typing (NeulandContact *self, gboolean is_typing);
+
+gboolean
+neuland_contact_get_is_typing (NeulandContact *self);
+
 #endif /* __NEULAND_CONTACT_H__ */

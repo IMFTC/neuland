@@ -157,6 +157,20 @@ neuland_contact_set_connected (NeulandContact *contact,
   g_object_thaw_notify (G_OBJECT (contact));
 }
 
+
+gboolean
+neuland_contact_get_is_typing (NeulandContact *self)
+{
+  return self->priv->is_typing;
+}
+
+void
+neuland_contact_set_is_typing (NeulandContact *self, gboolean is_typing)
+{
+  self->priv->is_typing = is_typing;
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_TYPING]);
+}
+
 static void
 neuland_contact_set_property (GObject *object,
                               guint property_id,
@@ -176,7 +190,7 @@ neuland_contact_set_property (GObject *object,
       neuland_contact_set_connected (contact, g_value_get_boolean (value));
       break;
     case PROP_IS_TYPING:
-      contact->priv->is_typing = g_value_get_boolean (value);
+      neuland_contact_set_is_typing (contact, g_value_get_boolean (value));
       break;
     case PROP_STATUS:
       contact->priv->status = g_value_get_enum (value);
@@ -216,7 +230,7 @@ neuland_contact_get_property (GObject *object,
       g_value_set_boolean (value, contact->priv->connected);
       break;
     case PROP_IS_TYPING:
-      g_value_set_boolean (value, contact->priv->is_typing);
+      g_value_set_boolean (value, neuland_contact_get_is_typing (contact));
       break;
     case PROP_STATUS:
       g_value_set_enum (value, contact->priv->status);

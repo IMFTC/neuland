@@ -100,18 +100,6 @@ neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *self)
   gtk_text_view_scroll_mark_onscreen (priv->text_view, mark);
 }
 
-/*
- * Returns TRUE when the '<contact> is typing ...' text is visible,
- * FALSE if not.
- */
-static gboolean
-neuland_chat_widget_get_show_is_typing (NeulandChatWidget *self)
-{
-  NeulandChatWidgetPrivate *priv = self->priv;
-
-  return (gtk_text_buffer_get_mark (priv->text_buffer, "is-typing-start") != NULL);
-}
-
 static void
 neuland_chat_widget_set_show_is_typing (NeulandChatWidget *self, gboolean is_typing)
 {
@@ -165,7 +153,6 @@ insert_text (NeulandChatWidget *widget,
   gchar *prefix;
   gboolean insert_time_stamp;
   gboolean insert_nick;
-  gboolean show_is_typing;
 
   GDateTime *time_now = g_date_time_new_now_local ();
 
@@ -208,7 +195,6 @@ insert_text (NeulandChatWidget *widget,
         || (priv->last_type == TYPE_ACTION);
     }
 
-  show_is_typing = neuland_chat_widget_get_show_is_typing (widget);
   neuland_chat_widget_set_show_is_typing (widget, FALSE);
 
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
@@ -260,7 +246,7 @@ insert_text (NeulandChatWidget *widget,
   gtk_text_buffer_move_mark (priv->text_buffer, priv->tmp_time_string_end_mark, &iter);
   g_free (tmp_time_string);
 
-  neuland_chat_widget_set_show_is_typing (widget, show_is_typing);
+  neuland_chat_widget_set_show_is_typing (widget, neuland_contact_get_is_typing (contact));
 
   priv->last_direction = direction;
   priv->last_type = type;
