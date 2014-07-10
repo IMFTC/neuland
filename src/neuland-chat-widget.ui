@@ -27,7 +27,9 @@ Author: Volker Sobek <reklov@live.com>
   <!-- interface-name Neuland -->
   <!-- interface-copyright Volker Sobek <reklov@live.com> -->
   <!-- interface-authors Volker Sobek <reklov@live.com> -->
-  <object class="GtkTextBuffer" id="entry_text_buffer"/>
+  <object class="GtkTextBuffer" id="entry_text_buffer">
+    <signal name="changed" handler="entry_text_buffer_changed_cb" swapped="yes"/>
+  </object>
   <object class="GtkTextTagTable" id="texttagtable1">
     <child type="tag">
       <object class="GtkTextTag" id="is_typing_tag">

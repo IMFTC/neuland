@@ -411,6 +411,24 @@ on_outgoing_action_cb (NeulandContact *contact,
 }
 
 static void
+on_show_typing_cb (GObject *obj,
+                   GParamSpec *pspec,
+                   gpointer user_data)
+{
+  NeulandContact *contact = NEULAND_CONTACT (obj);
+  NeulandTox *ntox = NEULAND_TOX (user_data);
+  NeulandToxPrivate *priv = ntox->priv;
+
+  g_mutex_lock (&priv->mutex);
+
+  tox_set_user_is_typing (priv->tox,
+                          neuland_contact_get_number (contact),
+                          neuland_contact_get_show_typing (contact));
+
+  g_mutex_unlock (&priv->mutex);
+}
+
+static void
 neuland_tox_load_contacts (NeulandTox *self)
 {
   NeulandToxPrivate *priv = self->priv;
@@ -437,8 +455,11 @@ neuland_tox_load_contacts (NeulandTox *self)
       NeulandContact *contact = neuland_contact_new (contact_number, contact_name->str, last_online);
       g_string_free (contact_name, TRUE);
 
-      g_signal_connect (contact, "outgoing-message", G_CALLBACK (on_outgoing_message_cb), self);
-      g_signal_connect (contact, "outgoing-action", G_CALLBACK (on_outgoing_action_cb), self);
+      g_object_connect (contact,
+                        "signal::outgoing-message", on_outgoing_message_cb, self,
+                        "signal::outgoing-action", on_outgoing_action_cb, self,
+                        "signal::notify::show-typing", on_show_typing_cb, self,
+                        NULL);
 
       g_hash_table_insert (contacts_ht, GINT_TO_POINTER (contact_number), contact);
     }
@@ -830,7 +851,7 @@ neuland_tox_start (NeulandTox *self)
       /*   g_message ("tox_do thread has to wait!"); */
       /* else */
       /*   g_mutex_unlock (&priv->mutex); */
-      
+
       g_mutex_lock (&priv->mutex);
 
       tox_do (tox);

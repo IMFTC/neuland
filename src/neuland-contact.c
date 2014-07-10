@@ -23,6 +23,7 @@
 #include "neuland-enums.h"
 #include "neuland-contact.h"
 
+#define NEULAND_CONTACT_SHOW_TYPING_TIMEOUT 3 /* Seconds */
 struct _NeulandContactPrivate
 {
   gint64 number;
@@ -36,6 +37,7 @@ struct _NeulandContactPrivate
   guint64 last_connected_change;
 
   gboolean has_chat_widget;
+  guint show_typing_timeout_id;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandContact, neuland_contact, G_TYPE_OBJECT)
@@ -49,6 +51,7 @@ enum {
   PROP_STATUS_MESSAGE,
   PROP_UNREAD_MESSAGES,
   PROP_IS_TYPING,
+  PROP_SHOW_TYPING,
   PROP_LAST_CONNECTED_CHANGE,
   PROP_N
 };
@@ -164,6 +167,44 @@ neuland_contact_get_is_typing (NeulandContact *self)
   return self->priv->is_typing;
 }
 
+gboolean
+show_typing_timeout_func (gpointer user_data)
+{
+  NeulandContact *contact = NEULAND_CONTACT (user_data);
+  NeulandContactPrivate *priv = contact->priv;
+
+  priv->show_typing_timeout_id = 0;
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_SHOW_TYPING]);
+
+  return G_SOURCE_REMOVE;
+}
+
+void
+neuland_contact_set_show_typing (NeulandContact *self, gboolean show_typing)
+{
+  NeulandContactPrivate *priv = self->priv;
+  gboolean old_show_typing = (priv->show_typing_timeout_id != 0);
+
+  if (old_show_typing)
+    g_source_remove (priv->show_typing_timeout_id);
+
+  if (show_typing)
+    priv->show_typing_timeout_id =
+      g_timeout_add_seconds (NEULAND_CONTACT_SHOW_TYPING_TIMEOUT,
+                             show_typing_timeout_func, self);
+  else
+    priv->show_typing_timeout_id = 0;
+
+  if (show_typing != old_show_typing)
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_TYPING]);
+}
+
+gboolean
+neuland_contact_get_show_typing (NeulandContact *self)
+{
+  return (self->priv->show_typing_timeout_id != 0);
+}
+
 void
 neuland_contact_set_is_typing (NeulandContact *self, gboolean is_typing)
 {
@@ -191,6 +232,9 @@ neuland_contact_set_property (GObject *object,
       break;
     case PROP_IS_TYPING:
       neuland_contact_set_is_typing (contact, g_value_get_boolean (value));
+      break;
+    case PROP_SHOW_TYPING:
+      neuland_contact_set_show_typing (contact, g_value_get_boolean (value));
       break;
     case PROP_STATUS:
       contact->priv->status = g_value_get_enum (value);
@@ -231,6 +275,9 @@ neuland_contact_get_property (GObject *object,
       break;
     case PROP_IS_TYPING:
       g_value_set_boolean (value, neuland_contact_get_is_typing (contact));
+      break;
+    case PROP_SHOW_TYPING:
+      g_value_set_boolean (value, neuland_contact_get_show_typing (contact));
       break;
     case PROP_STATUS:
       g_value_set_enum (value, contact->priv->status);
@@ -380,7 +427,15 @@ neuland_contact_class_init (NeulandContactClass *klass)
   properties[PROP_IS_TYPING] =
     g_param_spec_boolean ("is-typing",
                           "Is typing",
-                          "TRUE if the user is currently typing, FALSE if not",
+                          "TRUE if the contact is currently typing, FALSE if not",
+                          FALSE,
+                          G_PARAM_READWRITE |
+                          G_PARAM_CONSTRUCT);
+
+  properties[PROP_SHOW_TYPING] =
+    g_param_spec_boolean ("show-typing",
+                          "Show typing",
+                          "TRUE if contact should see us as currently typing, FALSE if not",
                           FALSE,
                           G_PARAM_READWRITE |
                           G_PARAM_CONSTRUCT);

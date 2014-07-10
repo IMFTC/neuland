@@ -69,12 +69,17 @@ neuland_chat_widget_dispose (GObject *object)
 {
   g_debug ("neuland_chat_widget_dispose (%p)", object);
   NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (object);
-  g_clear_object (&widget->priv->ntox);
-  g_clear_object (&widget->priv->contact);
+  NeulandChatWidgetPrivate *priv = widget->priv;
+
+  if (priv->contact != NULL)
+    neuland_contact_set_show_typing (priv->contact, FALSE);
+
+  g_clear_object (&priv->ntox);
+  g_clear_object (&priv->contact);
 
   G_OBJECT_CLASS (neuland_chat_widget_parent_class)->dispose (object);
 }
-
+  
 static void
 neuland_chat_widget_finalize (GObject *object)
 {
@@ -101,7 +106,7 @@ neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *self)
 }
 
 static void
-neuland_chat_widget_set_show_is_typing (NeulandChatWidget *self, gboolean is_typing)
+neuland_chat_widget_set_show_contact_is_typing (NeulandChatWidget *self, gboolean is_typing)
 {
   NeulandChatWidgetPrivate *priv = self->priv;
   GtkTextBuffer *buffer = priv->text_buffer;
@@ -195,7 +200,7 @@ insert_text (NeulandChatWidget *widget,
         || (priv->last_type == TYPE_ACTION);
     }
 
-  neuland_chat_widget_set_show_is_typing (widget, FALSE);
+  neuland_chat_widget_set_show_contact_is_typing (widget, FALSE);
 
   gtk_text_buffer_get_end_iter (text_buffer, &iter);
 
@@ -246,7 +251,8 @@ insert_text (NeulandChatWidget *widget,
   gtk_text_buffer_move_mark (priv->text_buffer, priv->tmp_time_string_end_mark, &iter);
   g_free (tmp_time_string);
 
-  neuland_chat_widget_set_show_is_typing (widget, neuland_contact_get_is_typing (contact));
+  if (direction == DIRECTION_OUT)
+    neuland_chat_widget_set_show_contact_is_typing (widget, neuland_contact_get_is_typing (contact));
 
   priv->last_direction = direction;
   priv->last_type = type;
@@ -403,11 +409,38 @@ entry_text_view_key_press_event_cb (NeulandChatWidget *widget,
        event->keyval == GDK_KEY_KP_Enter) &&
       !(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
     {
+      neuland_contact_set_show_typing (widget->priv->contact, FALSE);
       neuland_chat_widget_process_input (widget);
       return TRUE;
     }
 
   return FALSE;
+}
+
+static void
+entry_text_buffer_changed_cb (NeulandChatWidget *widget,
+                              gpointer user_data)
+{
+  NeulandChatWidgetPrivate *priv = widget->priv;
+  GtkTextBuffer *buffer = priv->entry_text_buffer;
+  NeulandContact *contact = priv->contact;
+  GtkTextIter iter_start;
+  GtkTextIter iter_end;
+
+  gtk_text_buffer_get_start_iter (buffer, &iter_start);
+  gtk_text_buffer_get_iter_at_offset (buffer, &iter_end, 4);
+
+  gchar *text = gtk_text_buffer_get_text (buffer, &iter_start, &iter_end, FALSE);
+
+  if (strlen (text) > 0 && (!g_str_has_prefix (text, "/")
+                            || g_str_has_prefix (text, "//") /* quoted commands are messages */
+                            || g_str_has_prefix (text, "/me ")))
+    /* Typing a message or a command that results in a message or
+       action being send */
+    neuland_contact_set_show_typing (contact, TRUE);
+  else
+    /* Typing a command; don't show that we are typing */
+    neuland_contact_set_show_typing (contact, FALSE);
 }
 
 static void
@@ -428,6 +461,7 @@ neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, timestamp_tag);
   gtk_widget_class_bind_template_callback (widget_class, entry_text_view_key_press_event_cb);
+  gtk_widget_class_bind_template_callback (widget_class, entry_text_buffer_changed_cb);
 
   gobject_class->dispose = neuland_chat_widget_dispose;
   gobject_class->finalize = neuland_chat_widget_finalize;
@@ -460,7 +494,7 @@ neuland_chat_widget_is_typing_cb (GObject *obj,
   gboolean is_typing;
 
   g_object_get (contact, "is-typing", &is_typing, NULL);
-  neuland_chat_widget_set_show_is_typing (chat_widget, is_typing);
+  neuland_chat_widget_set_show_contact_is_typing (chat_widget, is_typing);
 }
 
 static void
@@ -475,8 +509,7 @@ on_connected_changed (GObject *obj,
   /* Make sure we hide the info bar when a contact comes online but
      don't show it automatically when a contact goes offline since
      that clutters the UI. We only show it once the user actually
-     tries to send a message.
-  */
+     tries to send a message. */
   if (connected)
     {
       neuland_chat_widget_show_offline_info (widget, FALSE);

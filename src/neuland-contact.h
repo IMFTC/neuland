@@ -108,4 +108,10 @@ neuland_contact_set_is_typing (NeulandContact *self, gboolean is_typing);
 gboolean
 neuland_contact_get_is_typing (NeulandContact *self);
 
+void
+neuland_contact_set_show_typing (NeulandContact *self, gboolean show_typing);
+
+gboolean
+neuland_contact_get_show_typing (NeulandContact *self);
+
 #endif /* __NEULAND_CONTACT_H__ */
