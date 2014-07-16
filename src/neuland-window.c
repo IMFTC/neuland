@@ -22,6 +22,7 @@
 #include "neuland-contact.h"
 #include "neuland-contact-widget.h"
 #include "neuland-chat-widget.h"
+#include "neuland-add-dialog.h"
 
 struct _NeulandWindowPrivate
 {
@@ -373,9 +374,23 @@ neuland_window_change_status (GSimpleAction *action,
   g_simple_action_set_state (action, parameter);
 }
 
+static void
+activate_add_contact (GSimpleAction *action,
+                      GVariant *parameter,
+                      gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  GtkWidget *add_dialog = neuland_add_dialog_new ();
+  gtk_window_set_transient_for (GTK_WINDOW (add_dialog), GTK_WINDOW (window));
+
+  gtk_widget_show_all (add_dialog);
+}
+
+
 static GActionEntry win_entries[] = {
   { "change-status", NULL, "i", "0", neuland_window_change_status },
-  { "selection-state", NULL, NULL, "false", neuland_window_selection_state_changed }
+  { "selection-state", NULL, NULL, "false", neuland_window_selection_state_changed },
+  { "add-contact", activate_add_contact }
 };
 
 static void

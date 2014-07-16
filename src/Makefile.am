@@ -30,6 +30,8 @@ neuland_SOURCES = \
 	neuland-window.h \
 	neuland-chat-widget.c \
 	neuland-chat-widget.h \
+	neuland-add-dialog.c \
+	neuland-add-dialog.h \
 	$(NULL)
 
 nodist_neuland_SOURCES = \

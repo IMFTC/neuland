@@ -50,6 +50,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="can_focus">True</property>
                 <property name="halign">center</property>
                 <property name="valign">center</property>
+                <property name="action-name">win.add-contact</property>
                 <style>
                   <class name="image-button"/>
                 </style>
