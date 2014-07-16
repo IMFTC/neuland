@@ -44,10 +44,6 @@ struct _NeulandContact
 {
   GObject parent;
 
-  gchar *name;
-  gchar *status_message;
-  NeulandContactStatus *status;
-
   NeulandContactPrivate *priv;
 };
 
