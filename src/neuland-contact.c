@@ -18,12 +18,11 @@
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <tox/tox.h>
-
 #include "neuland-enums.h"
 #include "neuland-contact.h"
 
 #define NEULAND_CONTACT_SHOW_TYPING_TIMEOUT 3 /* Seconds */
+
 struct _NeulandContactPrivate
 {
   gint64 number;
@@ -76,6 +75,7 @@ neuland_contact_set_name (NeulandContact *contact,
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
 
   g_free (contact->priv->name);
+
   contact->priv->name = g_strdup (name);
 
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_NAME]);

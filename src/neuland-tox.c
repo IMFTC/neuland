@@ -19,7 +19,7 @@
  */
 
 // TODO: Thread-safety
-#include "string.h"
+#include <string.h>
 
 #include "neuland-tox.h"
 #include "neuland-enums.h"
@@ -446,6 +446,14 @@ neuland_tox_load_contacts (NeulandTox *self)
   for (i = 0; i < n_contacts; i++)
     {
       gint contact_number = contact_list[i];
+
+      /* Skip contacts that we already have NeulandContact objects for */
+      if (g_hash_table_contains (contacts_ht, GINT_TO_POINTER (contact_number)))
+        {
+          g_debug ("Not adding contact with number %i; already added", contact_number);
+          continue;
+        }
+      g_debug ("Adding contact with number %i", contact_number);
       gchar tox_name[TOX_MAX_NAME_LENGTH] = {0};
       gint l;
       GString *contact_name;
@@ -514,7 +522,7 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
   guchar hex_string[TOX_FRIEND_ADDRESS_SIZE * 2 + 1] = {0,};
   tox_get_address (priv->tox, address);
   neuland_bin_to_hex_string (address, hex_string, TOX_FRIEND_ADDRESS_SIZE);
-  self->priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2 + 1);
+  self->priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
 
   guint8 name[TOX_MAX_NAME_LENGTH] = {0, };
   guint16 l = tox_get_self_name (tox, name);
@@ -524,6 +532,38 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
 
   g_mutex_unlock (&priv->mutex);
 }
+
+/* Returns a NeulandContact on success, NULL otherwise. A basic
+   validation of hex_address takes currently place in NeulandAddDialog.
+   TODO: Coordinate error handling */
+NeulandContact *
+neuland_tox_add_contact_from_hex_address (NeulandTox *self,
+                                          const gchar *hex_address,
+                                          const gchar *message)
+{
+  gchar *tmp_message = g_strcmp0 (message, "") != 0 ?
+    g_strdup (message) : g_strdup ("Let's tox?");
+  NeulandToxPrivate *priv = self->priv;
+  guint8 bin_address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
+  gboolean valid_hex = neuland_hex_string_to_bin (hex_address,
+                                                  bin_address,
+                                                  TOX_FRIEND_ADDRESS_SIZE);
+  g_mutex_lock (&priv->mutex);
+
+  gint32 friend_number = tox_add_friend (priv->tox, bin_address, tmp_message, strlen (tmp_message));
+
+  g_mutex_unlock (&priv->mutex);
+
+  g_free (tmp_message);
+
+  if (friend_number < 0)
+    return NULL;
+
+  neuland_tox_load_contacts (self);
+
+  return g_hash_table_lookup (priv->contacts_ht, GINT_TO_POINTER (friend_number));
+}
+
 
 void
 neuland_tox_save_and_kill (NeulandTox *self)
@@ -859,7 +899,7 @@ neuland_tox_start (NeulandTox *self)
 
       g_mutex_unlock (&priv->mutex);
 
-      g_debug ("tox_do, new interval: %i", interval * 1000);
+      //g_debug ("tox_do, new interval: %i", interval * 1000);
       g_usleep ((gulong) 1000 * interval);
     }
 

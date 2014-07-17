@@ -172,6 +172,27 @@ neuland_window_on_incoming_action_cb (NeulandWindow *window,
     neuland_contact_increase_unread_messages (contact);
 }
 
+static void
+neuland_window_add_contact (NeulandWindow *self, NeulandContact *contact)
+{
+  NeulandWindowPrivate *priv = self->priv;
+
+  g_object_connect (contact,
+                    "swapped-signal::ensure-chat-widget",
+                    neuland_window_on_ensure_chat_widget, self,
+                    "swapped-signal::incoming-message",
+                    neuland_window_on_incoming_message_cb, self,
+                    "swapped-signal::incoming-action",
+                    neuland_window_on_incoming_action_cb, self,
+                    NULL);
+
+  GtkWidget *contact_widget = neuland_contact_widget_new (contact);
+
+  g_hash_table_insert (priv->contact_widgets, contact, contact_widget);
+  gtk_list_box_insert (priv->contacts_list_box, contact_widget, -1);
+}
+
+
 
 static void
 neuland_window_load_contacts (NeulandWindow *self)
@@ -195,34 +216,27 @@ neuland_window_load_contacts (NeulandWindow *self)
   for (l = contacts; l != NULL; l = l->next)
     {
       NeulandContact *contact = NEULAND_CONTACT (l->data);
-      g_object_connect (contact,
-                        "swapped-signal::ensure-chat-widget",
-                        neuland_window_on_ensure_chat_widget, self,
-                        "swapped-signal::incoming-message",
-                        neuland_window_on_incoming_message_cb, self,
-                        "swapped-signal::incoming-action",
-                        neuland_window_on_incoming_action_cb, self,
-                        NULL);
-
-      GtkWidget *contact_widget = neuland_contact_widget_new (contact);
-
-      g_hash_table_insert (priv->contact_widgets, contact, contact_widget);
-      gtk_list_box_insert (priv->contacts_list_box, contact_widget, -1);
+      neuland_window_add_contact (self, contact);
     }
-  // add separator after last row as well
-  GtkWidget *dummy_label = gtk_widget_new (GTK_TYPE_LABEL,
-                                           "visible", FALSE,
-                                           NULL);
-  gtk_list_box_insert (priv->contacts_list_box,
-                       dummy_label, -1);
-  gtk_widget_set_sensitive (gtk_widget_get_parent (dummy_label), FALSE);
-  gtk_widget_set_opacity (gtk_widget_get_parent (dummy_label), 0);
+
+  /*
+   * /\* add separator after last row as well *\/
+   * GtkWidget *dummy_label = gtk_widget_new (GTK_TYPE_LABEL,
+   *                                          "visible", FALSE,
+   *                                          NULL);
+   * gtk_list_box_insert (priv->contacts_list_box,
+   *                      dummy_label, -1);
+   * gtk_widget_set_sensitive (gtk_widget_get_parent (dummy_label), FALSE);
+   * gtk_widget_set_opacity (gtk_widget_get_parent (dummy_label), 0);
+   */
+
   if (g_list_length (contacts) > 0)
     {
       GtkListBoxRow *first_row = gtk_list_box_get_row_at_index (priv->contacts_list_box, 0);
       gtk_list_box_select_row (priv->contacts_list_box, first_row);
       contacts_list_box_row_activated_cb (self, first_row, NULL);
     }
+
   //DEBUG:
   //g_message ("unreffing contact: %s\n", neuland_contact_get_name (contacts->data));
   //g_object_unref (contacts->data);
@@ -375,6 +389,32 @@ neuland_window_change_status (GSimpleAction *action,
 }
 
 static void
+on_add_dialog_response (GtkDialog *dialog,
+                        gint response_id,
+                        gpointer user_data)
+{
+  if (response_id == GTK_RESPONSE_OK)
+    {
+      NeulandWindow *window = NEULAND_WINDOW (user_data);
+      NeulandWindowPrivate *priv = window->priv;
+      NeulandTox *ntox = priv->ntox;
+      const char *tox_id = neuland_add_dialog_get_tox_id (NEULAND_ADD_DIALOG (dialog));
+      NeulandContact *contact =
+        neuland_tox_add_contact_from_hex_address
+        (priv->ntox,
+         tox_id,
+         neuland_add_dialog_get_message (NEULAND_ADD_DIALOG (dialog)));
+
+      if (contact == NULL)
+        g_warning ("Failed to add friend with address \"%s\"", tox_id);
+      else
+        neuland_window_add_contact (window, contact);
+    }
+
+  gtk_widget_destroy (GTK_WIDGET (dialog));
+}
+
+static void
 activate_add_contact (GSimpleAction *action,
                       GVariant *parameter,
                       gpointer user_data)
@@ -382,6 +422,8 @@ activate_add_contact (GSimpleAction *action,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   GtkWidget *add_dialog = neuland_add_dialog_new ();
   gtk_window_set_transient_for (GTK_WINDOW (add_dialog), GTK_WINDOW (window));
+
+  g_signal_connect (add_dialog, "response", G_CALLBACK (on_add_dialog_response), window);
 
   gtk_widget_show_all (add_dialog);
 }

@@ -51,4 +51,11 @@ GType neuland_add_dialog_get_type (void);
 GtkWidget *
 neuland_add_dialog_new (void);
 
+const gchar *
+neuland_add_dialog_get_tox_id (NeulandAddDialog *dialog);
+
+const gchar *
+neuland_add_dialog_get_message (NeulandAddDialog *dialog);
+
+
 #endif /* __NEULAND_ADD_DIALOG_H__ */
