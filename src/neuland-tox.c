@@ -107,7 +107,7 @@ typedef struct {
 static void
 add_idle_with_data_string (GSourceFunc idle_func,
                            gint32 contact_number,
-                           guint8 *str,
+                           const guint8 *str,
                            guint16 length,
                            NeulandTox *ntox)
 {
@@ -214,7 +214,7 @@ on_name_change_idle (gpointer user_data)
 static void
 on_name_change (Tox *tox,
                 gint32 contact_number,
-                guint8 *new_name,
+                const guint8 *new_name,
                 guint16 length,
                 gpointer user_data)
 {
@@ -241,7 +241,7 @@ on_status_message_idle (gpointer user_data)
 static void
 on_status_message (Tox *tox,
                    gint32 contact_number,
-                   guint8 *new_message,
+                   const guint8 *new_message,
                    guint16 length,
                    gpointer user_data)
 {
@@ -265,7 +265,7 @@ on_contact_message_idle (gpointer user_data)
 static void
 on_contact_message (Tox *tox,
                     gint32 contact_number,
-                    guint8 *message,
+                    const guint8 *message,
                     guint16 length,
                     gpointer user_data)
 {
@@ -289,7 +289,7 @@ on_contact_action_idle (gpointer user_data)
 static void
 on_contact_action (Tox *tox,
                    gint32 contact_number,
-                   guint8 *action,
+                   const guint8 *action,
                    guint16 length,
                    gpointer user_data)
 {
