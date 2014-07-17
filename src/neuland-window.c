@@ -422,6 +422,7 @@ activate_add_contact (GSimpleAction *action,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   GtkWidget *add_dialog = neuland_add_dialog_new ();
   gtk_window_set_transient_for (GTK_WINDOW (add_dialog), GTK_WINDOW (window));
+  gtk_window_set_modal (GTK_WINDOW (add_dialog), TRUE);
 
   g_signal_connect (add_dialog, "response", G_CALLBACK (on_add_dialog_response), window);
 

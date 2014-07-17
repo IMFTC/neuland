@@ -47,7 +47,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
-                <property name="width_chars">50</property>
+                <property name="width_chars">30</property>
                 <signal name="activate" handler="on_entry_activate" object="NeulandAddDialog" swapped="yes"/>
                 <signal name="changed" handler="on_entry_changed" object="NeulandAddDialog" swapped="yes"/>
               </object>
@@ -71,6 +71,7 @@ Author: Volker Sobek <reklov@live.com>
               <object class="GtkLabel" id="label1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">end</property>
                 <property name="label" translatable="yes">Tox ID:</property>
               </object>
               <packing>
@@ -82,6 +83,7 @@ Author: Volker Sobek <reklov@live.com>
               <object class="GtkLabel" id="label2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">end</property>
                 <property name="label" translatable="yes">Message:</property>
               </object>
               <packing>
