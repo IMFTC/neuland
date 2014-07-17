@@ -109,12 +109,6 @@ neuland_application_new_window (GApplication *app, gchar *data_path)
   window = neuland_window_new(ntox);
   g_object_unref (ntox); // window now holds the only reference to ntox
 
-  const gchar* app_new_accels[] = {"<Primary>n", NULL};
-  const gchar* app_quit_accels[] = {"<Primary>q", NULL};
-
-  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.new", app_new_accels);
-  gtk_application_set_accels_for_action (GTK_APPLICATION (app), "app.quit", app_quit_accels);
-
   gtk_application_add_window (GTK_APPLICATION (app), GTK_WINDOW (window));
   gtk_widget_show_all (GTK_WIDGET (window));
 }
@@ -173,6 +167,21 @@ neuland_application_startup (GApplication *application)
                                 G_MENU_MODEL (gtk_builder_get_object (builder, "app-menu")));
   g_action_map_add_action_entries (G_ACTION_MAP (application),
                                    app_entries, G_N_ELEMENTS (app_entries), application);
+
+  struct {
+    const gchar *target_dot_action;
+    const gchar *accelerators[2];
+  } accels[] = {
+    { "app.new", { "<Primary>n", NULL } },
+    { "app.quit", { "<Primary>q", NULL } },
+    { "win.add-contact", { "<Primary>a", NULL} }
+  };
+
+  int i;
+  for (i = 0; i < G_N_ELEMENTS (accels); i++)
+    gtk_application_set_accels_for_action (GTK_APPLICATION (application),
+                                           accels[i].target_dot_action,
+                                           accels[i].accelerators);
 
   g_object_unref (builder);
 }
