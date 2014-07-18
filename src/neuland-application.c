@@ -56,13 +56,28 @@ neuland_application_finalize (GObject *object)
 }
 
 static void
+neuland_application_new_window (NeulandApplication *app, gchar *data_path)
+{
+  g_debug ("neuland_application_new_window");
+
+  NeulandTox *ntox = neuland_tox_new(data_path);
+
+  GtkWidget *window;
+  window = neuland_window_new (ntox);
+  g_object_unref (ntox); // window now holds the only reference to ntox
+
+  gtk_application_add_window (GTK_APPLICATION (app), GTK_WINDOW (window));
+  gtk_widget_show_all (GTK_WIDGET (window));
+}
+
+/* Start a throw-away session, no data will be saved */
+static void
 neuland_application_new_activated (GSimpleAction *action,
                                    GVariant      *parameter,
                                    gpointer       user_data)
 {
-  GApplication *app = user_data;
-
-  g_application_activate (app);
+  NeulandApplication *app = NEULAND_APPLICATION (user_data);
+  neuland_application_new_window (app, NULL);
 }
 
 static void
@@ -98,21 +113,6 @@ static GActionEntry app_entries[] = {
 };
 
 static void
-neuland_application_new_window (GApplication *app, gchar *data_path)
-{
-  g_debug ("neuland_application_new_window");
-
-  NeulandTox *ntox = neuland_tox_new(data_path);
-
-  GtkWidget *window;
-  window = neuland_window_new(ntox);
-  g_object_unref (ntox); // window now holds the only reference to ntox
-
-  gtk_application_add_window (GTK_APPLICATION (app), GTK_WINDOW (window));
-  gtk_widget_show_all (GTK_WIDGET (window));
-}
-
-static void
 neuland_application_open (GApplication  *application,
                           GFile        **files,
                           gint           n_files,
@@ -123,7 +123,7 @@ neuland_application_open (GApplication  *application,
     {
       gchar *path = g_file_get_path (files[i]);
       g_message ("Creating window for tox data '%s'", path);
-      neuland_application_new_window (application, path);
+      neuland_application_new_window (NEULAND_APPLICATION (application), path);
     }
 }
 
@@ -136,7 +136,7 @@ neuland_application_activate (GApplication *application)
   data_path = g_build_filename (g_get_user_config_dir (), DEFAULT_TOX_DATA_PATH, NULL);
 
   g_debug ("Creating window for default tox data '%s'", data_path);
-  neuland_application_new_window (application, data_path);
+  neuland_application_new_window (NEULAND_APPLICATION (application), data_path);
   g_free (data_path);
 }
 

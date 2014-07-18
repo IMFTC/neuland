@@ -280,7 +280,7 @@ neuland_window_set_ntox (NeulandWindow *self, NeulandTox *ntox)
   neuland_window_load_contacts (self);
   gchar *id;
   g_object_get (self->priv->ntox, "tox-id", &id, NULL);
-  g_debug ("Our Tox ID: %s", id);
+  g_message ("Tox ID for window %p: %s", self, id);
 
   g_object_connect (ntox,
                     "signal::notify::self-name", on_name_change_cb, self,
