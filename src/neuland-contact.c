@@ -26,6 +26,7 @@
 struct _NeulandContactPrivate
 {
   gint64 number;
+  gchar *tox_id;
   gchar *name;
   gchar *status_message;
 
@@ -43,6 +44,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (NeulandContact, neuland_contact, G_TYPE_OBJECT)
 
 enum {
   PROP_0,
+  PROP_TOX_ID,
   PROP_NUMBER,
   PROP_NAME,
   PROP_CONNECTED,
@@ -199,6 +201,12 @@ neuland_contact_set_show_typing (NeulandContact *self, gboolean show_typing)
     g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_TYPING]);
 }
 
+const gchar *
+neuland_contact_get_status_message (NeulandContact *self)
+{
+  return self->priv->status_message;
+}
+
 gboolean
 neuland_contact_get_show_typing (NeulandContact *self)
 {
@@ -212,6 +220,12 @@ neuland_contact_set_is_typing (NeulandContact *self, gboolean is_typing)
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_TYPING]);
 }
 
+const gchar *
+neuland_contact_get_tox_id (NeulandContact *self)
+{
+  return self->priv->tox_id;
+}
+
 static void
 neuland_contact_set_property (GObject *object,
                               guint property_id,
@@ -223,6 +237,10 @@ neuland_contact_set_property (GObject *object,
     {
     case PROP_NUMBER:
       contact->priv->number = g_value_get_int64 (value);
+      break;
+    case PROP_TOX_ID:
+      g_free (contact->priv->tox_id);
+      contact->priv->tox_id = g_value_dup_string (value);
       break;
     case PROP_NAME:
       neuland_contact_set_name (contact, g_value_get_string (value));
@@ -408,6 +426,13 @@ neuland_contact_class_init (NeulandContactClass *klass)
                         G_PARAM_READWRITE |
                         G_PARAM_CONSTRUCT_ONLY);
 
+  properties[PROP_TOX_ID] =
+    g_param_spec_string ("tox-id",
+                         "Tox ID",
+                         "The contact's Tox ID",
+                         "",
+                         G_PARAM_READWRITE);
+
   properties[PROP_NAME] =
     g_param_spec_string ("name",
                          "Name",
@@ -545,7 +570,7 @@ neuland_contact_init (NeulandContact *self)
 }
 
 NeulandContact *
-neuland_contact_new (gint64 number, gchar *contact_name, guint64 last_connected_change)
+neuland_contact_new (gint64 number, const gchar *tox_id, const gchar *contact_name, const gchar *status_message, guint64 last_connected_change)
 {
   g_debug ("neuland_contact_new (%i, %s)", number, contact_name);
 
@@ -554,7 +579,9 @@ neuland_contact_new (gint64 number, gchar *contact_name, guint64 last_connected_
 
   neuland_contact = NEULAND_CONTACT (g_object_new (NEULAND_TYPE_CONTACT,
                                                    "number", number,
+                                                   "tox-id", tox_id,
                                                    "name", contact_name,
+                                                   "status-message", status_message,
                                                    "last-connected-change", last_connected_change,
                                                    NULL));
 

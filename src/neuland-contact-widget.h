@@ -64,6 +64,9 @@ void
 neuland_contact_widget_set_status (NeulandContactWidget *self, NeulandContactStatus new_status);
 
 void
+neuland_contact_widget_set_name (NeulandContactWidget *self, const gchar *name);
+
+void
 neuland_contact_widget_set_message (NeulandContactWidget *self, const gchar *new_message);
 
 void

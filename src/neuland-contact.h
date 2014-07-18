@@ -57,7 +57,8 @@ struct _NeulandContactClass
 };
 
 NeulandContact *
-neuland_contact_new (gint64 contact_number, gchar *contact_name, guint64 last_online);
+neuland_contact_new (gint64 number, const gchar *tox_id, const gchar *contact_name,
+                     const gchar *status_message, guint64 last_connected_change);
 
 void
 neuland_contact_increase_unread_messages (NeulandContact *self);
@@ -109,5 +110,11 @@ neuland_contact_set_show_typing (NeulandContact *self, gboolean show_typing);
 
 gboolean
 neuland_contact_get_show_typing (NeulandContact *self);
+
+const gchar *
+neuland_contact_get_tox_id (NeulandContact *self);
+
+const gchar *
+neuland_contact_get_status_message (NeulandContact *self);
 
 #endif /* __NEULAND_CONTACT_H__ */

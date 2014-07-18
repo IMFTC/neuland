@@ -18,6 +18,8 @@
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "neuland-contact-widget.h"
 
 struct _NeulandContactWidgetPrivate {
@@ -87,7 +89,7 @@ neuland_contact_widget_set_message (NeulandContactWidget *self,
 
 void
 neuland_contact_widget_set_status_message (NeulandContactWidget *self,
-                                           gchar *status_message)
+                                           const gchar *status_message)
 {
   gtk_label_set_label (self->priv->status_label, status_message);
 }
@@ -122,17 +124,41 @@ neuland_contact_widget_init (NeulandContactWidget *self)
 }
 
 void
-neuland_contact_widget_set_name (NeulandContactWidget *self,
-                                 gchar *name)
+neuland_contact_widget_set_name (NeulandContactWidget *self, const char *name)
 {
   gtk_label_set_text (self->priv->name_label, name);
+}
 
+/* Sets name to the name of contact, or to the tox id, if name is not
+   set */
+void
+neuland_contact_widget_update_name (NeulandContactWidget *self)
+{
+  NeulandContact *contact = self->priv->contact;
+
+  const gchar *name = neuland_contact_get_name (contact);
+
+  if (strlen (name) > 0)
+    neuland_contact_widget_set_name (self, name);
+  else
+    neuland_contact_widget_set_name (self, neuland_contact_get_tox_id (contact));
 }
 
 NeulandContact*
 neuland_contact_widget_get_contact (NeulandContactWidget *self)
 {
   return self->priv->contact;
+}
+
+
+static void
+neuland_contact_widget_name_changed_cb (GObject *obj,
+                                        GParamSpec *pspec,
+                                        gpointer user_data)
+{
+  g_debug ("neuland_contact_widget_name_changed_cb");
+  NeulandContactWidget *ncw = NEULAND_CONTACT_WIDGET (user_data);
+  neuland_contact_widget_update_name (ncw);
 }
 
 static void
@@ -196,7 +222,7 @@ neuland_contact_widget_status_message_changed_cb (GObject *obj,
   g_debug ("neuland_contact_widget_status_message_changed_cb");
   NeulandContact *nf = NEULAND_CONTACT (obj);
   NeulandContactWidget *nfw = NEULAND_CONTACT_WIDGET (user_data);
-  gchar *status_message;
+  const gchar *status_message = neuland_contact_get_status_message (nf);
 
   g_object_get (nf, "status-message", &status_message, NULL);
   neuland_contact_widget_set_status_message (nfw, status_message);
@@ -226,13 +252,15 @@ neuland_contact_widget_new (NeulandContact *contact)
   if (contact != NULL) {
     // Destroy ourself when the contact is finalized
     //g_object_weak_ref (G_OBJECT (contact), (GWeakNotify)gtk_widget_destroy, GTK_WIDGET (nfw));
-    g_object_bind_property (contact, "name", nfw->priv->name_label, "label", G_BINDING_SYNC_CREATE);
     g_object_connect (contact,
+                      "signal::notify::name", neuland_contact_widget_name_changed_cb, nfw,
                       "signal::notify::connected", neuland_contact_widget_connected_changed_cb, nfw,
                       "signal::notify::status", neuland_contact_widget_status_changed_cb, nfw,
                       "signal::notify::status-message", neuland_contact_widget_status_message_changed_cb, nfw,
                       "signal::notify::unread-messages", neuland_contact_widget_unread_messages_cb, nfw,
                       NULL);
+
+    neuland_contact_widget_update_name (nfw);
     neuland_contact_widget_status_message_changed_cb (G_OBJECT (contact), NULL, nfw);
   }
   return GTK_WIDGET (nfw);
