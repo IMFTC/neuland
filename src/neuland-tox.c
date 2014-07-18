@@ -25,8 +25,8 @@
 #include "neuland-enums.h"
 #include "neuland-marshal.h"
 
-#define DEFAULT_NEULAND_STATUS_MESSAGE "I'm using unstable software!"
-#define DEFAULT_NEULAND_NAME "Neuland User"
+#define NEULAND_DEFAULT_STATUS_MESSAGE "I'm testing Neuland!"
+#define NEULAND_DEFAULT_NAME "Neuland User"
 
 struct _NeulandToxPrivate
 {
@@ -484,53 +484,71 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
   gsize length;
   GError *error = NULL;
 
-  if (data_path == NULL)
-    return;
-
-  g_free (priv->data_path);
-
-  g_mutex_lock (&priv->mutex);
-
-  if (g_file_get_contents (data_path, &data, &length, &error))
+  g_message ("data_path: %s", data_path);
+  if (data_path != NULL)
     {
-      g_debug ("Setting tox data_path to: %s", priv->data_path);
-      tox_load (priv->tox, data, length);
-      priv->data_path = data_path;
-    }
-  else
-    {
-      if (error->code == G_FILE_ERROR_NOENT) // No such file or directory
+
+      if (g_file_get_contents (data_path, &data, &length, &error))
         {
-          /* Tox will start up without a file, creating a new identity.
-             when closing we will try to save the tox data to this
-             location. */
-          g_message ("File %s not found. Will try to save new data to it on exit.");
+          g_debug ("Setting tox data_path to: %s", priv->data_path);
+
+          g_mutex_lock (&priv->mutex);
+          tox_load (priv->tox, data, length);
+          g_mutex_unlock (&priv->mutex);
+
           priv->data_path = data_path;
         }
       else
         {
-          g_debug ("%s", error->message);
-          priv->data_path = NULL;
+          if (error->code == G_FILE_ERROR_NOENT) // No such file or directory
+            {
+              /* Tox will start up without a file, creating a new identity.
+                 when closing we will try to save the tox data to this
+                 location. */
+              g_message ("File %s not found. Will try to save new data to it on exit.");
+              priv->data_path = data_path;
+            }
+          else
+            {
+              g_debug ("%s", error->message);
+              priv->data_path = NULL;
+            }
         }
-
-      g_mutex_unlock (&priv->mutex);
-
-      return;
     }
 
+  g_mutex_lock (&priv->mutex);
+
   guint8 address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
+  guint8 name[TOX_MAX_NAME_LENGTH] = {0, };
+  guint8 status_message[TOX_MAX_STATUSMESSAGE_LENGTH] = {0,};
   guchar hex_string[TOX_FRIEND_ADDRESS_SIZE * 2 + 1] = {0,};
+  GString *status_message_str;
+  GString *name_str;
+  guint16 l;
+
   tox_get_address (priv->tox, address);
   neuland_bin_to_hex_string (address, hex_string, TOX_FRIEND_ADDRESS_SIZE);
   self->priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
 
-  guint8 name[TOX_MAX_NAME_LENGTH] = {0, };
-  guint16 l = tox_get_self_name (tox, name);
-  GString *name_str = g_string_new_len (name, l);
+  l = tox_get_self_status_message (tox, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
+  status_message_str = g_string_new_len (status_message, l);
+  self->priv->status_message = status_message_str->str;
+
+  l = tox_get_self_name (tox, name);
+  name_str = g_string_new_len (name, l);
   self->priv->name = name_str->str;
-  g_string_free (name_str, FALSE);
 
   g_mutex_unlock (&priv->mutex);
+
+  /* If we have no name yet, set a default name and status message */
+  if (l <= 0)
+    {
+      self->priv->name = g_strdup (NEULAND_DEFAULT_NAME);
+      self->priv->status_message = g_strdup (NEULAND_DEFAULT_STATUS_MESSAGE);
+    }
+
+  g_string_free (status_message_str, FALSE);
+  g_string_free (name_str, FALSE);
 }
 
 /* Returns a NeulandContact on success, NULL otherwise. A basic
@@ -801,7 +819,7 @@ neuland_tox_class_init (NeulandToxClass *klass)
     g_param_spec_string ("self-name",
                          "Self name",
                          "Our own name",
-                         DEFAULT_NEULAND_NAME,
+                         NEULAND_DEFAULT_NAME,
                          G_PARAM_READWRITE);
   properties[PROP_STATUS] =
     g_param_spec_enum ("status",
@@ -815,7 +833,7 @@ neuland_tox_class_init (NeulandToxClass *klass)
     g_param_spec_string ("status-message",
                          "Status message",
                          "Our own status message",
-                         DEFAULT_NEULAND_STATUS_MESSAGE,
+                         NEULAND_DEFAULT_STATUS_MESSAGE,
                          G_PARAM_READWRITE);
 
   g_object_class_install_properties (gobject_class,
