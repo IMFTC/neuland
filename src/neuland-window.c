@@ -38,6 +38,7 @@ struct _NeulandWindowPrivate
   GtkButton       *gear_button;
   GtkToggleButton *select_button;
   gint             me_button_height;
+  GtkWidget       *welcome_widget;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -192,7 +193,12 @@ neuland_window_add_contact (NeulandWindow *self, NeulandContact *contact)
   gtk_list_box_insert (priv->contacts_list_box, contact_widget, -1);
 }
 
-
+static void
+neuland_window_show_welcome_widget (NeulandWindow *self)
+{
+  NeulandWindowPrivate *priv = self->priv;
+  gtk_stack_set_visible_child (priv->chat_stack, priv->welcome_widget);
+}
 
 static void
 neuland_window_load_contacts (NeulandWindow *self)
@@ -520,14 +526,17 @@ neuland_window_init (NeulandWindow *self)
   priv->chat_widgets = g_hash_table_new (NULL, NULL);
 
   builder = gtk_builder_new_from_resource ("/org/tox/neuland/neuland-window-menu.ui");
+  gtk_builder_add_from_resource (builder, "/org/tox/neuland/neuland-me-status-menu.ui", NULL);
+  gtk_builder_add_from_resource (builder, "/org/tox/neuland/neuland-welcome-widget.ui", NULL);
+
   gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (priv->gear_button),
                                   (GMenuModel*) gtk_builder_get_object (builder, "win-menu"));
 
-  g_object_unref (G_OBJECT (builder));
-
   g_action_map_add_action_entries (G_ACTION_MAP (self), win_entries, G_N_ELEMENTS (win_entries), self);
 
-  builder = gtk_builder_new_from_resource ("/org/tox/neuland/neuland-me-status-menu.ui");
+  priv->welcome_widget = GTK_WIDGET (gtk_builder_get_object  (builder, "welcome-widget"));
+  gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->welcome_widget);
+
   priv->me_widget = neuland_contact_widget_new (NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget), "...");
   neuland_contact_widget_set_status (NEULAND_CONTACT_WIDGET (priv->me_widget), NEULAND_CONTACT_STATUS_NONE);
@@ -538,6 +547,8 @@ neuland_window_init (NeulandWindow *self)
 
   gtk_widget_get_preferred_height (priv->me_button, NULL, &priv->me_button_height);
   gtk_list_box_set_header_func (priv->contacts_list_box, contacts_list_box_header_func, NULL, NULL);
+
+  g_object_unref (G_OBJECT (builder));
 }
 
 GtkWidget *
