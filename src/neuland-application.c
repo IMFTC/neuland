@@ -28,7 +28,6 @@
 #include "neuland-contact.h"
 #include "neuland-tox.h"
 
-#define MY_NAME "neuland"
 /* Relative to XDG_CONFIG_HOME */
 #define DEFAULT_TOX_DATA_PATH "tox/data.neuland"
 
