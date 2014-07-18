@@ -523,7 +523,7 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
               /* Tox will start up without a file, creating a new identity.
                  when closing we will try to save the tox data to this
                  location. */
-              g_message ("File %s not found. Will try to save new data to it on exit.");
+              g_message ("File %s not found. Will try to save new data to it on exit.", data_path);
               priv->data_path = data_path;
             }
           else
