@@ -142,13 +142,11 @@ neuland_contact_widget_update_name (NeulandContactWidget *self)
 
   if (strlen (name) > 0)
     {
-      g_message ("dim-label");
       gtk_style_context_remove_class (context, "dim-label");
       neuland_contact_widget_set_name (self, name);
     }
   else
     {
-      g_message ("dim-label");
       /* Looks like there is currently some gtk+ bug here; adding
          dim-label doesn't cause the label to redraw at once. */
       gtk_style_context_add_class (context, "dim-label");
