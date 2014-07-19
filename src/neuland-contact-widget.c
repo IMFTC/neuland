@@ -189,12 +189,42 @@ neuland_contact_widget_status_changed_cb (GObject *obj,
 neuland_contact_widget_set_connected (NeulandContactWidget *self,
                                       gboolean connected)
 {
-  if (!connected)
-    gtk_image_set_from_icon_name (self->priv->status_image,
-                                  "user-offline",
-                                  GTK_ICON_SIZE_MENU);
+  NeulandContact *contact = self->priv->contact;
+
+  if (contact == NULL)
+    /* (contact == NULL) is a bit of a hack because this widget is
+     * currently used without a contact for our own status button,
+     * too. */
+    {
+      if (!connected)
+        gtk_image_set_from_icon_name (self->priv->status_image,
+                                      "user-offline",
+                                      GTK_ICON_SIZE_MENU);
+    }
+  else
+    /* If the widget has a contact, check if we have seen this
+     * contact online before. If we have, use the 'user-offline'
+     * icon, if not, use the 'user-invisible' icon (The user might
+     * not have accepted our contact request yet). */
+    {
+      guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
+        {
+          if (last_connected_change != 0)
+            /* Seen online before */
+            gtk_image_set_from_icon_name (self->priv->status_image,
+                                          "user-offline",
+                                          GTK_ICON_SIZE_MENU);
+          else
+            /* Not seen online yet */
+            gtk_image_set_from_icon_name (self->priv->status_image,
+                                          "user-invisible",
+                                          GTK_ICON_SIZE_MENU);
+        }
+    }
 }
 
+
+static void
 neuland_contact_widget_connected_changed_cb (GObject *obj,
                                              GParamSpec *pspec,
                                              gpointer user_data)
@@ -274,6 +304,8 @@ neuland_contact_widget_new (NeulandContact *contact)
 
     neuland_contact_widget_update_name (nfw);
     neuland_contact_widget_status_message_changed_cb (G_OBJECT (contact), NULL, nfw);
+    neuland_contact_widget_status_changed_cb (G_OBJECT (contact), NULL, nfw);
+    neuland_contact_widget_connected_changed_cb (G_OBJECT (contact), NULL, nfw);
   }
   return GTK_WIDGET (nfw);
 }
