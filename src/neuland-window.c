@@ -39,6 +39,7 @@ struct _NeulandWindowPrivate
   GtkToggleButton *select_button;
   gint             me_button_height;
   GtkWidget       *welcome_widget;
+  GtkWidget       *tox_id_label;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -282,19 +283,22 @@ neuland_window_set_ntox (NeulandWindow *self, NeulandTox *ntox)
   g_return_if_fail (NEULAND_IS_WINDOW (self));
   g_return_if_fail (NEULAND_IS_TOX (ntox));
 
-  self->priv->ntox = g_object_ref (ntox);
+  NeulandWindowPrivate *priv = self->priv;
+  priv->ntox = g_object_ref (ntox);
   neuland_window_load_contacts (self);
   gchar *id;
-  g_object_get (self->priv->ntox, "tox-id", &id, NULL);
+
+  g_object_get (priv->ntox, "tox-id", &id, NULL);
   g_message ("Tox ID for window %p: %s", self, id);
+  gtk_label_set_text (GTK_LABEL (priv->tox_id_label), id);
 
   g_object_connect (ntox,
                     "signal::notify::self-name", on_name_change_cb, self,
                     "signal::notify::status-message", on_status_message_change_cb, self,
                     NULL);
-  neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (self->priv->me_widget),
+  neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget),
                                    neuland_tox_get_name (ntox));
-  neuland_contact_widget_set_message (NEULAND_CONTACT_WIDGET (self->priv->me_widget),
+  neuland_contact_widget_set_message (NEULAND_CONTACT_WIDGET (priv->me_widget),
                                       neuland_tox_get_status_message (ntox));
 
 }
@@ -535,6 +539,9 @@ neuland_window_init (NeulandWindow *self)
   g_action_map_add_action_entries (G_ACTION_MAP (self), win_entries, G_N_ELEMENTS (win_entries), self);
 
   priv->welcome_widget = GTK_WIDGET (gtk_builder_get_object  (builder, "welcome-widget"));
+  GtkWidget *tox_id_label = GTK_WIDGET (gtk_builder_get_object (builder, "tox_id_label"));
+  priv->tox_id_label = tox_id_label;
+
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->welcome_widget);
 
   priv->me_widget = neuland_contact_widget_new (NULL);

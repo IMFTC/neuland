@@ -39,5 +39,37 @@ Don't have any contacts yet?</property>
         <property name="position">1</property>
       </packing>
     </child>
+    <child>
+      <object class="GtkLabel" id="label2">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Your own &lt;b&gt;Tox ID&lt;/b&gt; to give to others is:</property>
+        <property name="use_markup">True</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="tox_id_label">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="justify">center</property>
+        <property name="wrap">True</property>
+        <property name="wrap_mode">word-char</property>
+        <property name="selectable">True</property>
+        <property name="max_width_chars">38</property>
+        <attributes>
+          <attribute name="font-desc" value="Monospace 10"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">3</property>
+      </packing>
+    </child>
   </object>
 </interface>
