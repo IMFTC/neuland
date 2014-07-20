@@ -26,7 +26,7 @@
 
 struct _NeulandWindowPrivate
 {
-  NeulandTox      *ntox;
+  NeulandTox      *tox;
   GtkWidget       *me_button;
   GtkWidget       *me_widget;
   GtkListBox      *contacts_list_box;
@@ -82,7 +82,7 @@ neuland_window_get_chat_widget_for_contact (NeulandWindow *window,
     return chat_widget;
 
   g_debug ("Creating new chat widget for contact '%s'", neuland_contact_get_name (contact));
-  chat_widget = neuland_chat_widget_new (priv->ntox, contact, priv->me_button_height);
+  chat_widget = neuland_chat_widget_new (priv->tox, contact, priv->me_button_height);
   g_hash_table_insert (priv->chat_widgets, contact, chat_widget);
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), chat_widget);
 
@@ -207,16 +207,16 @@ neuland_window_load_contacts (NeulandWindow *window)
   g_debug ("neuland_window_load_contacts ...");
 
   NeulandWindowPrivate *priv = window->priv;
-  if (priv->ntox == NULL)
+  if (priv->tox == NULL)
     return;
 
   GList *contacts;
-  contacts = neuland_tox_get_contacts (priv->ntox);
+  contacts = neuland_tox_get_contacts (priv->tox);
   if (contacts == NULL) {
-    g_debug ("NeulandTox instance %p has no contacts", priv->ntox);
+    g_debug ("NeulandTox instance %p has no contacts", priv->tox);
     return;
   }
-  g_debug ("NeulandTox instance %p has %i contacts in list", priv->ntox,
+  g_debug ("NeulandTox instance %p has %i contacts in list", priv->tox,
            g_list_length (contacts));
 
   GList *l;
@@ -254,12 +254,12 @@ on_name_change_cb (GObject *object,
                    GParamSpec *pspec,
                    gpointer user_data)
 {
-  NeulandTox *ntox = NEULAND_TOX (object);
+  NeulandTox *tox = NEULAND_TOX (object);
   NeulandWindow *window = NEULAND_WINDOW (user_data);
 
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET
                                    (window->priv->me_widget),
-                                   neuland_tox_get_name (ntox));
+                                   neuland_tox_get_name (tox));
 }
 
 static void
@@ -267,39 +267,39 @@ on_status_message_change_cb (GObject *object,
                              GParamSpec *pspec,
                              gpointer user_data)
 {
-  NeulandTox *ntox = NEULAND_TOX (object);
+  NeulandTox *tox = NEULAND_TOX (object);
   NeulandWindow *window = NEULAND_WINDOW (user_data);
 
   neuland_contact_widget_set_status_message (NEULAND_CONTACT_WIDGET
                                              (window->priv->me_widget),
-                                             neuland_tox_get_status_message (ntox));
+                                             neuland_tox_get_status_message (tox));
 }
 
 
 static void
-neuland_window_set_ntox (NeulandWindow *window, NeulandTox *ntox)
+neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
 {
-  g_debug ("neuland_window_set_ntox");
+  g_debug ("neuland_window_set_tox");
   g_return_if_fail (NEULAND_IS_WINDOW (window));
-  g_return_if_fail (NEULAND_IS_TOX (ntox));
+  g_return_if_fail (NEULAND_IS_TOX (tox));
 
   NeulandWindowPrivate *priv = window->priv;
-  priv->ntox = g_object_ref (ntox);
+  priv->tox = g_object_ref (tox);
   neuland_window_load_contacts (window);
   gchar *id;
 
-  g_object_get (priv->ntox, "tox-id", &id, NULL);
+  g_object_get (priv->tox, "tox-id", &id, NULL);
   g_message ("Tox ID for window %p: %s", window, id);
   gtk_label_set_text (GTK_LABEL (priv->tox_id_label), id);
 
-  g_object_connect (ntox,
+  g_object_connect (tox,
                     "signal::notify::self-name", on_name_change_cb, window,
                     "signal::notify::status-message", on_status_message_change_cb, window,
                     NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget),
-                                   neuland_tox_get_name (ntox));
+                                   neuland_tox_get_name (tox));
   neuland_contact_widget_set_message (NEULAND_CONTACT_WIDGET (priv->me_widget),
-                                      neuland_tox_get_status_message (ntox));
+                                      neuland_tox_get_status_message (tox));
 
 }
 
@@ -315,7 +315,7 @@ neuland_window_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_NEULAND_TOX:
-      neuland_window_set_ntox (window, g_value_get_object (value));
+      neuland_window_set_tox (window, g_value_get_object (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -336,7 +336,7 @@ neuland_window_get_property  (GObject    *object,
   switch (property_id)
     {
     case PROP_NEULAND_TOX:
-      neuland_window_set_ntox (window, NEULAND_TOX (g_value_get_object (value)));
+      neuland_window_set_tox (window, NEULAND_TOX (g_value_get_object (value)));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -393,7 +393,7 @@ neuland_window_change_status (GSimpleAction *action,
   NeulandContactStatus status = (NeulandContactStatus)g_variant_get_int32 (parameter);
   g_debug ("Changing own status to %i", status);
 
-  neuland_tox_set_status (window->priv->ntox, status);
+  neuland_tox_set_status (window->priv->tox, status);
   neuland_contact_widget_set_status (NEULAND_CONTACT_WIDGET (window->priv->me_widget), status);
   g_simple_action_set_state (action, parameter);
 }
@@ -407,11 +407,11 @@ on_add_dialog_response (GtkDialog *dialog,
     {
       NeulandWindow *window = NEULAND_WINDOW (user_data);
       NeulandWindowPrivate *priv = window->priv;
-      NeulandTox *ntox = priv->ntox;
+      NeulandTox *tox = priv->tox;
       const char *tox_id = neuland_add_dialog_get_tox_id (NEULAND_ADD_DIALOG (dialog));
       NeulandContact *contact =
         neuland_tox_add_contact_from_hex_address
-        (priv->ntox,
+        (priv->tox,
          tox_id,
          neuland_add_dialog_get_message (NEULAND_ADD_DIALOG (dialog)));
 
@@ -451,7 +451,7 @@ neuland_window_dispose (GObject *object)
 {
   g_debug ("neuland_window_dispose ...");
   NeulandWindow *window = NEULAND_WINDOW (object);
-  g_clear_object (&window->priv->ntox);
+  g_clear_object (&window->priv->tox);
 
   G_OBJECT_CLASS (neuland_window_parent_class)->dispose (object);
 }
@@ -559,14 +559,14 @@ neuland_window_init (NeulandWindow *window)
 }
 
 GtkWidget *
-neuland_window_new (NeulandTox *ntox)
+neuland_window_new (NeulandTox *tox)
 {
   NeulandWindow *window;
 
   g_debug ("window new ...");
-  g_return_if_fail (NEULAND_IS_TOX (ntox));
+  g_return_if_fail (NEULAND_IS_TOX (tox));
   window = g_object_new (NEULAND_TYPE_WINDOW,
-                         "neuland-tox", ntox,
+                         "neuland-tox", tox,
                          NULL);
   return GTK_WIDGET (window);
 }

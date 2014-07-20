@@ -51,6 +51,6 @@ struct _NeulandChatWidgetClass
 };
 
 GtkWidget *
-neuland_chat_widget_new (NeulandTox *ntox, NeulandContact *contact, gint text_entry_min_height);
+neuland_chat_widget_new (NeulandTox *tox, NeulandContact *contact, gint text_entry_min_height);
 
 #endif /* __NEULAND_CHAT_WIDGET__ */

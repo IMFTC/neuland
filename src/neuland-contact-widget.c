@@ -177,11 +177,11 @@ neuland_contact_widget_status_changed_cb (GObject *obj,
                                           gpointer user_data)
 {
   g_debug ("neuland_contact_widget_status_changed_cb");
-  NeulandContact *nf = NEULAND_CONTACT (obj);
-  NeulandContactWidget *nfw = NEULAND_CONTACT_WIDGET (user_data);
+  NeulandContact *contact = NEULAND_CONTACT (obj);
+  NeulandContactWidget *contact_widget = NEULAND_CONTACT_WIDGET (user_data);
   NeulandContactStatus status;
-  g_object_get (nf, "status", &status, NULL);
-  neuland_contact_widget_set_status (nfw, status);
+  g_object_get (contact, "status", &status, NULL);
+  neuland_contact_widget_set_status (contact_widget, status);
 }
 
 neuland_contact_widget_set_connected (NeulandContactWidget *contact_widget,
@@ -228,11 +228,11 @@ neuland_contact_widget_connected_changed_cb (GObject *obj,
                                              gpointer user_data)
 {
   g_debug ("neuland_contact_widget_connected_changed_cb");
-  NeulandContact *nf = NEULAND_CONTACT (obj);
-  NeulandContactWidget *nfw = NEULAND_CONTACT_WIDGET (user_data);
+  NeulandContact *contact = NEULAND_CONTACT (obj);
+  NeulandContactWidget *contact_widget = NEULAND_CONTACT_WIDGET (user_data);
   gboolean connected;
-  g_object_get (nf, "connected", &connected, NULL);
-  neuland_contact_widget_set_connected (nfw, connected);
+  g_object_get (contact, "connected", &connected, NULL);
+  neuland_contact_widget_set_connected (contact_widget, connected);
 }
 
 static void
@@ -260,12 +260,12 @@ neuland_contact_widget_status_message_changed_cb (GObject *obj,
                                                   gpointer user_data)
 {
   g_debug ("neuland_contact_widget_status_message_changed_cb");
-  NeulandContact *nf = NEULAND_CONTACT (obj);
-  NeulandContactWidget *nfw = NEULAND_CONTACT_WIDGET (user_data);
-  const gchar *status_message = neuland_contact_get_status_message (nf);
+  NeulandContact *contact = NEULAND_CONTACT (obj);
+  NeulandContactWidget *contact_widget = NEULAND_CONTACT_WIDGET (user_data);
+  const gchar *status_message = neuland_contact_get_status_message (contact);
 
-  g_object_get (nf, "status-message", &status_message, NULL);
-  neuland_contact_widget_set_status_message (nfw, status_message);
+  g_object_get (contact, "status-message", &status_message, NULL);
+  neuland_contact_widget_set_status_message (contact_widget, status_message);
 }
 
 void
@@ -286,24 +286,24 @@ GtkWidget *
 neuland_contact_widget_new (NeulandContact *contact)
 {
   g_debug ("neuland_contact_widget_new (%p)", contact);
-  NeulandContactWidget *nfw;
-  nfw = NEULAND_CONTACT_WIDGET (g_object_new (NEULAND_TYPE_CONTACT_WIDGET, NULL));
-  nfw->priv->contact = contact;
+  NeulandContactWidget *contact_widget;
+  contact_widget = NEULAND_CONTACT_WIDGET (g_object_new (NEULAND_TYPE_CONTACT_WIDGET, NULL));
+  contact_widget->priv->contact = contact;
   if (contact != NULL) {
     // Destroy ourself when the contact is finalized
-    //g_object_weak_ref (G_OBJECT (contact), (GWeakNotify)gtk_widget_destroy, GTK_WIDGET (nfw));
+    //g_object_weak_ref (G_OBJECT (contact), (GWeakNotify)gtk_widget_destroy, GTK_WIDGET (contact_widget));
     g_object_connect (contact,
-                      "signal::notify::name", neuland_contact_widget_name_changed_cb, nfw,
-                      "signal::notify::connected", neuland_contact_widget_connected_changed_cb, nfw,
-                      "signal::notify::status", neuland_contact_widget_status_changed_cb, nfw,
-                      "signal::notify::status-message", neuland_contact_widget_status_message_changed_cb, nfw,
-                      "signal::notify::unread-messages", neuland_contact_widget_unread_messages_cb, nfw,
+                      "signal::notify::name", neuland_contact_widget_name_changed_cb, contact_widget,
+                      "signal::notify::connected", neuland_contact_widget_connected_changed_cb, contact_widget,
+                      "signal::notify::status", neuland_contact_widget_status_changed_cb, contact_widget,
+                      "signal::notify::status-message", neuland_contact_widget_status_message_changed_cb, contact_widget,
+                      "signal::notify::unread-messages", neuland_contact_widget_unread_messages_cb, contact_widget,
                       NULL);
 
-    neuland_contact_widget_update_name (nfw);
-    neuland_contact_widget_status_message_changed_cb (G_OBJECT (contact), NULL, nfw);
-    neuland_contact_widget_status_changed_cb (G_OBJECT (contact), NULL, nfw);
-    neuland_contact_widget_connected_changed_cb (G_OBJECT (contact), NULL, nfw);
+    neuland_contact_widget_update_name (contact_widget);
+    neuland_contact_widget_status_message_changed_cb (G_OBJECT (contact), NULL, contact_widget);
+    neuland_contact_widget_status_changed_cb (G_OBJECT (contact), NULL, contact_widget);
+    neuland_contact_widget_connected_changed_cb (G_OBJECT (contact), NULL, contact_widget);
   }
-  return GTK_WIDGET (nfw);
+  return GTK_WIDGET (contact_widget);
 }

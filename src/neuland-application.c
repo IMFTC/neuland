@@ -60,11 +60,11 @@ neuland_application_new_window (NeulandApplication *app, gchar *data_path)
 {
   g_debug ("neuland_application_new_window");
 
-  NeulandTox *ntox = neuland_tox_new(data_path);
+  NeulandTox *tox = neuland_tox_new(data_path);
 
   GtkWidget *window;
-  window = neuland_window_new (ntox);
-  g_object_unref (ntox); // window now holds the only reference to ntox
+  window = neuland_window_new (tox);
+  g_object_unref (tox); // window now holds the only reference to tox
 
   gtk_application_add_window (GTK_APPLICATION (app), GTK_WINDOW (window));
   gtk_widget_show_all (GTK_WIDGET (window));

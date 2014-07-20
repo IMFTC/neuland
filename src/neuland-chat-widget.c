@@ -35,7 +35,7 @@ typedef enum {
 } MessageType;
 
 struct _NeulandChatWidgetPrivate {
-  NeulandTox *ntox;
+  NeulandTox *tox;
   NeulandContact *contact;
 
   GtkTextView *text_view;
@@ -74,7 +74,7 @@ neuland_chat_widget_dispose (GObject *object)
   if (priv->contact != NULL)
     neuland_contact_set_show_typing (priv->contact, FALSE);
 
-  g_clear_object (&priv->ntox);
+  g_clear_object (&priv->tox);
   g_clear_object (&priv->contact);
 
   G_OBJECT_CLASS (neuland_chat_widget_parent_class)->dispose (object);
@@ -148,7 +148,7 @@ insert_text (NeulandChatWidget *widget,
 {
   NeulandChatWidgetPrivate *priv = widget->priv;
   GtkTextBuffer *text_buffer = priv->text_buffer;
-  NeulandTox *ntox = priv->ntox;
+  NeulandTox *tox = priv->tox;
   NeulandContact *contact = priv->contact;
   GtkTextIter iter;
   GtkTextTag *name_tag;
@@ -180,7 +180,7 @@ insert_text (NeulandChatWidget *widget,
       name_tag = priv->contact_name_tag;
       break;
     case DIRECTION_OUT:
-      name = neuland_tox_get_name (ntox);
+      name = neuland_tox_get_name (tox);
       name_tag = priv->my_name_tag;
       break;
     }
@@ -369,12 +369,12 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
       else if (g_ascii_strncasecmp (string, "/message ", 9) == 0)
         {
           g_debug ("/message command recognized");
-          neuland_tox_set_status_message (priv->ntox, g_strchug (string+9));
+          neuland_tox_set_status_message (priv->tox, g_strchug (string+9));
         }
       else if (g_ascii_strncasecmp (string, "/nick ", 6) == 0)
         {
           g_debug ("/nick command recognized");
-          neuland_tox_set_name (priv->ntox, g_strchug(string+6));
+          neuland_tox_set_name (priv->tox, g_strchug(string+6));
         }
       else
         g_message ("Unknown command: %s", string);
@@ -520,16 +520,16 @@ on_connected_changed (GObject *obj,
 }
 
 GtkWidget *
-neuland_chat_widget_new (NeulandTox *ntox,
+neuland_chat_widget_new (NeulandTox *tox,
                          NeulandContact *contact,
                          gint text_entry_min_height)
 {
   g_debug ("neuland_chat_widget_new");
   g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
-  g_return_val_if_fail (NEULAND_IS_TOX (ntox), NULL);
+  g_return_val_if_fail (NEULAND_IS_TOX (tox), NULL);
   NeulandChatWidget *ncw = NEULAND_CHAT_WIDGET (g_object_new (NEULAND_TYPE_CHAT_WIDGET, NULL));
   NeulandChatWidgetPrivate *priv = ncw->priv;
-  priv->ntox = g_object_ref (ntox);
+  priv->tox = g_object_ref (tox);
   priv->contact = contact;
   g_object_connect (contact,
                     "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, ncw,

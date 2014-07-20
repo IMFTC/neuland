@@ -98,7 +98,7 @@ neuland_contact_get_name (NeulandContact *contact)
    connecting an appropriate receiver widget to handle the following
    message/action signal correctly and to set (optionally)
    has_chat_widget to TRUE [currently this is done in
-   neuland_chat_widget_new (ntox, contact)] to stop emission of the
+   neuland_chat_widget_new (tox, contact)] to stop emission of the
    "ensure-chat-widget" signal before every message/action.
 */
 void
