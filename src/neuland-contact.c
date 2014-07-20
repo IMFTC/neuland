@@ -164,9 +164,9 @@ neuland_contact_set_connected (NeulandContact *contact,
 
 
 gboolean
-neuland_contact_get_is_typing (NeulandContact *self)
+neuland_contact_get_is_typing (NeulandContact *contact)
 {
-  return self->priv->is_typing;
+  return contact->priv->is_typing;
 }
 
 gboolean
@@ -182,9 +182,9 @@ show_typing_timeout_func (gpointer user_data)
 }
 
 void
-neuland_contact_set_show_typing (NeulandContact *self, gboolean show_typing)
+neuland_contact_set_show_typing (NeulandContact *contact, gboolean show_typing)
 {
-  NeulandContactPrivate *priv = self->priv;
+  NeulandContactPrivate *priv = contact->priv;
   gboolean old_show_typing = (priv->show_typing_timeout_id != 0);
 
   if (old_show_typing)
@@ -193,37 +193,37 @@ neuland_contact_set_show_typing (NeulandContact *self, gboolean show_typing)
   if (show_typing)
     priv->show_typing_timeout_id =
       g_timeout_add_seconds (NEULAND_CONTACT_SHOW_TYPING_TIMEOUT,
-                             show_typing_timeout_func, self);
+                             show_typing_timeout_func, contact);
   else
     priv->show_typing_timeout_id = 0;
 
   if (show_typing != old_show_typing)
-    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_TYPING]);
+    g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_SHOW_TYPING]);
 }
 
 const gchar *
-neuland_contact_get_status_message (NeulandContact *self)
+neuland_contact_get_status_message (NeulandContact *contact)
 {
-  return self->priv->status_message;
+  return contact->priv->status_message;
 }
 
 gboolean
-neuland_contact_get_show_typing (NeulandContact *self)
+neuland_contact_get_show_typing (NeulandContact *contact)
 {
-  return (self->priv->show_typing_timeout_id != 0);
+  return (contact->priv->show_typing_timeout_id != 0);
 }
 
 void
-neuland_contact_set_is_typing (NeulandContact *self, gboolean is_typing)
+neuland_contact_set_is_typing (NeulandContact *contact, gboolean is_typing)
 {
-  self->priv->is_typing = is_typing;
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_IS_TYPING]);
+  contact->priv->is_typing = is_typing;
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_IS_TYPING]);
 }
 
 const gchar *
-neuland_contact_get_tox_id (NeulandContact *self)
+neuland_contact_get_tox_id (NeulandContact *contact)
 {
-  return self->priv->tox_id;
+  return contact->priv->tox_id;
 }
 
 static void
@@ -316,68 +316,68 @@ neuland_contact_get_property (GObject *object,
 }
 
 void
-neuland_contact_increase_unread_messages (NeulandContact *self)
+neuland_contact_increase_unread_messages (NeulandContact *contact)
 {
-  self->priv->unread_messages++;
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_UNREAD_MESSAGES]);
+  contact->priv->unread_messages++;
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_UNREAD_MESSAGES]);
 }
 
 void
-neuland_contact_reset_unread_messages (NeulandContact *self)
+neuland_contact_reset_unread_messages (NeulandContact *contact)
 {
-  self->priv->unread_messages = 0;
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_UNREAD_MESSAGES]);
+  contact->priv->unread_messages = 0;
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_UNREAD_MESSAGES]);
 }
 
 void
-neuland_contact_send_message (NeulandContact *self, gchar *outgoing_message)
+neuland_contact_send_message (NeulandContact *contact, gchar *outgoing_message)
 {
-  g_signal_emit (self,
+  g_signal_emit (contact,
                  signals[OUTGOING_MESSAGE],
                  0,
                  outgoing_message);
 }
 
 void
-neuland_contact_send_action (NeulandContact *self, gchar *outgoing_action)
+neuland_contact_send_action (NeulandContact *contact, gchar *outgoing_action)
 {
-  g_signal_emit (self,
+  g_signal_emit (contact,
                  signals[OUTGOING_ACTION],
                  0,
                  outgoing_action);
 }
 
 void
-neuland_contact_signal_incoming_message (NeulandContact *self,
+neuland_contact_signal_incoming_message (NeulandContact *contact,
                                          gchar *incoming_message)
 {
   /* See note [*0] */
-  if (!self->priv->has_chat_widget)
-    g_signal_emit (self, signals[ENSURE_CHAT_WIDGET], 0);
-  if (!self->priv->has_chat_widget)
+  if (!contact->priv->has_chat_widget)
+    g_signal_emit (contact, signals[ENSURE_CHAT_WIDGET], 0);
+  if (!contact->priv->has_chat_widget)
     g_warning ("Apparently there is no chat widget for contact %s, even though "
                "its creation has been requested. The following message might go lost:\n%s",
-               neuland_contact_get_name (self), incoming_message);
+               neuland_contact_get_name (contact), incoming_message);
 
-  g_signal_emit (self,
+  g_signal_emit (contact,
                  signals[INCOMING_MESSAGE],
                  0,
                  incoming_message);
 }
 
 void
-neuland_contact_signal_incoming_action (NeulandContact *self,
+neuland_contact_signal_incoming_action (NeulandContact *contact,
                                         gchar *incoming_action)
 {
   /* See note [*0] */
-  if (!self->priv->has_chat_widget)
-    g_signal_emit (self, signals[ENSURE_CHAT_WIDGET], 0);
-  if (!self->priv->has_chat_widget)
+  if (!contact->priv->has_chat_widget)
+    g_signal_emit (contact, signals[ENSURE_CHAT_WIDGET], 0);
+  if (!contact->priv->has_chat_widget)
     g_warning ("Apparently there is no chat widget for contact %s, even though "
                "its creation has been requested. The following action might go lost:\n%s",
-               neuland_contact_get_name (self), incoming_action);
+               neuland_contact_get_name (contact), incoming_action);
 
-  g_signal_emit (self,
+  g_signal_emit (contact,
                  signals[INCOMING_ACTION],
                  0,
                  incoming_action);
@@ -562,11 +562,11 @@ neuland_contact_class_init (NeulandContactClass *klass)
 };
 
 static void
-neuland_contact_init (NeulandContact *self)
+neuland_contact_init (NeulandContact *contact)
 {
   g_debug ("neuland_contact_init");
-  NEULAND_IS_CONTACT (self);
-  self->priv = neuland_contact_get_instance_private (self);
+  NEULAND_IS_CONTACT (contact);
+  contact->priv = neuland_contact_get_instance_private (contact);
 }
 
 NeulandContact *

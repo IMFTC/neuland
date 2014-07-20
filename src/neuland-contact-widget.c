@@ -54,7 +54,7 @@ neuland_contact_widget_finalize (GObject *object)
 }
 
 void
-neuland_contact_widget_set_status (NeulandContactWidget *self,
+neuland_contact_widget_set_status (NeulandContactWidget *contact_widget,
                                    NeulandContactStatus new_status)
 {
   gchar *icon_name;
@@ -77,21 +77,21 @@ neuland_contact_widget_set_status (NeulandContactWidget *self,
       g_debug ("Invalid NeulandContactStatus: %u", new_status);
       return;
     }
-  gtk_image_set_from_icon_name (self->priv->status_image, icon_name, GTK_ICON_SIZE_MENU);
+  gtk_image_set_from_icon_name (contact_widget->priv->status_image, icon_name, GTK_ICON_SIZE_MENU);
 }
 
 void
-neuland_contact_widget_set_message (NeulandContactWidget *self,
+neuland_contact_widget_set_message (NeulandContactWidget *contact_widget,
                                     const gchar *new_message)
 {
-  gtk_label_set_text (GTK_LABEL (self->priv->status_label), new_message);
+  gtk_label_set_text (GTK_LABEL (contact_widget->priv->status_label), new_message);
 }
 
 void
-neuland_contact_widget_set_status_message (NeulandContactWidget *self,
+neuland_contact_widget_set_status_message (NeulandContactWidget *contact_widget,
                                            const gchar *status_message)
 {
-  gtk_label_set_label (self->priv->status_label, status_message);
+  gtk_label_set_label (contact_widget->priv->status_label, status_message);
 }
 
 
@@ -114,27 +114,27 @@ neuland_contact_widget_class_init (NeulandContactWidgetClass *klass)
 }
 
 static void
-neuland_contact_widget_init (NeulandContactWidget *self)
+neuland_contact_widget_init (NeulandContactWidget *contact_widget)
 {
   g_debug ("neuland_contact_widget_init");
-  gtk_widget_init_template (GTK_WIDGET (self));
+  gtk_widget_init_template (GTK_WIDGET (contact_widget));
 
-  self->priv = neuland_contact_widget_get_instance_private (self);
-  gtk_notebook_set_current_page (self->priv->indicator_notebook, 0);
+  contact_widget->priv = neuland_contact_widget_get_instance_private (contact_widget);
+  gtk_notebook_set_current_page (contact_widget->priv->indicator_notebook, 0);
 }
 
 void
-neuland_contact_widget_set_name (NeulandContactWidget *self, const char *name)
+neuland_contact_widget_set_name (NeulandContactWidget *contact_widget, const char *name)
 {
-  gtk_label_set_text (self->priv->name_label, name);
+  gtk_label_set_text (contact_widget->priv->name_label, name);
 }
 
 /* Sets name to the name of contact, or to the tox id, if name is not
    set */
 void
-neuland_contact_widget_update_name (NeulandContactWidget *self)
+neuland_contact_widget_update_name (NeulandContactWidget *contact_widget)
 {
-  NeulandContactWidgetPrivate *priv = self->priv;
+  NeulandContactWidgetPrivate *priv = contact_widget->priv;
   NeulandContact *contact = priv->contact;
   GtkStyleContext *context = gtk_widget_get_style_context (GTK_WIDGET (priv->name_label));
 
@@ -143,21 +143,21 @@ neuland_contact_widget_update_name (NeulandContactWidget *self)
   if (strlen (name) > 0)
     {
       gtk_style_context_remove_class (context, "dim-label");
-      neuland_contact_widget_set_name (self, name);
+      neuland_contact_widget_set_name (contact_widget, name);
     }
   else
     {
       /* Looks like there is currently some gtk+ bug here; adding
          dim-label doesn't cause the label to redraw at once. */
       gtk_style_context_add_class (context, "dim-label");
-      neuland_contact_widget_set_name (self, neuland_contact_get_tox_id (contact));
+      neuland_contact_widget_set_name (contact_widget, neuland_contact_get_tox_id (contact));
     }
 }
 
 NeulandContact*
-neuland_contact_widget_get_contact (NeulandContactWidget *self)
+neuland_contact_widget_get_contact (NeulandContactWidget *contact_widget)
 {
-  return self->priv->contact;
+  return contact_widget->priv->contact;
 }
 
 
@@ -184,10 +184,10 @@ neuland_contact_widget_status_changed_cb (GObject *obj,
   neuland_contact_widget_set_status (nfw, status);
 }
 
-neuland_contact_widget_set_connected (NeulandContactWidget *self,
+neuland_contact_widget_set_connected (NeulandContactWidget *contact_widget,
                                       gboolean connected)
 {
-  NeulandContact *contact = self->priv->contact;
+  NeulandContact *contact = contact_widget->priv->contact;
 
   if (contact == NULL)
     /* (contact == NULL) is a bit of a hack because this widget is
@@ -195,7 +195,7 @@ neuland_contact_widget_set_connected (NeulandContactWidget *self,
      * too. */
     {
       if (!connected)
-        gtk_image_set_from_icon_name (self->priv->status_image,
+        gtk_image_set_from_icon_name (contact_widget->priv->status_image,
                                       "user-offline",
                                       GTK_ICON_SIZE_MENU);
     }
@@ -209,12 +209,12 @@ neuland_contact_widget_set_connected (NeulandContactWidget *self,
         {
           if (last_connected_change != 0)
             /* Seen online before */
-            gtk_image_set_from_icon_name (self->priv->status_image,
+            gtk_image_set_from_icon_name (contact_widget->priv->status_image,
                                           "user-offline",
                                           GTK_ICON_SIZE_MENU);
           else
             /* Not seen online yet */
-            gtk_image_set_from_icon_name (self->priv->status_image,
+            gtk_image_set_from_icon_name (contact_widget->priv->status_image,
                                           "user-invisible",
                                           GTK_ICON_SIZE_MENU);
         }
@@ -269,11 +269,11 @@ neuland_contact_widget_status_message_changed_cb (GObject *obj,
 }
 
 void
-neuland_contact_widget_show_check_box (NeulandContactWidget *self,
+neuland_contact_widget_show_check_box (NeulandContactWidget *contact_widget,
                                        gboolean show)
 {
-  g_return_if_fail (NEULAND_IS_CONTACT_WIDGET (self));
-  GtkNotebook *notebook = self->priv->indicator_notebook;
+  g_return_if_fail (NEULAND_IS_CONTACT_WIDGET (contact_widget));
+  GtkNotebook *notebook = contact_widget->priv->indicator_notebook;
 
   if (show)
     gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_CHECKBOX);

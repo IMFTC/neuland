@@ -53,7 +53,7 @@ GType
 neuland_window_get_type (void);
 
 void
-neuland_window_add_contact_widget (NeulandWindow *self,
+neuland_window_add_contact_widget (NeulandWindow *window,
                                    NeulandContactWidget *nfw);
 void
 neuland_window_set_status_activated (GSimpleAction *action,

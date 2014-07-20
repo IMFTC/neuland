@@ -52,10 +52,10 @@ GtkWidget *
 neuland_add_dialog_new (void);
 
 const gchar *
-neuland_add_dialog_get_tox_id (NeulandAddDialog *dialog);
+neuland_add_dialog_get_tox_id (NeulandAddDialog *add_dialog);
 
 const gchar *
-neuland_add_dialog_get_message (NeulandAddDialog *dialog);
+neuland_add_dialog_get_message (NeulandAddDialog *add_dialog);
 
 
 #endif /* __NEULAND_ADD_DIALOG_H__ */

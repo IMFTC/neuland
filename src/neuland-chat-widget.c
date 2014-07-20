@@ -79,7 +79,7 @@ neuland_chat_widget_dispose (GObject *object)
 
   G_OBJECT_CLASS (neuland_chat_widget_parent_class)->dispose (object);
 }
-  
+
 static void
 neuland_chat_widget_finalize (GObject *object)
 {
@@ -93,9 +93,9 @@ neuland_chat_widget_finalize (GObject *object)
 }
 
 static gboolean
-neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *self)
+neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *chat_widget)
 {
-  NeulandChatWidgetPrivate *priv = self->priv;
+  NeulandChatWidgetPrivate *priv = chat_widget->priv;
   GtkTextIter iter;
   GtkTextMark *mark = priv->scroll_mark;
 
@@ -106,9 +106,9 @@ neuland_chat_widget_scroll_to_bottom (NeulandChatWidget *self)
 }
 
 static void
-neuland_chat_widget_set_show_contact_is_typing (NeulandChatWidget *self, gboolean is_typing)
+neuland_chat_widget_set_show_contact_is_typing (NeulandChatWidget *chat_widget, gboolean is_typing)
 {
-  NeulandChatWidgetPrivate *priv = self->priv;
+  NeulandChatWidgetPrivate *priv = chat_widget->priv;
   GtkTextBuffer *buffer = priv->text_buffer;
   NeulandContact *contact = priv->contact;
 
@@ -322,16 +322,16 @@ hide_offline_info (gpointer user_data)
 }
 
 static void
-neuland_chat_widget_show_offline_info (NeulandChatWidget *self,
+neuland_chat_widget_show_offline_info (NeulandChatWidget *chat_widget,
                                        gboolean show)
 {
   static gint id;
-  gtk_widget_set_visible (GTK_WIDGET (self->priv->info_bar),
+  gtk_widget_set_visible (GTK_WIDGET (chat_widget->priv->info_bar),
                           show);
 
-  g_source_remove_by_user_data (self);
+  g_source_remove_by_user_data (chat_widget);
   if (show)
-    g_timeout_add_seconds (6, hide_offline_info, self);
+    g_timeout_add_seconds (6, hide_offline_info, chat_widget);
 }
 
 static void
@@ -468,11 +468,11 @@ neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
 }
 
 static void
-neuland_chat_widget_init (NeulandChatWidget *self)
+neuland_chat_widget_init (NeulandChatWidget *chat_widget)
 {
-  gtk_widget_init_template (GTK_WIDGET (self));
-  self->priv = neuland_chat_widget_get_instance_private (self);
-  NeulandChatWidgetPrivate *priv = self->priv;
+  gtk_widget_init_template (GTK_WIDGET (chat_widget));
+  chat_widget->priv = neuland_chat_widget_get_instance_private (chat_widget);
+  NeulandChatWidgetPrivate *priv = chat_widget->priv;
 
   GtkTextIter iter;
   gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);

@@ -52,25 +52,25 @@ GType
 neuland_contact_widget_get_type (void);
 
 void
-neuland_contact_widget_set_unread_messages_count (NeulandContactWidget *self, gint count);
+neuland_contact_widget_set_unread_messages_count (NeulandContactWidget *contact_widget, gint count);
 
 gint
-neuland_contact_widget_get_private_number (NeulandContactWidget *self);
+neuland_contact_widget_get_private_number (NeulandContactWidget *contact_widget);
 
 NeulandContact*
-neuland_contact_widget_get_contact (NeulandContactWidget *self);
+neuland_contact_widget_get_contact (NeulandContactWidget *contact_widget);
 
 void
-neuland_contact_widget_set_status (NeulandContactWidget *self, NeulandContactStatus new_status);
+neuland_contact_widget_set_status (NeulandContactWidget *contact_widget, NeulandContactStatus new_status);
 
 void
-neuland_contact_widget_set_name (NeulandContactWidget *self, const gchar *name);
+neuland_contact_widget_set_name (NeulandContactWidget *contact_widget, const gchar *name);
 
 void
-neuland_contact_widget_set_message (NeulandContactWidget *self, const gchar *new_message);
+neuland_contact_widget_set_message (NeulandContactWidget *contact_widget, const gchar *new_message);
 
 void
-neuland_contact_widget_show_check_box (NeulandContactWidget *self, gboolean show);
+neuland_contact_widget_show_check_box (NeulandContactWidget *contact_widget, gboolean show);
 
 GtkWidget*
 neuland_contact_widget_new (NeulandContact *contact);

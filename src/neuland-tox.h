@@ -50,40 +50,40 @@ struct _NeulandToxClass
 
   /* Signals */
 
-  void (* connection_status_changed) (NeulandTox *ntox, NeulandContact *contact);
+  void (* connection_status_changed) (NeulandTox *tox, NeulandContact *contact);
 };
 
 NeulandTox *
 neuland_tox_new (gchar *data_file);
 
 GList *
-neuland_tox_get_contacts (NeulandTox *self);
+neuland_tox_get_contacts (NeulandTox *tox);
 
 void
-neuland_tox_save_and_kill (NeulandTox *self);
+neuland_tox_save_and_kill (NeulandTox *tox);
 
 void
-neuland_tox_set_status (NeulandTox *ntox, NeulandContactStatus status);
+neuland_tox_set_status (NeulandTox *tox, NeulandContactStatus status);
 
 NeulandContactStatus
-neuland_tox_get_status (NeulandTox *ntox);
+neuland_tox_get_status (NeulandTox *tox);
 
 NeulandContact *
-neuland_tox_get_contact_by_number (NeulandTox *self, gint32 number);
+neuland_tox_get_contact_by_number (NeulandTox *tox, gint32 number);
 
 void
-neuland_tox_set_name (NeulandTox *ntox, const gchar *name);
+neuland_tox_set_name (NeulandTox *tox, const gchar *name);
 
 const gchar *
-neuland_tox_get_name (NeulandTox *ntox);
+neuland_tox_get_name (NeulandTox *tox);
 
 void
-neuland_tox_set_status_message (NeulandTox *ntox, const gchar *status_message);
+neuland_tox_set_status_message (NeulandTox *tox, const gchar *status_message);
 
 const gchar *
-neuland_tox_get_status_message (NeulandTox *ntox);
+neuland_tox_get_status_message (NeulandTox *tox);
 
 NeulandContact *
-neuland_tox_add_contact_from_hex_address (NeulandTox *self, const gchar *hex_address, const gchar *message);
+neuland_tox_add_contact_from_hex_address (NeulandTox *tox, const gchar *hex_address, const gchar *message);
 
 #endif /* __NEULAND_TOX_H__ */

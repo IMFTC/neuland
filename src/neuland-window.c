@@ -175,17 +175,17 @@ neuland_window_on_incoming_action_cb (NeulandWindow *window,
 }
 
 static void
-neuland_window_add_contact (NeulandWindow *self, NeulandContact *contact)
+neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 {
-  NeulandWindowPrivate *priv = self->priv;
+  NeulandWindowPrivate *priv = window->priv;
 
   g_object_connect (contact,
                     "swapped-signal::ensure-chat-widget",
-                    neuland_window_on_ensure_chat_widget, self,
+                    neuland_window_on_ensure_chat_widget, window,
                     "swapped-signal::incoming-message",
-                    neuland_window_on_incoming_message_cb, self,
+                    neuland_window_on_incoming_message_cb, window,
                     "swapped-signal::incoming-action",
-                    neuland_window_on_incoming_action_cb, self,
+                    neuland_window_on_incoming_action_cb, window,
                     NULL);
 
   GtkWidget *contact_widget = neuland_contact_widget_new (contact);
@@ -195,18 +195,18 @@ neuland_window_add_contact (NeulandWindow *self, NeulandContact *contact)
 }
 
 static void
-neuland_window_show_welcome_widget (NeulandWindow *self)
+neuland_window_show_welcome_widget (NeulandWindow *window)
 {
-  NeulandWindowPrivate *priv = self->priv;
+  NeulandWindowPrivate *priv = window->priv;
   gtk_stack_set_visible_child (priv->chat_stack, priv->welcome_widget);
 }
 
 static void
-neuland_window_load_contacts (NeulandWindow *self)
+neuland_window_load_contacts (NeulandWindow *window)
 {
   g_debug ("neuland_window_load_contacts ...");
 
-  NeulandWindowPrivate *priv = self->priv;
+  NeulandWindowPrivate *priv = window->priv;
   if (priv->ntox == NULL)
     return;
 
@@ -223,7 +223,7 @@ neuland_window_load_contacts (NeulandWindow *self)
   for (l = contacts; l != NULL; l = l->next)
     {
       NeulandContact *contact = NEULAND_CONTACT (l->data);
-      neuland_window_add_contact (self, contact);
+      neuland_window_add_contact (window, contact);
     }
 
   /*
@@ -241,7 +241,7 @@ neuland_window_load_contacts (NeulandWindow *self)
     {
       GtkListBoxRow *first_row = gtk_list_box_get_row_at_index (priv->contacts_list_box, 0);
       gtk_list_box_select_row (priv->contacts_list_box, first_row);
-      contacts_list_box_row_activated_cb (self, first_row, NULL);
+      contacts_list_box_row_activated_cb (window, first_row, NULL);
     }
 
   //DEBUG:
@@ -277,24 +277,24 @@ on_status_message_change_cb (GObject *object,
 
 
 static void
-neuland_window_set_ntox (NeulandWindow *self, NeulandTox *ntox)
+neuland_window_set_ntox (NeulandWindow *window, NeulandTox *ntox)
 {
   g_debug ("neuland_window_set_ntox");
-  g_return_if_fail (NEULAND_IS_WINDOW (self));
+  g_return_if_fail (NEULAND_IS_WINDOW (window));
   g_return_if_fail (NEULAND_IS_TOX (ntox));
 
-  NeulandWindowPrivate *priv = self->priv;
+  NeulandWindowPrivate *priv = window->priv;
   priv->ntox = g_object_ref (ntox);
-  neuland_window_load_contacts (self);
+  neuland_window_load_contacts (window);
   gchar *id;
 
   g_object_get (priv->ntox, "tox-id", &id, NULL);
-  g_message ("Tox ID for window %p: %s", self, id);
+  g_message ("Tox ID for window %p: %s", window, id);
   gtk_label_set_text (GTK_LABEL (priv->tox_id_label), id);
 
   g_object_connect (ntox,
-                    "signal::notify::self-name", on_name_change_cb, self,
-                    "signal::notify::status-message", on_status_message_change_cb, self,
+                    "signal::notify::self-name", on_name_change_cb, window,
+                    "signal::notify::status-message", on_status_message_change_cb, window,
                     NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget),
                                    neuland_tox_get_name (ntox));
@@ -507,25 +507,25 @@ neuland_window_class_init (NeulandWindowClass *klass)
 }
 
 void
-neuland_window_add_contact_widget (NeulandWindow       *self,
+neuland_window_add_contact_widget (NeulandWindow       *window,
                                    NeulandContactWidget *fw)
 {
   g_debug ("neuland_window_add_contact ...");
   g_return_if_fail (NEULAND_IS_CONTACT_WIDGET (fw));
 
-  gtk_list_box_insert (self->priv->contacts_list_box, GTK_WIDGET (fw), -1);
+  gtk_list_box_insert (window->priv->contacts_list_box, GTK_WIDGET (fw), -1);
 }
 
 static void
-neuland_window_init (NeulandWindow *self)
+neuland_window_init (NeulandWindow *window)
 {
   g_debug ("neuland_window_init");
   GtkBuilder *builder;
 
-  gtk_widget_init_template (GTK_WIDGET (self));
-  self->priv = neuland_window_get_instance_private (self);
+  gtk_widget_init_template (GTK_WIDGET (window));
+  window->priv = neuland_window_get_instance_private (window);
 
-  NeulandWindowPrivate *priv = self->priv;
+  NeulandWindowPrivate *priv = window->priv;
   priv->contact_widgets = g_hash_table_new (NULL, NULL);
   priv->chat_widgets = g_hash_table_new (NULL, NULL);
 
@@ -536,7 +536,7 @@ neuland_window_init (NeulandWindow *self)
   gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (priv->gear_button),
                                   (GMenuModel*) gtk_builder_get_object (builder, "win-menu"));
 
-  g_action_map_add_action_entries (G_ACTION_MAP (self), win_entries, G_N_ELEMENTS (win_entries), self);
+  g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window);
 
   priv->welcome_widget = GTK_WIDGET (gtk_builder_get_object  (builder, "welcome-widget"));
   GtkWidget *tox_id_label = GTK_WIDGET (gtk_builder_get_object (builder, "tox_id_label"));

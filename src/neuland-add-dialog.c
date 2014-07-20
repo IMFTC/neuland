@@ -33,23 +33,23 @@ struct _NeulandAddDialogPrivate
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandAddDialog, neuland_add_dialog, GTK_TYPE_DIALOG)
 
 static void
-on_entry_activate (NeulandAddDialog *dialog,
+on_entry_activate (NeulandAddDialog *add_dialog,
                    gpointer user_data)
 {
   GtkEntry *entry = GTK_ENTRY (user_data);
 
   gtk_entry_get_text (entry);
 
-  gtk_dialog_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
+  gtk_dialog_response (GTK_DIALOG (add_dialog), GTK_RESPONSE_OK);
 }
 
 
 static gboolean
-validate_address (NeulandAddDialog *dialog)
+validate_address (NeulandAddDialog *add_dialog)
 {
-  NeulandAddDialogPrivate *priv = dialog->priv;
+  NeulandAddDialogPrivate *priv = add_dialog->priv;
 
-  const gchar *hex_address = neuland_add_dialog_get_tox_id (dialog);
+  const gchar *hex_address = neuland_add_dialog_get_tox_id (add_dialog);
   guint8 bin_address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
 
   if (strlen (hex_address) != TOX_FRIEND_ADDRESS_SIZE * 2)
@@ -69,11 +69,11 @@ static void
 on_entry_changed (GObject *gobject,
                   gpointer user_data)
 {
-  NeulandAddDialog *dialog = NEULAND_ADD_DIALOG (gobject);
-  NeulandAddDialogPrivate *priv = dialog->priv;
+  NeulandAddDialog *add_dialog = NEULAND_ADD_DIALOG (gobject);
+  NeulandAddDialogPrivate *priv = add_dialog->priv;
 
   GtkEntry *entry = GTK_ENTRY (user_data);
-  gboolean address_is_valid = validate_address (dialog);
+  gboolean address_is_valid = validate_address (add_dialog);
 
   gtk_widget_set_sensitive (GTK_WIDGET (priv->add_button), address_is_valid);
 
@@ -103,42 +103,42 @@ neuland_add_dialog_class_init (NeulandAddDialogClass *klass)
 
 /* String owned by the widget! */
 const gchar *
-neuland_add_dialog_get_tox_id (NeulandAddDialog *dialog)
+neuland_add_dialog_get_tox_id (NeulandAddDialog *add_dialog)
 {
-  NeulandAddDialogPrivate *priv = dialog->priv;
+  NeulandAddDialogPrivate *priv = add_dialog->priv;
 
   return gtk_entry_get_text (priv->tox_id_entry);
 }
 
 /* String owned by the widget! */
 const gchar *
-neuland_add_dialog_get_message (NeulandAddDialog *dialog)
+neuland_add_dialog_get_message (NeulandAddDialog *add_dialog)
 {
-  NeulandAddDialogPrivate *priv = dialog->priv;
+  NeulandAddDialogPrivate *priv = add_dialog->priv;
 
   return gtk_entry_get_text (priv->message_entry);
 }
 
 static void
-neuland_add_dialog_init (NeulandAddDialog *self)
+neuland_add_dialog_init (NeulandAddDialog *add_dialog)
 {
   GtkBuilder *builder;
-  gtk_widget_init_template (GTK_WIDGET (self));
+  gtk_widget_init_template (GTK_WIDGET (add_dialog));
 
-  self->priv = neuland_add_dialog_get_instance_private (self);
+  add_dialog->priv = neuland_add_dialog_get_instance_private (add_dialog);
 }
 
 GtkWidget *
 neuland_add_dialog_new ()
 {
-  NeulandAddDialog *dialog;
+  NeulandAddDialog *add_dialog;
 
-  dialog = NEULAND_ADD_DIALOG (g_object_new (NEULAND_TYPE_ADD_DIALOG,
+  add_dialog = NEULAND_ADD_DIALOG (g_object_new (NEULAND_TYPE_ADD_DIALOG,
                                              /* Setting this in
                                                 neuland-add-dialog.ui
                                                 is not working - why? */
                                              "use-header-bar", TRUE,
                                              NULL));
 
-  return GTK_WIDGET (dialog);
+  return GTK_WIDGET (add_dialog);
 }

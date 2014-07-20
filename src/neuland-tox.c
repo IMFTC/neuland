@@ -30,7 +30,7 @@
 
 struct _NeulandToxPrivate
 {
-  Tox *tox;
+  Tox *tox_struct;
   gchar *data_path;
   gchar *tox_id_hex;
   gchar *name;
@@ -76,32 +76,32 @@ static GParamSpec *properties[PROP_N] = {NULL, };
 static guint signals[LAST_SIGNAL] = { 0 };
 
 GList *
-neuland_tox_get_contacts (NeulandTox *self)
+neuland_tox_get_contacts (NeulandTox *tox)
 {
-  g_return_if_fail (NEULAND_IS_TOX (self));
+  g_return_if_fail (NEULAND_IS_TOX (tox));
   g_debug ("neuland_tox_get_contacts ...");
-  return g_hash_table_get_values (self->priv->contacts_ht);
+  return g_hash_table_get_values (tox->priv->contacts_ht);
 }
 
 NeulandContact *
-neuland_tox_get_contact_by_number (NeulandTox *self, gint32 number)
+neuland_tox_get_contact_by_number (NeulandTox *tox, gint32 number)
 {
-  GHashTable *ht = self->priv->contacts_ht;
+  GHashTable *ht = tox->priv->contacts_ht;
   return  (g_hash_table_lookup (ht, GINT_TO_POINTER (number)));
 }
 
 typedef struct {
-  Tox *tox;
+  Tox *tox_struct;
   gint32 contact_number;
   guint8 *str;
-  NeulandTox *ntox;
+  NeulandTox *tox;
 } DataStructStr;
 
 typedef struct {
-  Tox *tox;
+  Tox *tox_struct;
   gint32 contact_number;
   guint integer;
-  NeulandTox *ntox;
+  NeulandTox *tox;
 } DataStructInt;
 
 static void
@@ -109,13 +109,13 @@ add_idle_with_data_string (GSourceFunc idle_func,
                            gint32 contact_number,
                            const guint8 *str,
                            guint16 length,
-                           NeulandTox *ntox)
+                           NeulandTox *tox)
 {
   DataStructStr *data = g_new0 (DataStructStr, 1);
 
   data->contact_number = contact_number;
   data->str = g_strndup (str, length);
-  data->ntox = ntox;
+  data->tox = tox;
 
   g_idle_add (idle_func, data);
 }
@@ -130,13 +130,13 @@ static void
 add_idle_with_data_integer (GSourceFunc idle_func,
                             gint32 contact_number,
                             guint8 integer,
-                            NeulandTox *ntox)
+                            NeulandTox *tox)
 {
   DataStructInt *data = g_new0 (DataStructInt, 1);
 
   data->contact_number = contact_number;
   data->integer = integer;
-  data->ntox = ntox;
+  data->tox = tox;
 
   g_idle_add (idle_func, data);
 }
@@ -151,7 +151,7 @@ on_connection_status_idle (gpointer user_data)
 {
   g_debug ("on_connection_status_idle");
   DataStructInt *data = user_data;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (data->ntox, data->contact_number);
+  NeulandContact *contact = neuland_tox_get_contact_by_number (data->tox, data->contact_number);
 
   if (contact != NULL)
     neuland_contact_set_connected (contact, data->integer);
@@ -162,7 +162,7 @@ on_connection_status_idle (gpointer user_data)
 }
 
 static void
-on_connection_status (Tox *tox,
+on_connection_status (Tox *tox_struct,
                       gint32 contact_number,
                       guint8 status,
                       gpointer user_data)
@@ -177,7 +177,7 @@ on_user_status_idle (gpointer user_data)
 {
   g_debug ("on_user_status_idle");
   DataStructInt *data = user_data;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (data->ntox, data->contact_number);
+  NeulandContact *contact = neuland_tox_get_contact_by_number (data->tox, data->contact_number);
 
   if (contact != NULL)
     g_object_set (contact, "status", data->integer, NULL);
@@ -188,7 +188,7 @@ on_user_status_idle (gpointer user_data)
 }
 
 static void
-on_user_status (Tox *tox,
+on_user_status (Tox *tox_struct,
                 gint32 contact_number,
                 guint8 status,
                 void *user_data)
@@ -201,7 +201,7 @@ static gboolean
 on_name_change_idle (gpointer user_data)
 {
   DataStructStr *data = user_data;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (data->ntox, data->contact_number);
+  NeulandContact *contact = neuland_tox_get_contact_by_number (data->tox, data->contact_number);
 
   if (contact != NULL)
     g_object_set (contact, "name", data->str, NULL);
@@ -212,7 +212,7 @@ on_name_change_idle (gpointer user_data)
 }
 
 static void
-on_name_change (Tox *tox,
+on_name_change (Tox *tox_struct,
                 gint32 contact_number,
                 const guint8 *new_name,
                 guint16 length,
@@ -227,8 +227,8 @@ static gboolean
 on_status_message_idle (gpointer user_data)
 {
   DataStructStr *data = user_data;
-  NeulandTox *ntox = data->ntox;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (ntox, data->contact_number);
+  NeulandTox *tox = data->tox;
+  NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
   if (contact != NULL)
     g_object_set (contact, "status-message", data->str, NULL);
@@ -239,7 +239,7 @@ on_status_message_idle (gpointer user_data)
 }
 
 static void
-on_status_message (Tox *tox,
+on_status_message (Tox *tox_struct,
                    gint32 contact_number,
                    const guint8 *new_message,
                    guint16 length,
@@ -253,8 +253,8 @@ static gboolean
 on_contact_message_idle (gpointer user_data)
 {
   DataStructStr *data = user_data;
-  NeulandTox *ntox = data->ntox;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (ntox, data->contact_number);
+  NeulandTox *tox = data->tox;
+  NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
   neuland_contact_signal_incoming_message (contact, data->str);
   free_data_str (data);
@@ -263,7 +263,7 @@ on_contact_message_idle (gpointer user_data)
 }
 
 static void
-on_contact_message (Tox *tox,
+on_contact_message (Tox *tox_struct,
                     gint32 contact_number,
                     const guint8 *message,
                     guint16 length,
@@ -277,8 +277,8 @@ static gboolean
 on_contact_action_idle (gpointer user_data)
 {
   DataStructStr *data = user_data;
-  NeulandTox *ntox = data->ntox;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (ntox, data->contact_number);
+  NeulandTox *tox = data->tox;
+  NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
   neuland_contact_signal_incoming_action (contact, data->str);
   free_data_str (data);
@@ -287,7 +287,7 @@ on_contact_action_idle (gpointer user_data)
 }
 
 static void
-on_contact_action (Tox *tox,
+on_contact_action (Tox *tox_struct,
                    gint32 contact_number,
                    const guint8 *action,
                    guint16 length,
@@ -301,8 +301,8 @@ static gboolean
 on_typing_change_idle (gpointer user_data)
 {
   DataStructInt *data = user_data;
-  NeulandTox *ntox = data->ntox;
-  NeulandContact *contact = neuland_tox_get_contact_by_number (ntox, data->contact_number);
+  NeulandTox *tox = data->tox;
+  NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
   if (contact != NULL)
     g_object_set (contact, "is-typing", data->integer, NULL);
@@ -311,7 +311,7 @@ on_typing_change_idle (gpointer user_data)
 }
 
 static void
-on_typing_change (Tox *tox,
+on_typing_change (Tox *tox_struct,
                   gint32 contact_number,
                   guint8 is_typing,
                   gpointer user_data)
@@ -321,18 +321,18 @@ on_typing_change (Tox *tox,
 }
 
 void
-neuland_tox_send_message (NeulandTox *ntox,
+neuland_tox_send_message (NeulandTox *tox,
                           NeulandContact *contact,
                           gchar *message)
 {
-  NeulandToxPrivate *priv = ntox->priv;
+  NeulandToxPrivate *priv = tox->priv;
 
   gint contact_number;
   g_object_get (contact, "contact-number", &contact_number, NULL);
 
   g_mutex_lock (&priv->mutex);
 
-  tox_send_message (ntox->priv->tox, contact_number,
+  tox_send_message (tox->priv->tox_struct, contact_number,
                     message, strlen (message));
 
   g_mutex_unlock (&priv->mutex);
@@ -340,32 +340,32 @@ neuland_tox_send_message (NeulandTox *ntox,
 
 
 static void
-neuland_tox_connect_callbacks (NeulandTox *self)
+neuland_tox_connect_callbacks (NeulandTox *tox)
 {
-  NeulandToxPrivate *priv = self->priv;
-  Tox *tox = priv->tox;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
 
   g_mutex_lock (&priv->mutex);
 
-  tox_callback_connection_status (tox, on_connection_status, self);
-  tox_callback_user_status (tox, on_user_status, self);
-  tox_callback_name_change (tox, on_name_change, self);
-  tox_callback_status_message (tox, on_status_message, self);
-  tox_callback_friend_message (tox, on_contact_message, self);
-  tox_callback_friend_action (tox, on_contact_action, self);
-  tox_callback_typing_change (tox, on_typing_change, self);
+  tox_callback_connection_status (tox_struct, on_connection_status, tox);
+  tox_callback_user_status (tox_struct, on_user_status, tox);
+  tox_callback_name_change (tox_struct, on_name_change, tox);
+  tox_callback_status_message (tox_struct, on_status_message, tox);
+  tox_callback_friend_message (tox_struct, on_contact_message, tox);
+  tox_callback_friend_action (tox_struct, on_contact_action, tox);
+  tox_callback_typing_change (tox_struct, on_typing_change, tox);
 
   g_mutex_unlock (&priv->mutex);
 
   /* TODO: */
-  /* tox_callback_friend_request (tox, NULL, self); */
-  /* tox_callback_group_invite (tox, NULL, self); */
-  /* tox_callback_group_message (tox, NULL, self); */
-  /* tox_callback_group_action (tox, NULL, self); */
-  /* tox_callback_group_namelist_change (tox, NULL, self); */
-  /* tox_callback_file_send_request (tox, NULL, self); */
-  /* tox_callback_file_control (tox, NULL, self); */
-  /* tox_callback_file_data (tox, NULL, self); */
+  /* tox_callback_friend_request (tox_struct, NULL, tox); */
+  /* tox_callback_group_invite (tox_struct, NULL, tox); */
+  /* tox_callback_group_message (tox_struct, NULL, tox); */
+  /* tox_callback_group_action (tox_struct, NULL, tox); */
+  /* tox_callback_group_namelist_change (tox_struct, NULL, tox); */
+  /* tox_callback_file_send_request (tox_struct, NULL, tox); */
+  /* tox_callback_file_control (tox_struct, NULL, tox); */
+  /* tox_callback_file_data (tox_struct, NULL, tox); */
 }
 
 static void
@@ -374,9 +374,9 @@ on_outgoing_message_cb (NeulandContact *contact,
                         gpointer user_data)
 {
   g_debug ("on_outgoing_message_cb contact: %p message: %s", contact, message);
-  NeulandTox *ntox = NEULAND_TOX (user_data);
-  NeulandToxPrivate *priv = ntox->priv;
-  Tox *tox = priv->tox;
+  NeulandTox *tox = NEULAND_TOX (user_data);
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
 
   gint contact_number;
   g_object_get (contact, "number", &contact_number, NULL);
@@ -384,7 +384,7 @@ on_outgoing_message_cb (NeulandContact *contact,
 
   g_mutex_lock (&priv->mutex);
 
-  ret = tox_send_message (tox, contact_number, message, strlen (message));
+  ret = tox_send_message (tox_struct, contact_number, message, strlen (message));
 
   g_mutex_unlock (&priv->mutex);
 }
@@ -395,9 +395,9 @@ on_outgoing_action_cb (NeulandContact *contact,
                        gpointer user_data)
 {
   g_debug ("on_outgoing_action_cb contact: %p action: %s", contact, action);
-  NeulandTox *ntox = NEULAND_TOX (user_data);
-  NeulandToxPrivate *priv = ntox->priv;
-  Tox *tox = priv->tox;
+  NeulandTox *tox = NEULAND_TOX (user_data);
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
 
   gint contact_number;
   g_object_get (contact, "number", &contact_number, NULL);
@@ -405,7 +405,7 @@ on_outgoing_action_cb (NeulandContact *contact,
 
   g_mutex_lock (&priv->mutex);
 
-  ret = tox_send_action (tox, contact_number, action, strlen (action));
+  ret = tox_send_action (tox_struct, contact_number, action, strlen (action));
 
   g_mutex_unlock (&priv->mutex);
 }
@@ -416,12 +416,12 @@ on_show_typing_cb (GObject *obj,
                    gpointer user_data)
 {
   NeulandContact *contact = NEULAND_CONTACT (obj);
-  NeulandTox *ntox = NEULAND_TOX (user_data);
-  NeulandToxPrivate *priv = ntox->priv;
+  NeulandTox *tox = NEULAND_TOX (user_data);
+  NeulandToxPrivate *priv = tox->priv;
 
   g_mutex_lock (&priv->mutex);
 
-  tox_set_user_is_typing (priv->tox,
+  tox_set_user_is_typing (priv->tox_struct,
                           neuland_contact_get_number (contact),
                           neuland_contact_get_show_typing (contact));
 
@@ -429,17 +429,17 @@ on_show_typing_cb (GObject *obj,
 }
 
 static void
-neuland_tox_load_contacts (NeulandTox *self)
+neuland_tox_load_contacts (NeulandTox *tox)
 {
-  NeulandToxPrivate *priv = self->priv;
-  Tox *tox = priv->tox;
-  GHashTable *contacts_ht = self->priv->contacts_ht;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
+  GHashTable *contacts_ht = tox->priv->contacts_ht;
 
   g_mutex_lock (&priv->mutex);
 
-  guint32 n_contacts = tox_count_friendlist (tox);
+  guint32 n_contacts = tox_count_friendlist (tox_struct);
   guint32 contact_list[n_contacts];
-  tox_get_friendlist (tox, contact_list, n_contacts);
+  tox_get_friendlist (tox_struct, contact_list, n_contacts);
 
   g_debug ("loading contacts ...");
 
@@ -461,20 +461,20 @@ neuland_tox_load_contacts (NeulandTox *self)
 
       gchar tox_name[TOX_MAX_NAME_LENGTH] = {0};
       GString *gs_tox_name;
-      l = tox_get_name (tox, contact_number, tox_name);
+      l = tox_get_name (tox_struct, contact_number, tox_name);
       gs_tox_name = g_string_new_len (tox_name, l);
 
       gchar client_id[TOX_CLIENT_ID_SIZE] = {0};
       gchar hex_string[TOX_CLIENT_ID_SIZE * 2 + 1] = {0,};
-      tox_get_client_id (tox, contact_number, client_id);
+      tox_get_client_id (tox_struct, contact_number, client_id);
       neuland_bin_to_hex_string (client_id, hex_string, TOX_CLIENT_ID_SIZE);
 
       gchar status_message[TOX_MAX_STATUSMESSAGE_LENGTH];
-      l = tox_get_status_message (tox, contact_number, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
+      l = tox_get_status_message (tox_struct, contact_number, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
       GString *gs_status_message;
       gs_status_message = g_string_new_len (status_message, l);
 
-      guint64 last_online = tox_get_last_online (tox, contact_number);
+      guint64 last_online = tox_get_last_online (tox_struct, contact_number);
 
       NeulandContact *contact = neuland_contact_new (contact_number, hex_string, gs_tox_name->str,
                                                      gs_status_message->str, last_online);
@@ -482,9 +482,9 @@ neuland_tox_load_contacts (NeulandTox *self)
       g_string_free (gs_status_message, TRUE);
 
       g_object_connect (contact,
-                        "signal::outgoing-message", on_outgoing_message_cb, self,
-                        "signal::outgoing-action", on_outgoing_action_cb, self,
-                        "signal::notify::show-typing", on_show_typing_cb, self,
+                        "signal::outgoing-message", on_outgoing_message_cb, tox,
+                        "signal::outgoing-action", on_outgoing_action_cb, tox,
+                        "signal::notify::show-typing", on_show_typing_cb, tox,
                         NULL);
 
       g_hash_table_insert (contacts_ht, GINT_TO_POINTER (contact_number), contact);
@@ -494,10 +494,10 @@ neuland_tox_load_contacts (NeulandTox *self)
 }
 
 static void
-neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
+neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
 {
-  NeulandToxPrivate *priv = self->priv;
-  Tox *tox = priv->tox;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
   gchar *data;
   gsize length;
   GError *error = NULL;
@@ -511,7 +511,7 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
           g_debug ("Setting tox data_path to: %s", priv->data_path);
 
           g_mutex_lock (&priv->mutex);
-          tox_load (priv->tox, data, length);
+          tox_load (priv->tox_struct, data, length);
           g_mutex_unlock (&priv->mutex);
 
           priv->data_path = data_path;
@@ -544,25 +544,25 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
   GString *name_str;
   guint16 l;
 
-  tox_get_address (priv->tox, address);
+  tox_get_address (priv->tox_struct, address);
   neuland_bin_to_hex_string (address, hex_string, TOX_FRIEND_ADDRESS_SIZE);
-  self->priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
+  tox->priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
 
-  l = tox_get_self_status_message (tox, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
+  l = tox_get_self_status_message (tox_struct, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
   status_message_str = g_string_new_len (status_message, l);
-  self->priv->status_message = status_message_str->str;
+  tox->priv->status_message = status_message_str->str;
 
-  l = tox_get_self_name (tox, name);
+  l = tox_get_self_name (tox_struct, name);
   name_str = g_string_new_len (name, l);
-  self->priv->name = name_str->str;
+  tox->priv->name = name_str->str;
 
   g_mutex_unlock (&priv->mutex);
 
   /* If we have no name yet, set a default name and status message */
   if (l <= 0)
     {
-      self->priv->name = g_strdup (NEULAND_DEFAULT_NAME);
-      self->priv->status_message = g_strdup (NEULAND_DEFAULT_STATUS_MESSAGE);
+      tox->priv->name = g_strdup (NEULAND_DEFAULT_NAME);
+      tox->priv->status_message = g_strdup (NEULAND_DEFAULT_STATUS_MESSAGE);
     }
 
   g_string_free (status_message_str, FALSE);
@@ -573,20 +573,20 @@ neuland_tox_set_data_path (NeulandTox *self, gchar *data_path)
    validation of hex_address takes currently place in NeulandAddDialog.
    TODO: Coordinate error handling */
 NeulandContact *
-neuland_tox_add_contact_from_hex_address (NeulandTox *self,
+neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
                                           const gchar *hex_address,
                                           const gchar *message)
 {
   gchar *tmp_message = g_strcmp0 (message, "") != 0 ?
     g_strdup (message) : g_strdup ("Let's tox?");
-  NeulandToxPrivate *priv = self->priv;
+  NeulandToxPrivate *priv = tox->priv;
   guint8 bin_address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
   gboolean valid_hex = neuland_hex_string_to_bin (hex_address,
                                                   bin_address,
                                                   TOX_FRIEND_ADDRESS_SIZE);
   g_mutex_lock (&priv->mutex);
 
-  gint32 friend_number = tox_add_friend (priv->tox, bin_address, tmp_message, strlen (tmp_message));
+  gint32 friend_number = tox_add_friend (priv->tox_struct, bin_address, tmp_message, strlen (tmp_message));
 
   g_mutex_unlock (&priv->mutex);
 
@@ -595,24 +595,24 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *self,
   if (friend_number < 0)
     return NULL;
 
-  neuland_tox_load_contacts (self);
+  neuland_tox_load_contacts (tox);
 
   return g_hash_table_lookup (priv->contacts_ht, GINT_TO_POINTER (friend_number));
 }
 
 
 void
-neuland_tox_save_and_kill (NeulandTox *self)
+neuland_tox_save_and_kill (NeulandTox *tox)
 {
-  NeulandToxPrivate *priv = self->priv;
+  NeulandToxPrivate *priv = tox->priv;
   if (priv->data_path)
     {
       g_mutex_lock (&priv->mutex);
 
-      gsize size = tox_size (priv->tox);
+      gsize size = tox_size (priv->tox_struct);
       gchar *contents = g_malloc0 (size);
 
-      tox_save (priv->tox, contents);
+      tox_save (priv->tox_struct, contents);
 
       g_mutex_unlock (&priv->mutex);
 
@@ -629,16 +629,16 @@ neuland_tox_save_and_kill (NeulandTox *self)
 
   priv->running = FALSE;
   g_mutex_lock (&priv->mutex);
-  tox_kill (priv->tox);
+  tox_kill (priv->tox_struct);
   g_mutex_unlock (&priv->mutex);
 }
 
 void
-neuland_tox_set_name (NeulandTox *ntox,
+neuland_tox_set_name (NeulandTox *tox,
                       const gchar *name)
 {
   g_debug ("neuland_tox_set_name: %s ...", name);
-  NeulandToxPrivate *priv = ntox->priv;
+  NeulandToxPrivate *priv = tox->priv;
 
   g_free (priv->name);
 
@@ -647,60 +647,60 @@ neuland_tox_set_name (NeulandTox *ntox,
 
   g_mutex_lock (&priv->mutex);
 
-  gint ret = tox_set_name (priv->tox, name_dup, MIN (strlen (name), TOX_MAX_NAME_LENGTH));
+  gint ret = tox_set_name (priv->tox_struct, name_dup, MIN (strlen (name), TOX_MAX_NAME_LENGTH));
 
   g_mutex_unlock (&priv->mutex);
 
   if (ret != 0)
     g_warning ("Failed to set our own name. Tried to set name: '%s'", name);
 
-  g_object_notify_by_pspec (G_OBJECT (ntox), properties[PROP_NAME]);
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_NAME]);
 }
 
 const gchar *
-neuland_tox_get_name (NeulandTox *ntox)
+neuland_tox_get_name (NeulandTox *tox)
 {
-  return ntox->priv->name;
+  return tox->priv->name;
 }
 
 void
-neuland_tox_set_status (NeulandTox *ntox, NeulandContactStatus status)
+neuland_tox_set_status (NeulandTox *tox, NeulandContactStatus status)
 {
-  NeulandToxPrivate *priv = ntox->priv;
-  Tox *tox = priv->tox;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
 
   GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_CONTACT_STATUS);
   GEnumValue *eval = g_enum_get_value (eclass, status);
-  g_message ("Setting NeulandTox (%p) status to: %s", ntox, eval->value_name);
+  g_message ("Setting NeulandTox (%p) status to: %s", tox, eval->value_name);
 
   g_mutex_lock (&priv->mutex);
 
-  tox_set_user_status (tox, (guint8)status);
+  tox_set_user_status (tox_struct, (guint8)status);
 
   g_mutex_unlock (&priv->mutex);
 
   priv->status = status;
-  g_object_notify_by_pspec (G_OBJECT (ntox), properties[PROP_STATUS]);
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_STATUS]);
 }
 
 NeulandContactStatus
-neuland_tox_get_status (NeulandTox *ntox)
+neuland_tox_get_status (NeulandTox *tox)
 {
-  return ntox->priv->status;
+  return tox->priv->status;
 }
 
 void
-neuland_tox_set_status_message (NeulandTox *ntox,
+neuland_tox_set_status_message (NeulandTox *tox,
                                 const gchar *status_message)
 {
-  NeulandToxPrivate *priv = ntox->priv;
-  Tox *tox = priv->tox;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
 
   gchar *status_message_tmp = status_message ? g_strdup (status_message) : "";
 
   g_mutex_lock (&priv->mutex);
 
-  gint ret = tox_set_status_message (tox, status_message_tmp,
+  gint ret = tox_set_status_message (tox_struct, status_message_tmp,
                                      MIN (strlen (status_message_tmp),
                                           TOX_MAX_STATUSMESSAGE_LENGTH));
 
@@ -710,7 +710,7 @@ neuland_tox_set_status_message (NeulandTox *ntox,
     {
       g_debug ("Successfully called tox_set_status_message"
                "for tox instance %p with message: '%s'",
-               tox, status_message_tmp);
+               tox_struct, status_message_tmp);
       g_free (priv->status_message);
       priv->status_message = status_message_tmp;
     }
@@ -720,15 +720,15 @@ neuland_tox_set_status_message (NeulandTox *ntox,
       g_free (status_message_tmp);
       g_warning ("Failure on calling tox_set_status_message"
                  "for tox instance %p with message '%s'",
-                 tox, status_message);
+                 tox_struct, status_message);
     }
-  g_object_notify_by_pspec (G_OBJECT (ntox), properties[PROP_STATUS_MESSAGE]);
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_STATUS_MESSAGE]);
 }
 
 const gchar *
-neuland_tox_get_status_message (NeulandTox *ntox)
+neuland_tox_get_status_message (NeulandTox *tox)
 {
-  return ntox->priv->status_message;
+  return tox->priv->status_message;
 }
 
 
@@ -860,22 +860,22 @@ neuland_tox_class_init (NeulandToxClass *klass)
 }
 
 static void
-neuland_tox_init (NeulandTox *self)
+neuland_tox_init (NeulandTox *tox)
 {
-  self->priv = neuland_tox_get_instance_private (self);
-  NeulandToxPrivate *priv = self->priv;
+  tox->priv = neuland_tox_get_instance_private (tox);
+  NeulandToxPrivate *priv = tox->priv;
 
-  priv->tox = tox_new (TOX_ENABLE_IPV6_DEFAULT);
+  priv->tox_struct = tox_new (TOX_ENABLE_IPV6_DEFAULT);
   priv->contacts_ht = g_hash_table_new (g_direct_hash, g_direct_equal);
 
   g_mutex_init (&priv->mutex);
 }
 
 static void
-neuland_tox_bootstrap (NeulandTox *self)
+neuland_tox_bootstrap (NeulandTox *tox)
 {
-  NeulandToxPrivate *priv = self->priv;
-  Tox *tox = priv->tox;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
   int i;
   guint8 *pub_key_bin = g_malloc0 (TOX_CLIENT_ID_SIZE);
 
@@ -891,7 +891,7 @@ neuland_tox_bootstrap (NeulandTox *self)
         {
           g_mutex_lock (&priv->mutex);
 
-          int ret = tox_bootstrap_from_address (tox,
+          int ret = tox_bootstrap_from_address (tox_struct,
                                                 node.address,
                                                 node.is_ipv6,
                                                 g_htons (node.port),
@@ -904,19 +904,19 @@ neuland_tox_bootstrap (NeulandTox *self)
 }
 
 static void
-neuland_tox_start (NeulandTox *self)
+neuland_tox_start (NeulandTox *tox)
 {
-  NeulandToxPrivate *priv = self->priv;
-  Tox *tox = priv->tox;
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
 
   g_mutex_lock (&priv->mutex);
-  gint connected = tox_isconnected (tox);
+  gint connected = tox_isconnected (tox_struct);
   g_mutex_unlock (&priv->mutex);
 
   if (connected == 1)
     return;
 
-  neuland_tox_bootstrap (self);
+  neuland_tox_bootstrap (tox);
 
   while (priv->running)
     {
@@ -930,8 +930,8 @@ neuland_tox_start (NeulandTox *self)
 
       g_mutex_lock (&priv->mutex);
 
-      tox_do (tox);
-      interval = tox_do_interval (tox);
+      tox_do (tox_struct);
+      interval = tox_do_interval (tox_struct);
 
       g_mutex_unlock (&priv->mutex);
 

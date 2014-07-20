@@ -196,10 +196,10 @@ neuland_application_shutdown (GApplication *application)
 }
 
 static void
-neuland_application_init (NeulandApplication *self)
+neuland_application_init (NeulandApplication *application)
 {
   g_debug ("neuland_application_init");
-  self->priv = neuland_application_get_instance_private (self);
+  application->priv = neuland_application_get_instance_private (application);
 }
 
 static void
