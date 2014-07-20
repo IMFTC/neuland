@@ -42,7 +42,7 @@ struct _NeulandChatWidget
 {
   GtkBox parent_instance;
 
-NeulandChatWidgetPrivate *priv;
+  NeulandChatWidgetPrivate *priv;
 };
 
 struct _NeulandChatWidgetClass

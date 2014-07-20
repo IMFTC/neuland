@@ -206,18 +206,18 @@ neuland_contact_widget_set_connected (NeulandContactWidget *contact_widget,
      * not have accepted our contact request yet). */
     {
       guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
-        {
-          if (last_connected_change != 0)
-            /* Seen online before */
-            gtk_image_set_from_icon_name (contact_widget->priv->status_image,
-                                          "user-offline",
-                                          GTK_ICON_SIZE_MENU);
-          else
-            /* Not seen online yet */
-            gtk_image_set_from_icon_name (contact_widget->priv->status_image,
-                                          "user-invisible",
-                                          GTK_ICON_SIZE_MENU);
-        }
+      {
+        if (last_connected_change != 0)
+          /* Seen online before */
+          gtk_image_set_from_icon_name (contact_widget->priv->status_image,
+                                        "user-offline",
+                                        GTK_ICON_SIZE_MENU);
+        else
+          /* Not seen online yet */
+          gtk_image_set_from_icon_name (contact_widget->priv->status_image,
+                                        "user-invisible",
+                                        GTK_ICON_SIZE_MENU);
+      }
     }
 }
 

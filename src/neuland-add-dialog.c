@@ -53,13 +53,13 @@ validate_address (NeulandAddDialog *add_dialog)
   guint8 bin_address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
 
   if (strlen (hex_address) != TOX_FRIEND_ADDRESS_SIZE * 2)
-      return FALSE;
+    return FALSE;
 
   gboolean is_valid_hex_string =
     neuland_hex_string_to_bin (hex_address, bin_address, TOX_FRIEND_ADDRESS_SIZE);
 
   if (!is_valid_hex_string)
-      return FALSE;
+    return FALSE;
 
   return TRUE;
 }
@@ -134,11 +134,11 @@ neuland_add_dialog_new ()
   NeulandAddDialog *add_dialog;
 
   add_dialog = NEULAND_ADD_DIALOG (g_object_new (NEULAND_TYPE_ADD_DIALOG,
-                                             /* Setting this in
-                                                neuland-add-dialog.ui
-                                                is not working - why? */
-                                             "use-header-bar", TRUE,
-                                             NULL));
+                                                 /* Setting this in
+                                                    neuland-add-dialog.ui
+                                                    is not working - why? */
+                                                 "use-header-bar", TRUE,
+                                                 NULL));
 
   return GTK_WIDGET (add_dialog);
 }
