@@ -91,14 +91,12 @@ neuland_tox_get_contact_by_number (NeulandTox *tox, gint32 number)
 }
 
 typedef struct {
-  Tox *tox_struct;
   gint32 contact_number;
   guint8 *str;
   NeulandTox *tox;
 } DataStructStr;
 
 typedef struct {
-  Tox *tox_struct;
   gint32 contact_number;
   guint integer;
   NeulandTox *tox;
