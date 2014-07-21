@@ -53,9 +53,6 @@ GType
 neuland_window_get_type (void);
 
 void
-neuland_window_add_contact_widget (NeulandWindow *window,
-                                   NeulandContactWidget *contact_widget);
-void
 neuland_window_set_status_activated (GSimpleAction *action,
                                      GVariant *parameter,
                                      gpointer user_data);

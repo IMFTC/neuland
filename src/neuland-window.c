@@ -506,16 +506,6 @@ neuland_window_class_init (NeulandWindowClass *klass)
                                      window_properties);
 }
 
-void
-neuland_window_add_contact_widget (NeulandWindow       *window,
-                                   NeulandContactWidget *fw)
-{
-  g_debug ("neuland_window_add_contact ...");
-  g_return_if_fail (NEULAND_IS_CONTACT_WIDGET (fw));
-
-  gtk_list_box_insert (window->priv->contacts_list_box, GTK_WIDGET (fw), -1);
-}
-
 static void
 neuland_window_init (NeulandWindow *window)
 {
