@@ -336,6 +336,48 @@ neuland_tox_send_message (NeulandTox *tox,
   g_mutex_unlock (&priv->mutex);
 }
 
+typedef struct {
+  guint8 *public_key;
+  guint8 *message;
+  NeulandTox *tox;
+} DataStructFriendRequest;
+
+static gboolean
+on_friend_request_idle (gpointer user_data)
+{
+  DataStructFriendRequest *data = user_data;
+  NeulandTox *tox = data->tox;
+  guint8 *public_key = data->public_key;
+  gchar *message = data->message;
+
+  gchar public_key_string[TOX_CLIENT_ID_SIZE * 2 + 1] = {0};
+  neuland_bin_to_hex_string (public_key, public_key_string, TOX_CLIENT_ID_SIZE);
+
+  g_message ("Received contact request from: %s", public_key_string);
+  NeulandContact *contact = neuland_contact_new (-1, public_key_string, "", "Open request", 0);
+
+  g_free (data->public_key);
+  g_free (data->message);
+  g_free (data);
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_friend_request (Tox *tox_struct,
+                   const guint8 *public_key,
+                   const guint8 *message,
+                   guint16 length,
+                   gpointer user_data)
+{
+  DataStructFriendRequest *data = g_new0 (DataStructFriendRequest, 1);
+
+  data->public_key = g_memdup (public_key, TOX_FRIEND_ADDRESS_SIZE);
+  data->message = g_strndup (message, length);
+  data->tox = NEULAND_TOX (user_data);
+
+  g_idle_add (on_friend_request_idle, data);
+}
 
 static void
 neuland_tox_connect_callbacks (NeulandTox *tox)
@@ -352,11 +394,11 @@ neuland_tox_connect_callbacks (NeulandTox *tox)
   tox_callback_friend_message (tox_struct, on_contact_message, tox);
   tox_callback_friend_action (tox_struct, on_contact_action, tox);
   tox_callback_typing_change (tox_struct, on_typing_change, tox);
+  tox_callback_friend_request (tox_struct, on_friend_request, tox);
 
   g_mutex_unlock (&priv->mutex);
 
   /* TODO: */
-  /* tox_callback_friend_request (tox_struct, NULL, tox); */
   /* tox_callback_group_invite (tox_struct, NULL, tox); */
   /* tox_callback_group_message (tox_struct, NULL, tox); */
   /* tox_callback_group_action (tox_struct, NULL, tox); */
