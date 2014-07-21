@@ -29,6 +29,7 @@ struct _NeulandContactPrivate
   gchar *tox_id;
   gchar *name;
   gchar *status_message;
+  gchar *request_message;
 
   NeulandContactStatus status;
   gboolean connected;
@@ -47,6 +48,7 @@ enum {
   PROP_TOX_ID,
   PROP_NUMBER,
   PROP_NAME,
+  PROP_REQUEST_MESSAGE,
   PROP_CONNECTED,
   PROP_STATUS,
   PROP_STATUS_MESSAGE,
@@ -83,11 +85,28 @@ neuland_contact_set_name (NeulandContact *contact,
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_NAME]);
 }
 
+
 const gchar *
 neuland_contact_get_name (NeulandContact *contact)
 {
   g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
   return contact->priv->name;
+}
+
+void
+neuland_contact_set_request_message (NeulandContact *contact,
+                                     const gchar *request_message)
+{
+  g_free (contact->priv->request_message);
+  contact->priv->request_message = g_strdup (request_message);
+
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_REQUEST_MESSAGE]);
+}
+
+const gchar *
+neuland_contact_get_request_message (NeulandContact *contact)
+{
+  return contact->priv->request_message;
 }
 
 /* [*0] Before emitting a "incoming-message" or "incoming-action"
@@ -226,6 +245,14 @@ neuland_contact_get_tox_id (NeulandContact *contact)
   return contact->priv->tox_id;
 }
 
+gboolean
+neuland_contact_is_request (NeulandContact *contact)
+{
+  return contact->priv->number < 0;
+}
+
+
+
 static void
 neuland_contact_set_property (GObject *object,
                               guint property_id,
@@ -244,6 +271,9 @@ neuland_contact_set_property (GObject *object,
       break;
     case PROP_NAME:
       neuland_contact_set_name (contact, g_value_get_string (value));
+      break;
+    case PROP_REQUEST_MESSAGE:
+      neuland_contact_set_request_message (contact, g_value_get_string (value));
       break;
     case PROP_CONNECTED:
       neuland_contact_set_connected (contact, g_value_get_boolean (value));
@@ -287,6 +317,9 @@ neuland_contact_get_property (GObject *object,
       break;
     case PROP_NAME:
       g_value_set_string (value, contact->priv->name);
+      break;
+    case PROP_REQUEST_MESSAGE:
+      g_value_set_string (value, contact->priv->request_message);
       break;
     case PROP_CONNECTED:
       g_value_set_boolean (value, contact->priv->connected);
@@ -424,7 +457,7 @@ neuland_contact_class_init (NeulandContactClass *klass)
                         G_MAXINT64,
                         -1,
                         G_PARAM_READWRITE |
-                        G_PARAM_CONSTRUCT_ONLY);
+                        G_PARAM_CONSTRUCT);
 
   properties[PROP_TOX_ID] =
     g_param_spec_string ("tox-id",
@@ -438,6 +471,14 @@ neuland_contact_class_init (NeulandContactClass *klass)
                          "Name",
                          "The contact's name",
                          "Unnamed Contact",
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT);
+
+  properties[PROP_REQUEST_MESSAGE] =
+    g_param_spec_string ("request-message",
+                         "Request message",
+                         "Message from contact to request us to add them",
+                         "",
                          G_PARAM_READWRITE |
                          G_PARAM_CONSTRUCT);
 

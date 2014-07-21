@@ -117,4 +117,7 @@ neuland_contact_get_tox_id (NeulandContact *contact);
 const gchar *
 neuland_contact_get_status_message (NeulandContact *contact);
 
+gboolean
+neuland_contact_is_request (NeulandContact *contact);
+
 #endif /* __NEULAND_CONTACT_H__ */
