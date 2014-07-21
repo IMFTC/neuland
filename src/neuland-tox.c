@@ -68,7 +68,7 @@ enum {
 };
 
 enum {
-  DUMMY_SIGNAL,
+  CONTACT_REQUEST,
   LAST_SIGNAL
 };
 
@@ -355,6 +355,8 @@ on_friend_request_idle (gpointer user_data)
 
   g_message ("Received contact request from: %s", public_key_string);
   NeulandContact *contact = neuland_contact_new (-1, public_key_string, "", "Open request", 0);
+
+  g_signal_emit (tox, signals[CONTACT_REQUEST], 0, contact);
 
   g_free (data->public_key);
   g_free (data->message);
@@ -897,6 +899,18 @@ neuland_tox_class_init (NeulandToxClass *klass)
   g_object_class_install_properties (gobject_class,
                                      PROP_N,
                                      properties);
+
+  signals[CONTACT_REQUEST] =
+    g_signal_new ("contact-request",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE,
+                  1,
+                  NEULAND_TYPE_CONTACT);
+
 }
 
 static void
