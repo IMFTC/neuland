@@ -220,7 +220,6 @@ neuland_application_class_init (NeulandApplicationClass *class)
 
 }
 
-int counter = 0;
 NeulandApplication *
 neuland_application_new (void)
 {
