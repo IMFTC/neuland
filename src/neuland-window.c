@@ -125,7 +125,6 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
                                            G_BINDING_SYNC_CREATE);
 
   gboolean is_request = neuland_contact_is_request (contact);
-  g_message ("is_request: %s", is_request ? "TRUE" : "FALSE");
   gtk_widget_set_visible (GTK_WIDGET (priv->accept_button), is_request);
   gtk_widget_set_visible (GTK_WIDGET (priv->discard_button), is_request);
 }
