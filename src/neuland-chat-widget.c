@@ -519,6 +519,12 @@ on_connected_changed (GObject *obj,
     insert_action (widget, "is now offline", DIRECTION_IN);
 }
 
+NeulandContact *
+neuland_chat_widget_get_contact (NeulandChatWidget *widget)
+{
+  return widget->priv->contact;
+}
+
 GtkWidget *
 neuland_chat_widget_new (NeulandTox *tox,
                          NeulandContact *contact,
