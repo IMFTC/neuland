@@ -533,10 +533,13 @@ neuland_chat_widget_new (NeulandTox *tox,
   g_debug ("neuland_chat_widget_new");
   g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
   g_return_val_if_fail (NEULAND_IS_TOX (tox), NULL);
+
   NeulandChatWidget *ncw = NEULAND_CHAT_WIDGET (g_object_new (NEULAND_TYPE_CHAT_WIDGET, NULL));
   NeulandChatWidgetPrivate *priv = ncw->priv;
+
   priv->tox = g_object_ref (tox);
-  priv->contact = contact;
+  priv->contact = g_object_ref (contact);
+
   g_object_connect (contact,
                     "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, ncw,
                     "signal::notify::connected", on_connected_changed, ncw,

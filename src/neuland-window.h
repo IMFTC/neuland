@@ -52,12 +52,14 @@ struct _NeulandWindowClass
 GType
 neuland_window_get_type (void);
 
-void
-neuland_window_set_status_activated (GSimpleAction *action,
-                                     GVariant *parameter,
-                                     gpointer user_data);
-
 GtkWidget *
 neuland_window_new (NeulandTox *tox);
+
+void
+neuland_window_set_status_activated (GSimpleAction *action,
+                                     GVariant *parameter, gpointer user_data);
+
+NeulandContact *
+neuland_window_get_active_contact (NeulandWindow *window);
 
 #endif /* __NEULAND_WINDOW__ */
