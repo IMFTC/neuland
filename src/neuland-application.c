@@ -85,7 +85,9 @@ neuland_application_about_activated (GSimpleAction *action,
                                      GVariant      *parameter,
                                      gpointer       user_data)
 {
-  gtk_show_about_dialog (NULL,
+  GtkApplication *application = GTK_APPLICATION (user_data);
+
+  gtk_show_about_dialog (gtk_application_get_active_window (application),
                          "program-name", "Neuland",
                          "title", "About Neuland",
                          "comments", "no commets",
