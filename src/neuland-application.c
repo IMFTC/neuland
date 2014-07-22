@@ -245,9 +245,7 @@ main (int argc, char **argv)
   NeulandApplication *neuland;
   int status;
 
-  g_debug ("main");
   neuland = neuland_application_new ();
-  g_debug ("neuland: %p", neuland);
 
   status = g_application_run (G_APPLICATION (neuland), argc, argv);
 
