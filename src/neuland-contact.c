@@ -18,6 +18,8 @@
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <tox/tox.h>
+
 #include "neuland-enums.h"
 #include "neuland-contact.h"
 
@@ -26,7 +28,8 @@
 struct _NeulandContactPrivate
 {
   gint64 number;
-  gchar *tox_id;
+  gpointer *tox_id;
+  gchar *tox_id_hex;
   gchar *name;
   gchar *status_message;
   gchar *request_message;
@@ -46,6 +49,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (NeulandContact, neuland_contact, G_TYPE_OBJECT)
 enum {
   PROP_0,
   PROP_TOX_ID,
+  PROP_TOX_ID_HEX,
   PROP_NUMBER,
   PROP_NAME,
   PROP_REQUEST_MESSAGE,
@@ -239,19 +243,36 @@ neuland_contact_set_is_typing (NeulandContact *contact, gboolean is_typing)
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_IS_TYPING]);
 }
 
-const gchar *
-neuland_contact_get_tox_id (NeulandContact *contact)
-{
-  return contact->priv->tox_id;
-}
-
 gboolean
 neuland_contact_is_request (NeulandContact *contact)
 {
   return contact->priv->number < 0;
 }
 
+/* Only set on construction; not public. */
+static void
+neuland_contact_set_tox_id (NeulandContact *contact, gpointer tox_id)
+{
+  NeulandContactPrivate *priv = contact->priv;
+  g_return_if_fail (priv->tox_id == NULL);
 
+  priv->tox_id = g_memdup (tox_id, TOX_CLIENT_ID_SIZE);
+  priv->tox_id_hex = g_malloc0 (TOX_CLIENT_ID_SIZE * 2 + 1);
+
+  neuland_bin_to_hex_string (priv->tox_id, priv->tox_id_hex, TOX_CLIENT_ID_SIZE);
+}
+
+const gpointer
+neuland_contact_get_tox_id (NeulandContact *contact)
+{
+  return contact->priv->tox_id;
+}
+
+const gchar *
+neuland_contact_get_tox_id_hex (NeulandContact *contact)
+{
+  return contact->priv->tox_id_hex;
+}
 
 static void
 neuland_contact_set_property (GObject *object,
@@ -266,8 +287,7 @@ neuland_contact_set_property (GObject *object,
       contact->priv->number = g_value_get_int64 (value);
       break;
     case PROP_TOX_ID:
-      g_free (contact->priv->tox_id);
-      contact->priv->tox_id = g_value_dup_string (value);
+      neuland_contact_set_tox_id (contact, g_value_get_pointer (value));
       break;
     case PROP_NAME:
       neuland_contact_set_name (contact, g_value_get_string (value));
@@ -314,6 +334,12 @@ neuland_contact_get_property (GObject *object,
     {
     case PROP_NUMBER:
       g_value_set_int64 (value, contact->priv->number);
+      break;
+    case PROP_TOX_ID:
+      g_value_set_pointer (value, neuland_contact_get_tox_id (contact));
+      break;
+    case PROP_TOX_ID_HEX:
+      g_value_set_string (value, neuland_contact_get_tox_id_hex (contact));
       break;
     case PROP_NAME:
       g_value_set_string (value, contact->priv->name);
@@ -433,6 +459,8 @@ neuland_contact_finalize (GObject *object)
 
   g_free (priv->name);
   g_free (priv->status_message);
+  g_free (priv->tox_id);
+  g_free (priv->tox_id_hex);
 
   G_OBJECT_CLASS (neuland_contact_parent_class)->finalize (object);
 }
@@ -460,11 +488,18 @@ neuland_contact_class_init (NeulandContactClass *klass)
                         G_PARAM_CONSTRUCT);
 
   properties[PROP_TOX_ID] =
-    g_param_spec_string ("tox-id",
-                         "Tox ID",
-                         "The contact's Tox ID",
+    g_param_spec_pointer ("tox-id",
+                          "Tox ID",
+                          "The contact's Tox ID in binary format",
+                          G_PARAM_READWRITE |
+                          G_PARAM_CONSTRUCT_ONLY);
+
+  properties[PROP_TOX_ID_HEX] =
+    g_param_spec_string ("tox-id-hex",
+                         "Tox ID hex",
+                         "The contact's Tox ID as a hex string",
                          "",
-                         G_PARAM_READWRITE);
+                         G_PARAM_READABLE);
 
   properties[PROP_NAME] =
     g_param_spec_string ("name",

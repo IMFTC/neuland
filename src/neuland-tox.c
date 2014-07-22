@@ -506,10 +506,8 @@ neuland_tox_load_contacts (NeulandTox *tox)
       l = tox_get_name (tox_struct, contact_number, tox_name);
       gs_tox_name = g_string_new_len (tox_name, l);
 
-      gchar client_id[TOX_CLIENT_ID_SIZE] = {0};
-      gchar hex_string[TOX_CLIENT_ID_SIZE * 2 + 1] = {0,};
+      guint8 client_id[TOX_CLIENT_ID_SIZE] = {0};
       tox_get_client_id (tox_struct, contact_number, client_id);
-      neuland_bin_to_hex_string (client_id, hex_string, TOX_CLIENT_ID_SIZE);
 
       gchar status_message[TOX_MAX_STATUSMESSAGE_LENGTH];
       l = tox_get_status_message (tox_struct, contact_number, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
@@ -518,7 +516,7 @@ neuland_tox_load_contacts (NeulandTox *tox)
 
       guint64 last_online = tox_get_last_online (tox_struct, contact_number);
 
-      NeulandContact *contact = neuland_contact_new (contact_number, hex_string, gs_tox_name->str,
+      NeulandContact *contact = neuland_contact_new (contact_number, client_id, gs_tox_name->str,
                                                      gs_status_message->str, last_online);
       g_string_free (gs_tox_name, TRUE);
       g_string_free (gs_status_message, TRUE);
