@@ -274,6 +274,19 @@ neuland_contact_get_tox_id_hex (NeulandContact *contact)
   return contact->priv->tox_id_hex;
 }
 
+void
+neuland_contact_set_number (NeulandContact *contact, gint64 number)
+{
+  contact->priv->number = number;
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_NUMBER]);
+}
+
+gint64
+neuland_contact_get_number (NeulandContact *contact)
+{
+  return contact->priv->number;
+}
+
 static void
 neuland_contact_set_property (GObject *object,
                               guint property_id,
@@ -284,7 +297,7 @@ neuland_contact_set_property (GObject *object,
   switch (property_id)
     {
     case PROP_NUMBER:
-      contact->priv->number = g_value_get_int64 (value);
+      neuland_contact_set_number (contact, g_value_get_int64 (value));
       break;
     case PROP_TOX_ID:
       neuland_contact_set_tox_id (contact, g_value_get_pointer (value));
@@ -333,7 +346,7 @@ neuland_contact_get_property (GObject *object,
   switch (property_id)
     {
     case PROP_NUMBER:
-      g_value_set_int64 (value, contact->priv->number);
+      g_value_set_int64 (value, neuland_contact_get_number (contact));
       break;
     case PROP_TOX_ID:
       g_value_set_pointer (value, neuland_contact_get_tox_id (contact));
