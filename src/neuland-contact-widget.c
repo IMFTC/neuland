@@ -140,7 +140,7 @@ neuland_contact_widget_update_name (NeulandContactWidget *contact_widget)
 
   const gchar *name = neuland_contact_get_name (contact);
 
-  if (strlen (name) > 0)
+  if (name && strlen (name) > 0)
     {
       gtk_style_context_remove_class (context, "dim-label");
       neuland_contact_widget_set_name (contact_widget, name);

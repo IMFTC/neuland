@@ -354,7 +354,7 @@ on_friend_request_idle (gpointer user_data)
   neuland_bin_to_hex_string (public_key, public_key_string, TOX_CLIENT_ID_SIZE);
 
   g_message ("Received contact request from: %s", public_key_string);
-  NeulandContact *contact = neuland_contact_new (-1, public_key, "", "Open request", 0);
+  NeulandContact *contact = neuland_contact_new (-1, public_key, NULL, "Open request", 0);
 
   g_signal_emit (tox, signals[CONTACT_REQUEST], 0, contact);
 
