@@ -124,6 +124,10 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
                                            priv->right_header_bar, "subtitle",
                                            G_BINDING_SYNC_CREATE);
 
+  /* If the contact doesn't have a name yet, show the Tox ID instaed. */
+  if (neuland_contact_get_name (contact) == NULL)
+    gtk_header_bar_set_title (priv->right_header_bar, neuland_contact_get_tox_id_hex (contact));
+
   gboolean is_request = neuland_contact_is_request (contact);
   gtk_widget_set_visible (GTK_WIDGET (priv->accept_button), is_request);
   gtk_widget_set_visible (GTK_WIDGET (priv->discard_button), is_request);
