@@ -40,32 +40,96 @@ Author: Volker Sobek <reklov@live.com>
             <property name="title" translatable="yes"></property>
             <property name="show_close_button">False</property>
             <property name="expand">False</property>
+            <!-- The default title is always at least 20 chars wide,
+                 even when empty, that's way too much for us here, so
+                 we use an empty label as custom title widget. -->
+            <child type="title">
+              <object class="GtkLabel" id="empty_label">
+                <property name="visible">False</property>
+              </object>
+            </child>
             <style>
               <class name="titlebar"/>
               <class name="neuland-left-titlebar"/>
             </style>
             <child>
-              <object class="GtkButton" id="add_button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-                <property name="action-name">win.add-contact</property>
+              <object class="GtkBox" id="button_box1">
                 <style>
-                  <class name="image-button"/>
+                  <class name="linked"/>
                 </style>
                 <child>
-                  <object class="GtkImage" id="image1">
+                  <object class="GtkButton" id="add_button">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="icon_name">list-add-symbolic</property>
-                    <property name="icon_size">1</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+                    <property name="action-name">win.add-contact</property>
+                    <style>
+                      <class name="image-button"/>
+                      <class name="connected"/>
+                    </style>
+                    <child>
+                      <object class="GtkImage" id="image1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">list-add-symbolic</property>
+                        <property name="icon_size">1</property>
+                      </object>
+                    </child>
                   </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="requests_button">
+                    <property name="visible">True</property>
+                    <property name="no_show_all">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <child>
+                      <object class="GtkBox" id="box1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">6</property>
+                        <child>
+                          <object class="GtkLabel" id="label2">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Requests</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="label1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">center</property>
+                            <property name="valign">center</property>
+                            <property name="label" translatable="yes">0</property>
+                            <property name="justify">right</property>
+                            <style>
+                              <class name="pending-messages-count"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
               </object>
-              <packing>
-                <property name="pack_type">start</property>
-              </packing>
             </child>
             <child>
               <object class="GtkToggleButton" id="select_button">
@@ -102,7 +166,6 @@ Author: Volker Sobek <reklov@live.com>
               <class name="titlebar"/>
               <class name="neuland-right-titlebar"/>
             </style>
-
             <child>
               <object class="GtkMenuButton" id="discard_button">
                 <property name="visible">False</property>
@@ -122,7 +185,6 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="pack_type">start</property>
               </packing>
             </child>
-
             <child>
               <object class="GtkMenuButton" id="gear_button">
                 <property name="visible">True</property>
@@ -145,7 +207,6 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="pack_type">end</property>
               </packing>
             </child>
-
             <child>
               <object class="GtkMenuButton" id="accept_button">
                 <property name="visible">False</property>
@@ -168,7 +229,6 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="pack_type">end</property>
               </packing>
             </child>
-
           </object>
         </child>
       </object>
@@ -280,7 +340,6 @@ Author: Volker Sobek <reklov@live.com>
       <widget name="select_button"/>
     </widgets>
   </object>
-
   <!-- We need both of the following size groups; with just one of
        them the min width of widgets can still force different
        widths when resizing the window. -->
@@ -298,5 +357,4 @@ Author: Volker Sobek <reklov@live.com>
       <widget name="chat_stack"/>
     </widgets>
   </object>
-
 </interface>

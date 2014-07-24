@@ -36,6 +36,7 @@ struct _NeulandWindowPrivate
   GtkStack        *chat_stack;
   GHashTable      *contact_widgets;
   GHashTable      *chat_widgets;
+  GtkButton       *requests_button;
   GtkButton       *gear_button;
   GtkButton       *accept_button;
   GtkButton       *discard_button;
@@ -591,6 +592,7 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, select_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, accept_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, discard_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button);
 
   gtk_widget_class_bind_template_callback(widget_class, contacts_list_box_row_activated_cb);
 
