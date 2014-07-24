@@ -37,7 +37,7 @@ struct _NeulandToxPrivate
   GHashTable *contacts_ht;
   NeulandContactStatus status;
   gboolean running;
-
+  gint64 pending_requests;
   GMutex mutex;
 };
 
@@ -63,6 +63,7 @@ enum {
   PROP_NAME,
   PROP_STATUS,
   PROP_STATUS_MESSAGE,
+  PROP_PENDING_REQUESTS,
   PROP_N
 };
 
@@ -809,7 +810,19 @@ neuland_tox_get_status_message (NeulandTox *tox)
   return tox->priv->status_message;
 }
 
+void
+neuland_tox_set_pending_requests (NeulandTox *tox,
+                                  gint64 pending_requests)
+{
+  tox->priv->pending_requests = pending_requests;
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
+}
 
+gint64
+neuland_tox_get_pending_requests (NeulandTox *tox)
+{
+  return tox->priv->pending_requests;
+}
 
 static void
 neuland_tox_set_property (GObject *object,
@@ -833,6 +846,9 @@ neuland_tox_set_property (GObject *object,
       break;
     case PROP_STATUS_MESSAGE:
       neuland_tox_set_status_message (nt, g_value_get_string (value));
+      break;
+    case PROP_PENDING_REQUESTS:
+      neuland_tox_set_pending_requests (nt, g_value_get_int64 (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -862,6 +878,9 @@ neuland_tox_get_property (GObject *object,
       break;
     case PROP_STATUS_MESSAGE:
       g_value_set_string (value, priv->status_message);
+      break;
+    case PROP_PENDING_REQUESTS:
+      g_value_set_int64 (value, neuland_tox_get_pending_requests (nt));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -932,6 +951,15 @@ neuland_tox_class_init (NeulandToxClass *klass)
                          "Our own status message",
                          NEULAND_DEFAULT_STATUS_MESSAGE,
                          G_PARAM_READWRITE);
+  properties[PROP_PENDING_REQUESTS] =
+    g_param_spec_int64 ("pending-requests",
+                        "Pending requests",
+                        "Number of pending contact requests",
+                        0,
+                        G_MAXINT64,
+                        0,
+                        G_PARAM_READWRITE |
+                        G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties (gobject_class,
                                      PROP_N,

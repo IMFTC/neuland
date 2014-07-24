@@ -89,4 +89,10 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox, const gchar *hex_addr
 gint64
 neuland_tox_accept_contact_norequest (NeulandTox *tox, NeulandContact *contact);
 
+void
+neuland_tox_set_pending_requests (NeulandTox *tox, gint64 pending_requests);
+
+gint64
+neuland_tox_get_pending_requests (NeulandTox *tox);
+
 #endif /* __NEULAND_TOX_H__ */
