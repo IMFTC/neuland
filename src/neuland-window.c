@@ -44,6 +44,8 @@ struct _NeulandWindowPrivate
   gint             me_button_height;
   GtkWidget       *welcome_widget;
   GtkWidget       *tox_id_label;
+  GBinding        *name_binding;
+  GBinding        *status_binding;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -116,9 +118,6 @@ static void
 neuland_window_show_chat_for_contact (NeulandWindow *window,
                                       NeulandContact *contact)
 {
-  static GBinding *name_binding = NULL;
-  static GBinding *status_binding = NULL;
-
   g_return_if_fail (NEULAND_IS_WINDOW (window));
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
 
@@ -135,15 +134,15 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   neuland_contact_reset_unread_messages (contact);
 
   // Destroy old bindings
-  g_clear_object (&name_binding);
-  g_clear_object (&status_binding);
+  g_clear_object (&priv->name_binding);
+  g_clear_object (&priv->status_binding);
   // Set up new bindings
-  name_binding = g_object_bind_property (contact, "name",
-                                         priv->right_header_bar, "title",
-                                         G_BINDING_SYNC_CREATE);
-  status_binding = g_object_bind_property (contact, "status-message",
-                                           priv->right_header_bar, "subtitle",
-                                           G_BINDING_SYNC_CREATE);
+  priv->name_binding = g_object_bind_property (contact, "name",
+                                               priv->right_header_bar, "title",
+                                               G_BINDING_SYNC_CREATE);
+  priv->status_binding = g_object_bind_property (contact, "status-message",
+                                                 priv->right_header_bar, "subtitle",
+                                                 G_BINDING_SYNC_CREATE);
   /* If the contact doesn't have a name yet, show the Tox ID instead. */
   if (strlen(neuland_contact_get_name (contact)) == 0)
     gtk_header_bar_set_title (priv->right_header_bar, neuland_contact_get_tox_id_hex (contact));
