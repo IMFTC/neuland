@@ -82,11 +82,12 @@ Author: Volker Sobek <reklov@live.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="requests_button">
+                  <object class="GtkToggleButton" id="requests_button">
                     <property name="visible">True</property>
                     <property name="no_show_all">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="action-name">win.show-requests</property>
                     <child>
                       <object class="GtkBox" id="box1">
                         <property name="visible">True</property>
@@ -138,7 +139,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="focus_on_click">False</property>
                 <property name="halign">center</property>
                 <property name="valign">center</property>
-                <property name="action-name">win.selection-state</property>
+                <property name="action_name">win.selection-state</property>
                 <style>
                   <class name="image-button"/>
                 </style>
@@ -173,7 +174,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="can_focus">True</property>
                 <property name="vexpand">True</property>
                 <property name="valign">fill</property>
-                <property name="action-name">win.discard-request</property>
+                <property name="action_name">win.discard-request</property>
                 <child>
                   <object class="GtkLabel" id="discard_button_label">
                     <property name="visible">True</property>

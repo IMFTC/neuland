@@ -543,12 +543,59 @@ activate_discard_request (GSimpleAction *action,
   neuland_window_remove_contact (window, contact);
 }
 
+/* Filter function for showing only existing contacts */
+static gboolean
+contacts_list_box_filter_func_contacts (GtkListBoxRow *row,
+                                        gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandContactWidget *contact_widget =
+    NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
+  NeulandContact *contact = neuland_contact_widget_get_contact (contact_widget);
+
+  return !neuland_contact_is_request (contact);
+}
+
+/* Filter function for showing only open friend requests */
+static gboolean
+contacts_list_box_filter_func_requests (GtkListBoxRow *row,
+                                        gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandContactWidget *contact_widget =
+    NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
+  NeulandContact *contact = neuland_contact_widget_get_contact (contact_widget);
+
+  return neuland_contact_is_request (contact);
+}
+
+static void
+neuland_window_show_requests_state_changed (GSimpleAction *action,
+                                            GVariant *parameter,
+                                            gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  gboolean show_requests = g_variant_get_boolean (parameter);
+  GtkListBox *list_box = window->priv->contacts_list_box;
+
+  if (show_requests)
+    gtk_list_box_set_filter_func (list_box, contacts_list_box_filter_func_requests,
+                                  window, NULL);
+  else
+    gtk_list_box_set_filter_func (list_box, contacts_list_box_filter_func_contacts,
+                                  window, NULL);
+
+  gtk_list_box_invalidate_filter (list_box);
+  g_simple_action_set_state (action, parameter);
+}
+
 static GActionEntry win_entries[] = {
   { "change-status", NULL, "i", "0", neuland_window_change_status },
   { "selection-state", NULL, NULL, "false", neuland_window_selection_state_changed },
   { "add-contact", activate_add_contact },
   { "accept-request", activate_accept_request },
-  { "discard-request", activate_discard_request }
+  { "discard-request", activate_discard_request },
+  { "show-requests", NULL, NULL, "false", neuland_window_show_requests_state_changed }
 };
 
 static void
@@ -651,7 +698,10 @@ neuland_window_init (NeulandWindow *window)
                                   (GMenuModel*) gtk_builder_get_object (builder, "me-status-menu"));
 
   gtk_widget_get_preferred_height (priv->me_button, NULL, &priv->me_button_height);
+
+  /* Set up list box for contacts */
   gtk_list_box_set_header_func (priv->contacts_list_box, contacts_list_box_header_func, NULL, NULL);
+  gtk_list_box_set_filter_func (priv->contacts_list_box, contacts_list_box_filter_func_contacts, window, NULL);
 
   g_object_unref (G_OBJECT (builder));
 }
