@@ -84,7 +84,7 @@ neuland_contact_set_name (NeulandContact *contact,
 
   g_free (contact->priv->name);
 
-  contact->priv->name = g_strdup (name);
+  contact->priv->name = g_strdup (name ? name : "");
 
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_NAME]);
 }
@@ -147,12 +147,6 @@ guint64
 neuland_contact_get_last_connected_change (NeulandContact *contact)
 {
   return contact->priv->last_connected_change;
-}
-
-gint64
-neuland_contact_get_number (NeulandContact *contact)
-{
-  return contact->priv->number;
 }
 
 /* construct-only property, so this is not public */
@@ -495,7 +489,7 @@ neuland_contact_class_init (NeulandContactClass *klass)
                         "Number",
                         "Number of the contact",
                         -1,
-                        G_MAXINT64,
+                        G_MAXINT32,
                         -1,
                         G_PARAM_READWRITE |
                         G_PARAM_CONSTRUCT);
@@ -518,7 +512,7 @@ neuland_contact_class_init (NeulandContactClass *klass)
     g_param_spec_string ("name",
                          "Name",
                          "The contact's name",
-                         "Unnamed Contact",
+                         "",
                          G_PARAM_READWRITE |
                          G_PARAM_CONSTRUCT);
 
@@ -659,18 +653,15 @@ neuland_contact_init (NeulandContact *contact)
 }
 
 NeulandContact *
-neuland_contact_new (gint64 number, const gchar *tox_id, const gchar *contact_name, const gchar *status_message, guint64 last_connected_change)
+neuland_contact_new (const guint8 *tox_id, gint64 contact_number,
+                     guint64 last_connected_change)
 {
-  g_debug ("neuland_contact_new (%i, %s)", number, contact_name);
-
   NeulandContact *neuland_contact;
   NeulandContactPrivate *priv = neuland_contact->priv;
 
   neuland_contact = NEULAND_CONTACT (g_object_new (NEULAND_TYPE_CONTACT,
-                                                   "number", number,
                                                    "tox-id", tox_id,
-                                                   "name", contact_name,
-                                                   "status-message", status_message,
+                                                   "number", contact_number,
                                                    "last-connected-change", last_connected_change,
                                                    NULL));
 

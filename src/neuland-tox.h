@@ -69,7 +69,7 @@ NeulandContactStatus
 neuland_tox_get_status (NeulandTox *tox);
 
 NeulandContact *
-neuland_tox_get_contact_by_number (NeulandTox *tox, gint32 number);
+neuland_tox_get_contact_by_number (NeulandTox *tox, gint64 number);
 
 void
 neuland_tox_set_name (NeulandTox *tox, const gchar *name);
@@ -85,5 +85,8 @@ neuland_tox_get_status_message (NeulandTox *tox);
 
 NeulandContact *
 neuland_tox_add_contact_from_hex_address (NeulandTox *tox, const gchar *hex_address, const gchar *message);
+
+gint64
+neuland_tox_accept_contact_norequest (NeulandTox *tox, NeulandContact *contact);
 
 #endif /* __NEULAND_TOX_H__ */

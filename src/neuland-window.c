@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <string.h>
 
 #include "neuland-window.h"
 #include "neuland-contact.h"
@@ -83,13 +84,32 @@ neuland_window_get_chat_widget_for_contact (NeulandWindow *window,
   if (chat_widget != NULL)
     return chat_widget;
 
-  g_debug ("Creating new chat widget for contact '%s'", neuland_contact_get_name (contact));
+  g_debug ("Creating new chat widget for contact %p", contact);
   chat_widget = neuland_chat_widget_new (priv->tox, contact, priv->me_button_height);
   g_hash_table_insert (priv->chat_widgets, contact, chat_widget);
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), chat_widget);
 
   return chat_widget;
 }
+
+/* Show or hide Accept and Discard buttons and set the chat widget's
+   sensitivity depending on whether the currently active contact is a
+   pending request or not. */
+static void
+neuland_window_update_request_mode (NeulandWindow *window)
+{
+  g_debug ("neuland_window_update_request_mode");
+
+  NeulandWindowPrivate *priv = window->priv;
+  NeulandContact *contact = neuland_window_get_active_contact (window);
+  GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
+  gboolean is_request = neuland_contact_is_request (contact);
+
+  gtk_widget_set_visible (GTK_WIDGET (priv->accept_button), is_request);
+  gtk_widget_set_visible (GTK_WIDGET (priv->discard_button), is_request);
+  gtk_widget_set_sensitive (GTK_WIDGET (chat_widget), !is_request);
+}
+
 
 static void
 neuland_window_show_chat_for_contact (NeulandWindow *window,
@@ -123,14 +143,11 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   status_binding = g_object_bind_property (contact, "status-message",
                                            priv->right_header_bar, "subtitle",
                                            G_BINDING_SYNC_CREATE);
-
-  /* If the contact doesn't have a name yet, show the Tox ID instaed. */
-  if (neuland_contact_get_name (contact) == NULL)
+  /* If the contact doesn't have a name yet, show the Tox ID instead. */
+  if (strlen(neuland_contact_get_name (contact)) == 0)
     gtk_header_bar_set_title (priv->right_header_bar, neuland_contact_get_tox_id_hex (contact));
 
-  gboolean is_request = neuland_contact_is_request (contact);
-  gtk_widget_set_visible (GTK_WIDGET (priv->accept_button), is_request);
-  gtk_widget_set_visible (GTK_WIDGET (priv->discard_button), is_request);
+  neuland_window_update_request_mode (window);
 }
 
 /* Returns the contact whose chat widget is currently visible in window.
@@ -509,7 +526,10 @@ activate_accept_request (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandContact *contact = neuland_window_get_active_contact (window);
-  /* TODO: Add contact */
+  NeulandTox *tox = window->priv->tox;
+
+  neuland_tox_accept_contact_request (tox, contact);
+  neuland_window_update_request_mode (window);
 }
 
 static void

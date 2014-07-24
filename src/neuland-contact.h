@@ -57,8 +57,7 @@ struct _NeulandContactClass
 };
 
 NeulandContact *
-neuland_contact_new (gint64 number, const gchar *tox_id, const gchar *contact_name,
-                     const gchar *status_message, guint64 last_connected_change);
+neuland_contact_new (const guint8 *tox_id, gint64 contact_number, guint64 last_connected_change);
 
 void
 neuland_contact_increase_unread_messages (NeulandContact *contact);
