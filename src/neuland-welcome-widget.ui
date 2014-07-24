@@ -9,6 +9,7 @@
     <property name="valign">center</property>
     <property name="orientation">vertical</property>
     <property name="spacing">12</property>
+    <property name="expand">True</property>
     <child>
       <object class="GtkLabel" id="label1">
         <property name="visible">True</property>
@@ -32,6 +33,9 @@ Don't have any contacts yet?</property>
         <property name="receives_default">True</property>
         <property name="halign">center</property>
         <property name="action_name">win.add-contact</property>
+        <style>
+          <class name="suggested-action"/>
+        </style>
       </object>
       <packing>
         <property name="expand">False</property>
