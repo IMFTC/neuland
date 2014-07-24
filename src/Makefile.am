@@ -37,15 +37,11 @@ neuland_SOURCES = \
 nodist_neuland_SOURCES = \
 	neuland-resources.c \
 	neuland-resources.h \
-	neuland-marshal.c \
-	neuland-marshal.h \
 	$(NULL)
 
 BUILT_SOURCES = \
 	neuland-resources.c \
 	neuland-resources.h \
-	neuland-marshal.c \
-	neuland-marshal.h \
 	$(NULL)
 
 EXTRA_DIST = \
@@ -67,10 +63,3 @@ neuland-resources.c: neuland.gresource.xml $(resource_files)
 neuland-resources.h: neuland.gresource.xml $(resource_files)
 	$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) \
 	 --generate-header --c-name neuland $(srcdir)/neuland.gresource.xml
-
-neuland-marshal.c: neuland-marshal.list $(GLIB_GENMARSHAL)
-	$(AM_V_GEN) echo "#include \"neuland-marshal.h\"" > $@ && \
-	$(GLIB_GENMARSHAL) $< --body --prefix=neuland_marshal >> $@
-
-neuland-marshal.h: neuland-marshal.list $(GLIB_GENMARSHAL)
-	$(GLIB_GENMARSHAL) $< --header --prefix=neuland_marshal > $@

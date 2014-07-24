@@ -23,7 +23,6 @@
 
 #include "neuland-tox.h"
 #include "neuland-enums.h"
-#include "neuland-marshal.h"
 
 #define NEULAND_DEFAULT_STATUS_MESSAGE "I'm testing Neuland!"
 #define NEULAND_DEFAULT_NAME "Neuland User"
