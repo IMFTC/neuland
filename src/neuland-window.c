@@ -250,22 +250,27 @@ neuland_window_activate_first_contact (NeulandWindow *window)
 static void
 neuland_window_remove_contact (NeulandWindow *window, NeulandContact *contact)
 {
+  g_return_if_fail (NEULAND_IS_WINDOW (window));
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   NeulandWindowPrivate *priv = window->priv;
+
+  /* Destroy the widgets related to contact */
   GtkWidget *contact_widget = GTK_WIDGET (g_hash_table_lookup (priv->contact_widgets, contact));
   GtkWidget *chat_widget = GTK_WIDGET (g_hash_table_lookup (priv->chat_widgets, contact));
+  GtkListBoxRow *row = GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
+
+  gtk_widget_destroy (GTK_WIDGET (row));
+  if (chat_widget)
+    gtk_widget_destroy (chat_widget);
 
   g_hash_table_remove (priv->contact_widgets, contact);
   g_hash_table_remove (priv->chat_widgets, contact);
 
-  GtkListBoxRow *row = GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
-  gtk_widget_destroy (GTK_WIDGET (row));
-
-  if (chat_widget)
-    gtk_widget_destroy (chat_widget);
+  /* Destroy contact itself */
+  neuland_tox_remove_contact (priv->tox, contact);
 
   neuland_window_activate_first_contact (window);
-
-  /* TODO: Remove in tox if contact request has been accepted yet */
 }
 
 static void

@@ -644,6 +644,28 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
   return g_hash_table_lookup (priv->contacts_ht, GINT_TO_POINTER (friend_number));
 }
 
+void
+neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
+{
+  g_return_if_fail (NEULAND_IS_TOX (tox));
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  NeulandToxPrivate *priv = tox->priv;
+
+  if (!neuland_contact_is_request (contact))
+    {
+      g_mutex_lock (&priv->mutex);
+      gint ret = tox_del_friend (priv->tox_struct, neuland_contact_get_number (contact));
+      g_mutex_unlock (&priv->mutex);
+
+      if (ret == -1)
+        g_warning ("Calling tox_del_friend failed for contact %p", contact);
+    }
+
+  g_object_unref (contact);
+}
+
+
 /* Add @contact (which isn't known to tox yet) to @tox.  Returns the
    friend number on success, -1 on failure. Notice that we update
    @contact in place from a 'request' contact with a friend number of
