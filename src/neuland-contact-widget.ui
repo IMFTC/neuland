@@ -150,7 +150,7 @@ Author: Volker Sobek <reklov@live.com>
         <property name="label" translatable="yes">Tox User</property>
         <property name="ellipsize">end</property>
         <property name="single_line_mode">True</property>
-        <property name="max_width_chars">25</property>
+        <property name="max_width_chars">20</property>
       </object>
       <packing>
         <property name="left_attach">1</property>
@@ -167,7 +167,7 @@ Author: Volker Sobek <reklov@live.com>
         <property name="label" translatable="yes">Status</property>
         <property name="ellipsize">end</property>
         <property name="single_line_mode">True</property>
-        <property name="max_width_chars">25</property>
+        <property name="max_width_chars">20</property>
         <style>
           <class name="dim-label"/>
         </style>
