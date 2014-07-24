@@ -460,6 +460,7 @@ incoming_action_or_message (NeulandContact *contact,
 static void
 neuland_contact_finalize (GObject *object)
 {
+  g_debug ("neuland_contact_finalize (%p)", object);
 
   NeulandContact *contact = NEULAND_CONTACT (object);
   NeulandContactPrivate *priv = contact->priv;

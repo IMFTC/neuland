@@ -888,6 +888,17 @@ neuland_tox_get_property (GObject *object,
 }
 
 static void
+neuland_tox_dispose (GObject *object)
+{
+  NeulandTox *nt = NEULAND_TOX (object);
+  NeulandToxPrivate *priv = nt->priv;
+
+  g_hash_table_destroy (priv->contacts_ht);
+
+  G_OBJECT_CLASS (neuland_tox_parent_class)->dispose (object);
+}
+
+static void
 neuland_tox_finalize (GObject *object)
 {
   g_debug ("neuland_tox_finalize...");
@@ -900,7 +911,6 @@ neuland_tox_finalize (GObject *object)
   g_free (priv->data_path);
   g_free (priv->name);
   g_free (priv->status_message);
-  g_hash_table_destroy (priv->contacts_ht);
 
   G_OBJECT_CLASS (neuland_tox_parent_class)->finalize (object);
 }
@@ -915,6 +925,7 @@ neuland_tox_class_init (NeulandToxClass *klass)
 
   gobject_class->set_property = neuland_tox_set_property;
   gobject_class->get_property = neuland_tox_get_property;
+  gobject_class->dispose = neuland_tox_dispose;
   gobject_class->finalize = neuland_tox_finalize;
 
   properties[PROP_DATA_PATH] =
@@ -985,7 +996,8 @@ neuland_tox_init (NeulandTox *tox)
   NeulandToxPrivate *priv = tox->priv;
 
   priv->tox_struct = tox_new (TOX_ENABLE_IPV6_DEFAULT);
-  priv->contacts_ht = g_hash_table_new (g_direct_hash, g_direct_equal);
+  priv->contacts_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+                                             NULL, g_object_unref);
 
   g_mutex_init (&priv->mutex);
 }
