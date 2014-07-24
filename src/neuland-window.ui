@@ -179,23 +179,17 @@ Author: Volker Sobek <reklov@live.com>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkPaned" id="paned1">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="position">200</property>
-            <property name="position_set">True</property>
-            <style>
-              <class name="neuland-paned"/>
-            </style>
+          <object class="GtkBox" id="box3">
             <child>
               <!-- We need this frame for setting the border in
                    CSS. For a GtkBox that doesn't work -->
               <object class="GtkFrame" id="frame1">
+                <property name="hexpand">False</property>
                 <style>
                   <class name="contacs-frame"/>
                 </style>
                 <child>
-                  <object class="GtkBox" id="box3">
+                  <object class="GtkBox" id="box4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
@@ -256,8 +250,7 @@ Author: Volker Sobek <reklov@live.com>
                 </child>
               </object>
               <packing>
-                <property name="resize">False</property>
-                <property name="shrink">False</property>
+                <property name="position">0</property>
               </packing>
             </child>
             <child>
@@ -266,8 +259,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="transition_type">crossfade</property>
               </object>
               <packing>
-                <property name="resize">True</property>
-                <property name="shrink">False</property>
+                <property name="position">1</property>
               </packing>
             </child>
           </object>
@@ -288,11 +280,23 @@ Author: Volker Sobek <reklov@live.com>
       <widget name="select_button"/>
     </widgets>
   </object>
+
+  <!-- We need both of the following size groups; with just one of
+       them the min width of widgets can still force different
+       widths when resizing the window. -->
   <object class="GtkSizeGroup" id="sizegroup2">
     <property name="mode">horizontal</property>
     <widgets>
       <widget name="left_header_bar"/>
-      <widget name="scrolledwindow1"/>
+      <widget name="frame1"/>
     </widgets>
   </object>
+  <object class="GtkSizeGroup" id="sizegroup3">
+    <property name="mode">horizontal</property>
+    <widgets>
+      <widget name="right_header_bar"/>
+      <widget name="chat_stack"/>
+    </widgets>
+  </object>
+
 </interface>
