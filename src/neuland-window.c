@@ -215,8 +215,22 @@ neuland_window_on_incoming_action_cb (NeulandWindow *window,
 }
 
 static void
+neuland_window_activate_first_contact (NeulandWindow *window)
+{
+  NeulandWindowPrivate *priv = window->priv;
+  GtkListBoxRow *first_row = gtk_list_box_get_row_at_index (priv->contacts_list_box, 0);
+
+  if (first_row)
+    {
+      gtk_list_box_select_row (priv->contacts_list_box, first_row);
+      contacts_list_box_row_activated_cb (window, first_row, NULL);
+    }
+}
+
+static void
 neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 {
+  g_debug ("neuland_window_add_contact %p");
   NeulandWindowPrivate *priv = window->priv;
 
   g_object_connect (contact,
@@ -235,19 +249,6 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 }
 
 static void
-neuland_window_activate_first_contact (NeulandWindow *window)
-{
-  NeulandWindowPrivate *priv = window->priv;
-  GtkListBoxRow *first_row = gtk_list_box_get_row_at_index (priv->contacts_list_box, 0);
-
-  if (first_row)
-    {
-      gtk_list_box_select_row (priv->contacts_list_box, first_row);
-      contacts_list_box_row_activated_cb (window, first_row, NULL);
-    }
-}
-
-static void
 neuland_window_remove_contact (NeulandWindow *window, NeulandContact *contact)
 {
   g_return_if_fail (NEULAND_IS_WINDOW (window));
@@ -262,13 +263,12 @@ neuland_window_remove_contact (NeulandWindow *window, NeulandContact *contact)
 
   gtk_widget_destroy (GTK_WIDGET (row));
   if (chat_widget)
-    gtk_widget_destroy (chat_widget);
+    {
+      g_hash_table_remove (priv->chat_widgets, contact);
+      gtk_widget_destroy (chat_widget);
+    }
 
   g_hash_table_remove (priv->contact_widgets, contact);
-  g_hash_table_remove (priv->chat_widgets, contact);
-
-  /* Destroy contact itself */
-  neuland_tox_remove_contact (priv->tox, contact);
 
   neuland_window_activate_first_contact (window);
 }
@@ -350,14 +350,25 @@ on_status_message_change_cb (GObject *object,
 }
 
 static void
-on_contact_request_cb (NeulandWindow *window,
+on_contact_add_cb (NeulandWindow *window,
+                     GObject *gobject,
+                     gpointer user_data)
+{
+  NeulandContact *contact = NEULAND_CONTACT (gobject);
+  g_message ("Adding contact %s to NeulandWindow %p",
+             neuland_contact_get_tox_id_hex (contact), window);
+  neuland_window_add_contact (window, contact);
+}
+
+static void
+on_contact_remove_cb (NeulandWindow *window,
                        GObject *gobject,
                        gpointer user_data)
 {
   NeulandContact *contact = NEULAND_CONTACT (gobject);
-  g_message ("Adding contact request from %s to NeulandWindow %p",
+  g_message ("Removing contact %s from NeulandWindow %p",
              neuland_contact_get_tox_id_hex (contact), window);
-  neuland_window_add_contact (window, contact);
+  neuland_window_remove_contact (window, contact);
 }
 
 static void
@@ -394,7 +405,8 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
   g_object_connect (tox,
                     "signal::notify::self-name", on_name_change_cb, window,
                     "signal::notify::status-message", on_status_message_change_cb, window,
-                    "swapped-signal::contact-request", on_contact_request_cb, window,
+                    "swapped-signal::contact-add", on_contact_add_cb, window,
+                    "swapped-signal::contact-remove", on_contact_remove_cb, window,
                     "swapped-signal::notify::pending-requests", on_pending_requests_cb, window,
                     NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget),
@@ -504,25 +516,18 @@ on_add_dialog_response (GtkDialog *dialog,
                         gint response_id,
                         gpointer user_data)
 {
-  if (response_id == GTK_RESPONSE_OK)
-    {
-      NeulandWindow *window = NEULAND_WINDOW (user_data);
-      NeulandWindowPrivate *priv = window->priv;
-      NeulandTox *tox = priv->tox;
-      const char *tox_id = neuland_add_dialog_get_tox_id (NEULAND_ADD_DIALOG (dialog));
-      NeulandContact *contact =
-        neuland_tox_add_contact_from_hex_address
-        (priv->tox,
-         tox_id,
-         neuland_add_dialog_get_message (NEULAND_ADD_DIALOG (dialog)));
-
-      if (contact == NULL)
-        g_warning ("Failed to add friend with address \"%s\"", tox_id);
-      else
-        neuland_window_add_contact (window, contact);
-    }
-
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandWindowPrivate *priv = window->priv;
+  NeulandTox *tox = priv->tox;
+  char *tox_id = g_strdup (neuland_add_dialog_get_tox_id (NEULAND_ADD_DIALOG (dialog)));
+  char *message = g_strdup (neuland_add_dialog_get_message (NEULAND_ADD_DIALOG (dialog)));
   gtk_widget_destroy (GTK_WIDGET (dialog));
+
+  if (response_id == GTK_RESPONSE_OK)
+    neuland_tox_add_contact_from_hex_address (priv->tox, tox_id, message);
+
+  g_free (tox_id);
+  g_free (message);
 }
 
 static void
@@ -558,9 +563,10 @@ activate_discard_request (GSimpleAction *action,
                           gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandWindowPrivate *priv = window->priv;
   NeulandContact *contact = neuland_window_get_active_contact (window);
-  neuland_window_update_request_mode (window);
-  neuland_window_remove_contact (window, contact);
+
+  neuland_tox_remove_contact (priv->tox, contact);
 }
 
 /* Filter function for showing only existing contacts */

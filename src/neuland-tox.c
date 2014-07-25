@@ -69,7 +69,8 @@ enum {
 };
 
 enum {
-  CONTACT_REQUEST,
+  CONTACT_ADD,
+  CONTACT_REMOVE,
   LAST_SIGNAL
 };
 
@@ -429,7 +430,7 @@ on_friend_request_idle (gpointer user_data)
 
   g_hash_table_insert (priv->requests_ht, contact, contact);
   g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
-  g_signal_emit (tox, signals[CONTACT_REQUEST], 0, contact);
+  g_signal_emit (tox, signals[CONTACT_ADD], 0, contact);
 
   g_free (data->public_key);
   g_free (data->message);
@@ -616,15 +617,12 @@ neuland_tox_load_contacts (NeulandTox *tox)
   g_mutex_unlock (&priv->mutex);
 }
 
-/* Returns a NeulandContact on success, NULL otherwise. A basic
-   validation of hex_address takes currently place in NeulandAddDialog.
-   TODO: Coordinate error handling */
-NeulandContact *
+void *
 neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
                                           const gchar *hex_address,
                                           const gchar *message)
 {
-  g_message ("Adding contact from address: %s", hex_address);
+  g_message ("neuland_tox_add_contact_from_hex_address %s", hex_address);
   gchar *tmp_message = g_strcmp0 (message, "") != 0 ?
     g_strdup (message) : g_strdup ("Let's tox?");
   NeulandToxPrivate *priv = tox->priv;
@@ -646,7 +644,9 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
 
   neuland_tox_load_contacts (tox);
 
-  return g_hash_table_lookup (priv->contacts_ht, GINT_TO_POINTER (friend_number));
+  NeulandContact *contact =
+    g_hash_table_lookup (priv->contacts_ht, GINT_TO_POINTER (friend_number));
+  g_signal_emit (tox, signals[CONTACT_ADD], 0, contact);
 }
 
 void
@@ -670,6 +670,7 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
       else
         {
           g_debug ("Removing contact %p from the contacts hash table", contact);
+          g_signal_emit (tox, signals[CONTACT_REMOVE], 0, contact);
           g_hash_table_remove (priv->contacts_ht, contact);
           g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
         }
@@ -677,6 +678,7 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
   else
     {
       g_debug ("Removing contact %p from the requests hash table", contact);
+      g_signal_emit (tox, signals[CONTACT_REMOVE], 0, contact);
       g_hash_table_remove (priv->requests_ht, contact);
       g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
     }
@@ -1009,8 +1011,8 @@ neuland_tox_class_init (NeulandToxClass *klass)
                                      PROP_N,
                                      properties);
 
-  signals[CONTACT_REQUEST] =
-    g_signal_new ("contact-request",
+  signals[CONTACT_ADD] =
+    g_signal_new ("contact-add",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_FIRST,
                   0,
@@ -1019,7 +1021,16 @@ neuland_tox_class_init (NeulandToxClass *klass)
                   G_TYPE_NONE,
                   1,
                   NEULAND_TYPE_CONTACT);
-
+  signals[CONTACT_REMOVE] =
+    g_signal_new ("contact-remove",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0,
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE,
+                  1,
+                  NEULAND_TYPE_CONTACT);
 }
 
 static void

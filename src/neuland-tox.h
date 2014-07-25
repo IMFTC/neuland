@@ -83,7 +83,7 @@ neuland_tox_set_status_message (NeulandTox *tox, const gchar *status_message);
 const gchar *
 neuland_tox_get_status_message (NeulandTox *tox);
 
-NeulandContact *
+void *
 neuland_tox_add_contact_from_hex_address (NeulandTox *tox, const gchar *hex_address, const gchar *message);
 
 gint64
