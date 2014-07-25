@@ -428,6 +428,7 @@ on_friend_request_idle (gpointer user_data)
                     NULL);
 
   g_hash_table_insert (priv->requests_ht, contact, contact);
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
   g_signal_emit (tox, signals[CONTACT_REQUEST], 0, contact);
 
   g_free (data->public_key);
@@ -668,15 +669,16 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
         g_warning ("Calling tox_del_friend failed for contact %p", contact);
       else
         {
-          g_debug ("Removing contact %p from the contacts hash table");
+          g_debug ("Removing contact %p from the contacts hash table", contact);
           g_hash_table_remove (priv->contacts_ht, contact);
           g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
         }
     }
   else
     {
-      g_debug ("Removing contact %p from the requests hash table");
+      g_debug ("Removing contact %p from the requests hash table", contact);
       g_hash_table_remove (priv->requests_ht, contact);
+      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
     }
 }
 
@@ -712,6 +714,8 @@ neuland_tox_accept_contact_request (NeulandTox *tox,
       g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
       g_message ("Added contact %s from request as number %i",
                  neuland_contact_get_tox_id_hex (contact), number);
+
+      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
     }
 
   return number;
