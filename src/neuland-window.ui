@@ -83,7 +83,7 @@ Author: Volker Sobek <reklov@live.com>
                 </child>
                 <child>
                   <object class="GtkToggleButton" id="requests_button">
-                    <property name="visible">True</property>
+                    <property name="visible">False</property>
                     <property name="no_show_all">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>

@@ -359,6 +359,17 @@ on_contact_request_cb (NeulandWindow *window,
   neuland_window_add_contact (window, contact);
 }
 
+static void
+on_pending_requests_cb (NeulandWindow *window,
+                        GObject *gobject,
+                        gpointer user_data)
+{
+  NeulandWindowPrivate *priv = window->priv;
+  NeulandTox *tox = priv->tox;
+
+  gtk_widget_set_visible (GTK_WIDGET (priv->requests_button),
+                          neuland_tox_get_pending_requests (tox) > 0);
+}
 
 
 static void
@@ -381,6 +392,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
                     "signal::notify::self-name", on_name_change_cb, window,
                     "signal::notify::status-message", on_status_message_change_cb, window,
                     "swapped-signal::contact-request", on_contact_request_cb, window,
+                    "swapped-signal::notify::pending-requests", on_pending_requests_cb, window,
                     NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget),
                                    neuland_tox_get_name (tox));
