@@ -71,12 +71,6 @@ neuland_chat_widget_dispose (GObject *object)
   NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (object);
   NeulandChatWidgetPrivate *priv = widget->priv;
 
-  if (priv->contact != NULL)
-    neuland_contact_set_show_typing (priv->contact, FALSE);
-
-  g_clear_object (&priv->tox);
-  g_clear_object (&priv->contact);
-
   G_OBJECT_CLASS (neuland_chat_widget_parent_class)->dispose (object);
 }
 
@@ -537,8 +531,8 @@ neuland_chat_widget_new (NeulandTox *tox,
   NeulandChatWidget *ncw = NEULAND_CHAT_WIDGET (g_object_new (NEULAND_TYPE_CHAT_WIDGET, NULL));
   NeulandChatWidgetPrivate *priv = ncw->priv;
 
-  priv->tox = g_object_ref (tox);
-  priv->contact = g_object_ref (contact);
+  priv->tox = tox;
+  priv->contact = contact;
 
   g_object_connect (contact,
                     "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, ncw,
