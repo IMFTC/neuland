@@ -774,7 +774,6 @@ neuland_tox_set_name (NeulandTox *tox,
   g_free (priv->name);
 
   gchar *name_dup = name ? g_strdup (name) : "";
-  priv->name = name_dup;
 
   g_mutex_lock (&priv->mutex);
 
@@ -784,8 +783,11 @@ neuland_tox_set_name (NeulandTox *tox,
 
   if (ret != 0)
     g_warning ("Failed to set our own name. Tried to set name: '%s'", name);
-
-  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_NAME]);
+  else
+    {
+      priv->name = name_dup;
+      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_NAME]);
+    }
 }
 
 const gchar *
