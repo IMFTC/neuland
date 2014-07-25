@@ -352,8 +352,8 @@ on_status_message_change_cb (GObject *object,
 
 static void
 on_contact_add_cb (NeulandWindow *window,
-                     GObject *gobject,
-                     gpointer user_data)
+                   GObject *gobject,
+                   gpointer user_data)
 {
   NeulandContact *contact = NEULAND_CONTACT (gobject);
 
@@ -362,8 +362,8 @@ on_contact_add_cb (NeulandWindow *window,
 
 static void
 on_contact_remove_cb (NeulandWindow *window,
-                       GObject *gobject,
-                       gpointer user_data)
+                      GObject *gobject,
+                      gpointer user_data)
 {
   NeulandContact *contact = NEULAND_CONTACT (gobject);
 
