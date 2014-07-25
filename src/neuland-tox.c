@@ -670,6 +670,7 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
         {
           g_debug ("Removing contact %p from the contacts hash table");
           g_hash_table_remove (priv->contacts_ht, contact);
+          g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
         }
     }
   else
@@ -848,18 +849,10 @@ neuland_tox_get_status_message (NeulandTox *tox)
   return tox->priv->status_message;
 }
 
-void
-neuland_tox_set_pending_requests (NeulandTox *tox,
-                                  gint64 pending_requests)
-{
-  tox->priv->pending_requests = pending_requests;
-  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
-}
-
 gint64
 neuland_tox_get_pending_requests (NeulandTox *tox)
 {
-  return tox->priv->pending_requests;
+  return g_hash_table_size (tox->priv->requests_ht);
 }
 
 static void
@@ -884,9 +877,6 @@ neuland_tox_set_property (GObject *object,
       break;
     case PROP_STATUS_MESSAGE:
       neuland_tox_set_status_message (nt, g_value_get_string (value));
-      break;
-    case PROP_PENDING_REQUESTS:
-      neuland_tox_set_pending_requests (nt, g_value_get_int64 (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -1009,8 +999,7 @@ neuland_tox_class_init (NeulandToxClass *klass)
                         0,
                         G_MAXINT64,
                         0,
-                        G_PARAM_READWRITE |
-                        G_PARAM_CONSTRUCT_ONLY);
+                        G_PARAM_READABLE);
 
   g_object_class_install_properties (gobject_class,
                                      PROP_N,
