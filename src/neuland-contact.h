@@ -128,4 +128,7 @@ neuland_contact_set_number (NeulandContact *contact, gint64 number);
 gint64
 neuland_contact_get_number (NeulandContact *contact);
 
+const gchar *
+neuland_contact_get_preferred_name (NeulandContact *contact);
+
 #endif /* __NEULAND_CONTACT_H__ */

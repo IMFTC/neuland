@@ -31,6 +31,7 @@ struct _NeulandContactPrivate
   gpointer *tox_id;
   gchar *tox_id_hex;
   gchar *name;
+  gchar *preferred_name;
   gchar *status_message;
   gchar *request_message;
 
@@ -52,6 +53,7 @@ enum {
   PROP_TOX_ID_HEX,
   PROP_NUMBER,
   PROP_NAME,
+  PROP_PREFERRED_NAME,
   PROP_REQUEST_MESSAGE,
   PROP_CONNECTED,
   PROP_STATUS,
@@ -76,6 +78,22 @@ static GParamSpec *properties[PROP_N] = {NULL, };
 static guint signals[LAST_SIGNAL] = { 0 };
 
 
+
+static void
+neuland_contact_update_preferred_name (NeulandContact *contact)
+{
+  NeulandContactPrivate *priv = contact->priv;
+  const gchar *name = priv->name;
+  glong name_length = g_utf8_strlen (name, 12);
+
+  g_free (priv->preferred_name);
+
+  if (name_length > 0)
+    priv->preferred_name = g_strndup (name, MIN (name_length, 12));
+  else
+    priv->preferred_name = g_strndup (neuland_contact_get_tox_id_hex (contact), 12);
+}
+
 void
 neuland_contact_set_name (NeulandContact *contact,
                           const gchar *name)
@@ -86,7 +104,10 @@ neuland_contact_set_name (NeulandContact *contact,
 
   contact->priv->name = g_strdup (name ? name : "");
 
+  neuland_contact_update_preferred_name (contact);
+
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_NAME]);
+  g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_PREFERRED_NAME]);
 }
 
 
@@ -329,6 +350,14 @@ neuland_contact_set_property (GObject *object,
     }
 }
 
+/* Returns the preferred name (truncated to 12 chars) for
+   contact. String is owned by @contact, don't free it. */
+const gchar *
+neuland_contact_get_preferred_name (NeulandContact *contact)
+{
+  return contact->priv->preferred_name;
+}
+
 static void
 neuland_contact_get_property (GObject *object,
                               guint property_id,
@@ -350,6 +379,9 @@ neuland_contact_get_property (GObject *object,
       break;
     case PROP_NAME:
       g_value_set_string (value, contact->priv->name);
+      break;
+    case PROP_PREFERRED_NAME:
+      g_value_set_string (value, neuland_contact_get_preferred_name (contact));
       break;
     case PROP_REQUEST_MESSAGE:
       g_value_set_string (value, contact->priv->request_message);
@@ -506,6 +538,14 @@ neuland_contact_class_init (NeulandContactClass *klass)
     g_param_spec_string ("tox-id-hex",
                          "Tox ID hex",
                          "The contact's Tox ID as a hex string",
+                         "",
+                         G_PARAM_READABLE);
+
+  properties[PROP_PREFERRED_NAME] =
+    g_param_spec_string ("preferred-name",
+                         "Preffered name",
+                         "Returns the first none empty property of: name, tox-id-hex."
+                         "Truncates to 12 chars",
                          "",
                          G_PARAM_READABLE);
 

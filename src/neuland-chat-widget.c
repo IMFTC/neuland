@@ -117,7 +117,7 @@ neuland_chat_widget_set_show_contact_is_typing (NeulandChatWidget *chat_widget, 
   gtk_text_buffer_get_end_iter (buffer, &end_iter);
 
   gchar *name;
-  g_object_get (contact, "name", &name, NULL);
+  g_object_get (contact, "preferred-name", &name, NULL);
   gchar *string;
   if (is_typing && (is_typing_start_mark == NULL))
     {
@@ -170,7 +170,7 @@ insert_text (NeulandChatWidget *widget,
   switch (direction)
     {
     case DIRECTION_IN:
-      name = neuland_contact_get_name (contact);
+      name = neuland_contact_get_preferred_name (contact);
       name_tag = priv->contact_name_tag;
       break;
     case DIRECTION_OUT:
