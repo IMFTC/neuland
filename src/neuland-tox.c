@@ -714,10 +714,15 @@ neuland_tox_accept_contact_request (NeulandTox *tox,
       /* contact has a tox friend number now, so override the -1 with that new number. */
       neuland_contact_set_number (contact, number);
 
+      /* Removing @contact from @requests_ht results in a
+         g_object_unref() call on contact, so we have to call
+         g_object_ref() beforehand, or @contact would be destroyed. */
+      g_object_ref (contact);
       g_hash_table_remove (priv->requests_ht, contact);
       g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
-      g_message ("Added contact %s from request as number %i",
-                 neuland_contact_get_tox_id_hex (contact), number);
+
+      g_message ("Added contact %s (%p) from request as number %i",
+                 neuland_contact_get_tox_id_hex (contact), contact, number);
 
       g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
     }
