@@ -227,6 +227,38 @@ neuland_window_activate_first_contact (NeulandWindow *window)
     }
 }
 
+/* This function must be called when ever a contact property relevant
+   to the filtering or sorting of the contact widget changes, in order
+   to re-filter and re-sort it. */
+static void
+neuland_window_contact_row_changed (NeulandWindow *window,
+                                    NeulandContact *contact)
+{
+  NeulandWindowPrivate *priv = window->priv;
+  GtkWidget *contact_widget =
+    GTK_WIDGET (g_hash_table_lookup (priv->contact_widgets, contact));
+
+  if (contact_widget == NULL)
+    return;
+
+  GtkListBoxRow *row = GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
+  gtk_list_box_row_changed (row);
+}
+
+/* This is used to get notified when a contact request has been
+   accepted, in which case the contact's number changes from -1 to n,
+   where n >= 0. */
+static void
+neuland_window_on_number_changed_cb (NeulandWindow *window,
+                                     GParamSpec *pspec,
+                                     gpointer user_data)
+{
+  NeulandContact *contact = NEULAND_CONTACT (user_data);
+  /* Re-filter the row for contact */
+  neuland_window_contact_row_changed (window, contact);
+}
+
+
 static void
 neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 {
@@ -234,6 +266,8 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
   NeulandWindowPrivate *priv = window->priv;
 
   g_object_connect (contact,
+                    "swapped-signal::notify::number",
+                    neuland_window_on_number_changed_cb, window,
                     "swapped-signal::ensure-chat-widget",
                     neuland_window_on_ensure_chat_widget, window,
                     "swapped-signal::incoming-message",
@@ -370,6 +404,13 @@ on_contact_remove_cb (NeulandWindow *window,
   neuland_window_remove_contact (window, contact);
 }
 
+/* This function is not used anywhere yet. */
+static void
+neuland_window_invalidate_filter (NeulandWindow *window)
+{
+  gtk_list_box_invalidate_filter (window->priv->contacts_list_box);
+}
+
 static void
 on_pending_requests_cb (NeulandWindow *window,
                         GObject *gobject,
@@ -377,9 +418,19 @@ on_pending_requests_cb (NeulandWindow *window,
 {
   NeulandWindowPrivate *priv = window->priv;
   NeulandTox *tox = priv->tox;
+  gint64 pending_requests = neuland_tox_get_pending_requests (tox);
 
-  gtk_widget_set_visible (GTK_WIDGET (priv->requests_button),
-                          neuland_tox_get_pending_requests (tox) > 0);
+  if (pending_requests > 0)
+    gtk_widget_set_visible (GTK_WIDGET (priv->requests_button), TRUE);
+  else
+    {
+      gtk_widget_set_visible (GTK_WIDGET (priv->requests_button), FALSE);
+
+      /* Automatically change to show only contacts when no open
+         requests are left */
+      g_action_group_change_action_state (G_ACTION_GROUP (window), "show-requests",
+                                          g_variant_new_boolean (FALSE));
+    }
 }
 
 
@@ -610,7 +661,6 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
     gtk_list_box_set_filter_func (list_box, contacts_list_box_filter_func_contacts,
                                   window, NULL);
 
-  gtk_list_box_invalidate_filter (list_box);
   g_simple_action_set_state (action, parameter);
 }
 
