@@ -34,7 +34,8 @@ struct _NeulandToxPrivate
   gchar *tox_id_hex;
   gchar *name;
   gchar *status_message;
-  GHashTable *contacts_ht;
+  GHashTable *contacts_ht;  /* key: tox friend number -> value: contact*/
+  GHashTable *requests_ht;  /* key: contact -> value: contact  */
   NeulandContactStatus status;
   gboolean running;
   gint64 pending_requests;
@@ -409,6 +410,7 @@ on_friend_request_idle (gpointer user_data)
 {
   DataStructFriendRequest *data = user_data;
   NeulandTox *tox = data->tox;
+  NeulandToxPrivate *priv = tox->priv;
   guint8 *public_key = data->public_key;
   gchar *message = data->message;
 
@@ -418,12 +420,14 @@ on_friend_request_idle (gpointer user_data)
   g_message ("Received contact request from: %s", public_key_string);
 
   NeulandContact *contact = neuland_contact_new (public_key, -1, 0);
+
   g_object_connect (contact,
                     "signal::outgoing-message", on_outgoing_message_cb, tox,
                     "signal::outgoing-action", on_outgoing_action_cb, tox,
                     "signal::notify::show-typing", on_show_typing_cb, tox,
                     NULL);
 
+  g_hash_table_insert (priv->requests_ht, contact, contact);
   g_signal_emit (tox, signals[CONTACT_REQUEST], 0, contact);
 
   g_free (data->public_key);
@@ -650,6 +654,8 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
   g_return_if_fail (NEULAND_IS_TOX (tox));
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
 
+  g_debug ("neuland_tox_remove_contact");
+
   NeulandToxPrivate *priv = tox->priv;
 
   if (!neuland_contact_is_request (contact))
@@ -660,9 +666,17 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
 
       if (ret == -1)
         g_warning ("Calling tox_del_friend failed for contact %p", contact);
+      else
+        {
+          g_debug ("Removing contact %p from the contacts hash table");
+          g_hash_table_remove (priv->contacts_ht, contact);
+        }
     }
-
-  g_object_unref (contact);
+  else
+    {
+      g_debug ("Removing contact %p from the requests hash table");
+      g_hash_table_remove (priv->requests_ht, contact);
+    }
 }
 
 
@@ -692,11 +706,13 @@ neuland_tox_accept_contact_request (NeulandTox *tox,
     {
       /* contact has a tox friend number now, so override the -1 with that new number. */
       neuland_contact_set_number (contact, number);
+
+      g_hash_table_remove (priv->requests_ht, contact);
+      g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
       g_message ("Added contact %s from request as number %i",
                  neuland_contact_get_tox_id_hex (contact), number);
     }
 
-  g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
   return number;
 }
 
@@ -912,10 +928,12 @@ neuland_tox_get_property (GObject *object,
 static void
 neuland_tox_dispose (GObject *object)
 {
+  g_debug ("neuland_tox_dispose %p", object);
   NeulandTox *nt = NEULAND_TOX (object);
   NeulandToxPrivate *priv = nt->priv;
 
   g_hash_table_destroy (priv->contacts_ht);
+  g_hash_table_destroy (priv->requests_ht);
 
   G_OBJECT_CLASS (neuland_tox_parent_class)->dispose (object);
 }
@@ -923,7 +941,7 @@ neuland_tox_dispose (GObject *object)
 static void
 neuland_tox_finalize (GObject *object)
 {
-  g_debug ("neuland_tox_finalize...");
+  g_debug ("neuland_tox_finalize %p", object);
   NeulandTox *nt = NEULAND_TOX (object);
   NeulandToxPrivate *priv = nt->priv;
 
@@ -1018,9 +1036,11 @@ neuland_tox_init (NeulandTox *tox)
   NeulandToxPrivate *priv = tox->priv;
 
   priv->tox_struct = tox_new (TOX_ENABLE_IPV6_DEFAULT);
+
   priv->contacts_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
                                              NULL, g_object_unref);
-
+  priv->requests_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+                                             NULL, g_object_unref);
   g_mutex_init (&priv->mutex);
 }
 
