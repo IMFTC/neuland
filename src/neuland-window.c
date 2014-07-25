@@ -37,6 +37,7 @@ struct _NeulandWindowPrivate
   GHashTable      *contact_widgets;
   GHashTable      *chat_widgets;
   GtkButton       *requests_button;
+  GtkLabel        *pending_requests_label;
   GtkButton       *gear_button;
   GtkButton       *accept_button;
   GtkButton       *discard_button;
@@ -388,6 +389,8 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
   g_message ("Tox ID for window %p: %s", window, id);
   gtk_label_set_text (GTK_LABEL (priv->tox_id_label), id);
 
+  g_object_bind_property (tox, "pending-requests", priv->pending_requests_label, "label", 0);
+
   g_object_connect (tox,
                     "signal::notify::self-name", on_name_change_cb, window,
                     "signal::notify::status-message", on_status_message_change_cb, window,
@@ -556,6 +559,7 @@ activate_discard_request (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandContact *contact = neuland_window_get_active_contact (window);
+  neuland_window_update_request_mode (window);
   neuland_window_remove_contact (window, contact);
 }
 
@@ -656,6 +660,7 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, accept_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, discard_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, pending_requests_label);
 
   gtk_widget_class_bind_template_callback(widget_class, contacts_list_box_row_activated_cb);
 
