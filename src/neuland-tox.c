@@ -773,7 +773,7 @@ neuland_tox_set_name (NeulandTox *tox,
 
   g_free (priv->name);
 
-  gchar *name_dup = name ? g_strdup (name) : "";
+  gchar *name_dup = g_strdup (name ? name : "");
 
   g_mutex_lock (&priv->mutex);
 
