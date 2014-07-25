@@ -576,12 +576,12 @@ neuland_tox_load_contacts (NeulandTox *tox)
       /* Skip contacts that we already have NeulandContact objects for */
       if (g_hash_table_contains (contacts_ht, GINT_TO_POINTER (contact_number)))
         {
-          g_debug ("Not adding contact with number %i; already added", contact_number);
+          g_debug ("  skipping contact with number %i; already added", contact_number);
           continue;
         }
 
       /* Create NeulandContacts and add them to this NeulandTox instance. */
-      g_debug ("Adding contact with number %i", contact_number);
+      g_debug ("  adding contact with number %i", contact_number);
 
       guint8 client_id[TOX_CLIENT_ID_SIZE] = {0};
       tox_get_client_id (tox_struct, contact_number, client_id);
@@ -669,16 +669,16 @@ neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
         g_warning ("Calling tox_del_friend failed for contact %p", contact);
       else
         {
-          g_debug ("Removing contact %p from the contacts hash table", contact);
           g_signal_emit (tox, signals[CONTACT_REMOVE], 0, contact);
+          g_debug ("Removing contact %p from the contacts hash table", contact);
           g_hash_table_remove (priv->contacts_ht, contact);
           g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
         }
     }
   else
     {
-      g_debug ("Removing contact %p from the requests hash table", contact);
       g_signal_emit (tox, signals[CONTACT_REMOVE], 0, contact);
+      g_debug ("Removing contact %p from the requests hash table", contact);
       g_hash_table_remove (priv->requests_ht, contact);
       g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
     }
@@ -694,6 +694,8 @@ gint64
 neuland_tox_accept_contact_request (NeulandTox *tox,
                                     NeulandContact *contact)
 {
+  g_debug ("neuland_tox_accept_contact_request for contact %p", contact);
+
   g_return_if_fail (NEULAND_IS_TOX (tox));
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
 

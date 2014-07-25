@@ -230,7 +230,7 @@ neuland_window_activate_first_contact (NeulandWindow *window)
 static void
 neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 {
-  g_debug ("neuland_window_add_contact %p");
+  g_message ("Adding contact %p to NeulandWindow %p", contact, window);
   NeulandWindowPrivate *priv = window->priv;
 
   g_object_connect (contact,
@@ -251,6 +251,7 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 static void
 neuland_window_remove_contact (NeulandWindow *window, NeulandContact *contact)
 {
+  g_message ("Removing contact %p from NeulandWindow %p", contact, window);
   g_return_if_fail (NEULAND_IS_WINDOW (window));
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
 
@@ -355,8 +356,7 @@ on_contact_add_cb (NeulandWindow *window,
                      gpointer user_data)
 {
   NeulandContact *contact = NEULAND_CONTACT (gobject);
-  g_message ("Adding contact %s to NeulandWindow %p",
-             neuland_contact_get_tox_id_hex (contact), window);
+
   neuland_window_add_contact (window, contact);
 }
 
@@ -366,8 +366,7 @@ on_contact_remove_cb (NeulandWindow *window,
                        gpointer user_data)
 {
   NeulandContact *contact = NEULAND_CONTACT (gobject);
-  g_message ("Removing contact %s from NeulandWindow %p",
-             neuland_contact_get_tox_id_hex (contact), window);
+
   neuland_window_remove_contact (window, contact);
 }
 
