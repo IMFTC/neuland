@@ -40,11 +40,13 @@ struct _NeulandWindowPrivate
   GtkStack        *side_pane_stack;
   GHashTable      *contact_widgets;
   GHashTable      *chat_widgets;
-  GtkButton       *requests_button;
   GtkLabel        *pending_requests_label;
   GtkButton       *gear_button;
-  GtkButton       *accept_button;
-  GtkButton       *discard_button;
+
+  GtkRevealer     *requests_button_revealer;
+  GtkRevealer     *discard_button_revealer;
+  GtkRevealer     *accept_button_revealer;
+
   GtkToggleButton *select_button;
   gint             me_button_height;
   GtkWidget       *welcome_widget;
@@ -121,8 +123,9 @@ neuland_window_update_request_mode (NeulandWindow *window)
   GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
   gboolean is_request = neuland_contact_is_request (contact);
 
-  gtk_widget_set_visible (GTK_WIDGET (priv->accept_button), is_request);
-  gtk_widget_set_visible (GTK_WIDGET (priv->discard_button), is_request);
+  gtk_revealer_set_reveal_child (priv->accept_button_revealer, is_request);
+  gtk_revealer_set_reveal_child (priv->discard_button_revealer, is_request);
+
   gtk_widget_set_sensitive (GTK_WIDGET (chat_widget), !is_request);
 }
 
@@ -480,11 +483,12 @@ on_pending_requests_cb (NeulandWindow *window,
   gint64 pending_requests = neuland_tox_get_pending_requests (tox);
 
   if (pending_requests > 0)
-    gtk_widget_set_visible (GTK_WIDGET (priv->requests_button), TRUE);
+    {
+      gtk_revealer_set_reveal_child (priv->requests_button_revealer, TRUE);
+    }
   else
     {
-      gtk_widget_set_visible (GTK_WIDGET (priv->requests_button), FALSE);
-
+      gtk_revealer_set_reveal_child (priv->requests_button_revealer, FALSE);
       /* Automatically change to show only contacts when no open
          requests are left */
       g_action_group_change_action_state (G_ACTION_GROUP (window), "show-requests",
@@ -746,9 +750,9 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, left_header_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, gear_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, select_button);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, accept_button);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, discard_button);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, accept_button_revealer);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, discard_button_revealer);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button_revealer);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, pending_requests_label);
 
   gtk_widget_class_bind_template_callback(widget_class, contacts_list_box_row_activated_cb);

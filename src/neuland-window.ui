@@ -53,7 +53,7 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-left-titlebar"/>
             </style>
             <child>
-              <object class="GtkBox" id="button_box1">
+              <object class="GtkBox" id="add_button_box">
                 <style>
                   <class name="linked"/>
                 </style>
@@ -82,46 +82,50 @@ Author: Volker Sobek <reklov@live.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkToggleButton" id="requests_button">
-                    <property name="visible">False</property>
-                    <property name="no_show_all">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="action-name">win.show-requests</property>
+                  <object class="GtkRevealer" id="requests_button_revealer">
+                    <property name="transition_type">slide-right</property>
                     <child>
-                      <object class="GtkBox" id="box1">
+                      <object class="GtkToggleButton" id="requests_button">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="spacing">6</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="action-name">win.show-requests</property>
                         <child>
-                          <object class="GtkLabel" id="label2">
+                          <object class="GtkBox" id="box1">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Requests</property>
+                            <property name="spacing">6</property>
+                            <child>
+                              <object class="GtkLabel" id="label2">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Requests</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="pending_requests_label">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="halign">center</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">0</property>
+                                <property name="justify">right</property>
+                                <style>
+                                  <class name="pending-messages-count"/>
+                                </style>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="pending_requests_label">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="halign">center</property>
-                            <property name="valign">center</property>
-                            <property name="label" translatable="yes">0</property>
-                            <property name="justify">right</property>
-                            <style>
-                              <class name="pending-messages-count"/>
-                            </style>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
                         </child>
                       </object>
                     </child>
@@ -168,17 +172,21 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-right-titlebar"/>
             </style>
             <child>
-              <object class="GtkButton" id="discard_button">
-                <property name="visible">False</property>
-                <property name="no_show_all">True</property>
-                <property name="can_focus">True</property>
-                <property name="vexpand">True</property>
-                <property name="valign">fill</property>
-                <property name="action_name">win.discard-request</property>
+              <object class="GtkRevealer" id="discard_button_revealer">
+                <property name="transition_type">crossfade</property>
                 <child>
-                  <object class="GtkLabel" id="discard_button_label">
+                  <object class="GtkButton" id="discard_button">
                     <property name="visible">True</property>
-                    <property name="label">Discard</property>
+                    <property name="can_focus">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="valign">fill</property>
+                    <property name="action_name">win.discard-request</property>
+                    <child>
+                      <object class="GtkLabel" id="discard_button_label">
+                        <property name="visible">True</property>
+                        <property name="label">Discard</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -209,20 +217,24 @@ Author: Volker Sobek <reklov@live.com>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="accept_button">
-                <property name="visible">False</property>
-                <property name="no_show_all">True</property>
-                <property name="can_focus">True</property>
-                <property name="vexpand">True</property>
-                <property name="valign">fill</property>
-                <property name="action-name">win.accept-request</property>
-                <style>
-                  <class name="suggested-action"/>
-                </style>
+              <object class="GtkRevealer" id="accept_button_revealer">
+                <property name="transition_type">crossfade</property>
                 <child>
-                  <object class="GtkLabel" id="accept_button_label">
+                  <object class="GtkButton" id="accept_button">
                     <property name="visible">True</property>
-                    <property name="label">Accept</property>
+                    <property name="can_focus">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="valign">fill</property>
+                    <property name="action-name">win.accept-request</property>
+                    <style>
+                      <class name="suggested-action"/>
+                    </style>
+                    <child>
+                      <object class="GtkLabel" id="accept_button_label">
+                        <property name="visible">True</property>
+                        <property name="label">Accept</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
