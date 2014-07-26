@@ -168,7 +168,7 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-right-titlebar"/>
             </style>
             <child>
-              <object class="GtkMenuButton" id="discard_button">
+              <object class="GtkButton" id="discard_button">
                 <property name="visible">False</property>
                 <property name="no_show_all">True</property>
                 <property name="can_focus">True</property>
@@ -209,7 +209,7 @@ Author: Volker Sobek <reklov@live.com>
               </packing>
             </child>
             <child>
-              <object class="GtkMenuButton" id="accept_button">
+              <object class="GtkButton" id="accept_button">
                 <property name="visible">False</property>
                 <property name="no_show_all">True</property>
                 <property name="can_focus">True</property>
