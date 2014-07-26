@@ -870,6 +870,12 @@ neuland_tox_get_pending_requests (NeulandTox *tox)
   return g_hash_table_size (tox->priv->requests_ht);
 }
 
+static char *
+neuland_tox_get_tox_id_hex (NeulandTox *tox)
+{
+  return tox->priv->tox_id_hex;
+}
+
 static void
 neuland_tox_set_property (GObject *object,
                           guint property_id,
@@ -914,7 +920,7 @@ neuland_tox_get_property (GObject *object,
       g_value_set_string (value, priv->data_path);
       break;
     case PROP_TOX_ID_HEX:
-      g_value_set_string (value, priv->tox_id_hex);
+      g_value_set_string (value, neuland_tox_get_tox_id_hex (nt));
       break;
     case PROP_NAME:
       g_value_set_string (value, priv->name);
@@ -981,8 +987,8 @@ neuland_tox_class_init (NeulandToxClass *klass)
                          G_PARAM_CONSTRUCT_ONLY |
                          G_PARAM_READWRITE);
   properties[PROP_TOX_ID_HEX] =
-    g_param_spec_string ("tox-id",
-                         "Tox ID",
+    g_param_spec_string ("tox-id-hex",
+                         "Tox ID hex",
                          "Tox ID as a string of hexadecimal digts",
                          NULL,
                          G_PARAM_READABLE);

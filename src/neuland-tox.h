@@ -92,4 +92,7 @@ neuland_tox_accept_contact_norequest (NeulandTox *tox, NeulandContact *contact);
 gint64
 neuland_tox_get_pending_requests (NeulandTox *tox);
 
+static char *
+neuland_tox_get_tox_id_hex (NeulandTox *tox);
+
 #endif /* __NEULAND_TOX_H__ */

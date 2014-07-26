@@ -509,7 +509,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
   neuland_window_load_contacts (window);
   gchar *id;
 
-  g_object_get (priv->tox, "tox-id", &id, NULL);
+  g_object_get (priv->tox, "tox-id-hex", &id, NULL);
   g_message ("Tox ID for window %p: %s", window, id);
   gtk_label_set_text (GTK_LABEL (priv->tox_id_label), id);
 
