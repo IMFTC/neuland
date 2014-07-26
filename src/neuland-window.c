@@ -150,16 +150,12 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   g_clear_object (&priv->name_binding);
   g_clear_object (&priv->status_binding);
   // Set up new bindings
-  priv->name_binding = g_object_bind_property (contact, "name",
+  priv->name_binding = g_object_bind_property (contact, "preferred-name",
                                                priv->right_header_bar, "title",
                                                G_BINDING_SYNC_CREATE);
   priv->status_binding = g_object_bind_property (contact, "status-message",
                                                  priv->right_header_bar, "subtitle",
                                                  G_BINDING_SYNC_CREATE);
-  /* If the contact doesn't have a name yet, show the Tox ID instead. */
-  if (strlen(neuland_contact_get_name (contact)) == 0)
-    gtk_header_bar_set_title (priv->right_header_bar, neuland_contact_get_tox_id_hex (contact));
-
   neuland_window_update_request_mode (window);
 }
 
