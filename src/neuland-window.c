@@ -78,7 +78,6 @@ contacts_list_box_header_func (GtkListBoxRow  *row,
     }
 }
 
-
 static GtkWidget *
 neuland_window_get_chat_widget_for_contact (NeulandWindow *window,
                                             NeulandContact *contact)
@@ -214,17 +213,37 @@ neuland_window_on_incoming_action_cb (NeulandWindow *window,
     neuland_contact_increase_unread_messages (contact);
 }
 
+static GtkListBoxRow *
+neuland_window_get_row_for_contact (NeulandWindow *window,
+                                    NeulandContact *contact)
+{
+  NeulandWindowPrivate *priv = window->priv;
+  GtkWidget *contact_widget =
+    GTK_WIDGET (g_hash_table_lookup (priv->contact_widgets, contact));
+  if (contact_widget == NULL)
+    return NULL;
+
+  return GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
+}
+
+static void
+neuland_window_activate_contact (NeulandWindow *window,
+                                 NeulandContact *contact)
+{
+  GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
+  if (row != NULL)
+    gtk_widget_activate (row);
+}
+
+
 static void
 neuland_window_activate_first_contact (NeulandWindow *window)
 {
   NeulandWindowPrivate *priv = window->priv;
-  GtkListBoxRow *first_row = gtk_list_box_get_row_at_index (priv->contacts_list_box, 0);
+  GtkWidget *first_row = GTK_WIDGET (gtk_list_box_get_row_at_index (priv->contacts_list_box, 0));
 
   if (first_row)
-    {
-      gtk_list_box_select_row (priv->contacts_list_box, first_row);
-      contacts_list_box_row_activated_cb (window, first_row, NULL);
-    }
+    gtk_widget_activate (first_row);
 }
 
 /* This function must be called when ever a contact property relevant
@@ -280,6 +299,10 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 
   g_hash_table_insert (priv->contact_widgets, contact, contact_widget);
   gtk_list_box_insert (priv->contacts_list_box, contact_widget, -1);
+
+  GtkWidget *selected_row = GTK_WIDGET (gtk_list_box_get_selected_row (priv->contacts_list_box));
+  if (selected_row == NULL || !gtk_widget_get_visible (gtk_bin_get_child (GTK_BIN (selected_row))))
+    neuland_window_activate_contact (window, contact);
 }
 
 static void
@@ -350,12 +373,6 @@ neuland_window_load_contacts (NeulandWindow *window)
    * gtk_widget_set_sensitive (gtk_widget_get_parent (dummy_label), FALSE);
    * gtk_widget_set_opacity (gtk_widget_get_parent (dummy_label), 0);
    */
-
-  if (g_list_length (contacts) > 0)
-    neuland_window_activate_first_contact (window);
-  //DEBUG:
-  //g_message ("unreffing contact: %s\n", neuland_contact_get_name (contacts->data));
-  //g_object_unref (contacts->data);
 }
 
 static void
