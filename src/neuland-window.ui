@@ -255,27 +255,48 @@ Author: Volker Sobek <reklov@live.com>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkScrolledWindow" id="scrolledwindow1">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hscrollbar_policy">never</property>
+                      <object class="GtkStack" id="side_pane_stack">
+                        <property name="homogeneous">True</property>
+                        <property name="transition_type">crossfade</property>
                         <child>
-                          <object class="GtkListBox" id="contacts_list_box">
+                          <object class="GtkScrolledWindow" id="scrolled_window_contacts">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <signal name="row-activated" handler="contacts_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
+                            <property name="can_focus">True</property>
+                            <property name="hscrollbar_policy">never</property>
+                            <child>
+                              <object class="GtkListBox" id="contacts_list_box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="expand">True</property>
+                                <signal name="row-activated" handler="contacts_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
                           </object>
-                          <packing>
-                            <property name="expand">True</property>
-                            <property name="position">0</property>
-                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="scrolled_window_requests">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="hscrollbar_policy">never</property>
+                            <child>
+                              <object class="GtkListBox" id="requests_list_box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="expand">True</property>
+                                <signal name="row-activated" handler="requests_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                          </object>
                         </child>
                       </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
                     </child>
                     <child>
                       <object class="GtkSeparator">

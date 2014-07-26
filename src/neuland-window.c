@@ -30,10 +30,14 @@ struct _NeulandWindowPrivate
   NeulandTox      *tox;
   GtkWidget       *me_button;
   GtkWidget       *me_widget;
+  GtkWidget       *scrolled_window_contacts;
+  GtkWidget       *scrolled_window_requests;
   GtkListBox      *contacts_list_box;
+  GtkListBox      *requests_list_box;
   GtkHeaderBar    *right_header_bar;
   GtkHeaderBar    *left_header_bar;
   GtkStack        *chat_stack;
+  GtkStack        *side_pane_stack;
   GHashTable      *contact_widgets;
   GHashTable      *chat_widgets;
   GtkButton       *requests_button;
@@ -93,6 +97,15 @@ neuland_window_get_chat_widget_for_contact (NeulandWindow *window,
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), chat_widget);
 
   return chat_widget;
+}
+
+static GtkWidget *
+neuland_window_get_contact_widget_for_contact (NeulandWindow *window,
+                                               NeulandContact *contact)
+{
+  GHashTable *contact_widgets = window->priv->contact_widgets;
+  GtkWidget *widget = GTK_WIDGET (g_hash_table_lookup (contact_widgets, contact));
+  return widget;
 }
 
 /* Show or hide Accept and Discard buttons and set the chat widget's
@@ -160,6 +173,17 @@ neuland_window_get_active_contact (NeulandWindow *window)
   GtkWidget *active_chat_widget = gtk_stack_get_visible_child (chat_stack);
 
   return neuland_chat_widget_get_contact (NEULAND_CHAT_WIDGET (active_chat_widget));
+}
+
+static void
+requests_list_box_row_activated_cb (NeulandWindow *window,
+                                    GtkListBoxRow *row,
+                                    gpointer user_data)
+{
+  NeulandContactWidget *widget = NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
+  NeulandContact *contact = neuland_contact_widget_get_contact (widget);
+
+  neuland_window_show_chat_for_contact (window, contact);
 }
 
 static void
@@ -266,22 +290,36 @@ neuland_window_contact_row_changed (NeulandWindow *window,
 
 /* This is used to get notified when a contact request has been
    accepted, in which case the contact's number changes from -1 to n,
-   where n >= 0. */
+   where n > -1. */
 static void
 neuland_window_on_number_changed_cb (NeulandWindow *window,
                                      GParamSpec *pspec,
                                      gpointer user_data)
 {
+  NeulandWindowPrivate *priv = window->priv;
   NeulandContact *contact = NEULAND_CONTACT (user_data);
-  /* Re-filter the row for contact */
-  neuland_window_contact_row_changed (window, contact);
+  GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
+
+  if (neuland_contact_get_number (contact) > -1)
+    {
+      /* Move contact from requests_list_box to contacts_list_box. */
+      g_object_ref (row);
+      gtk_container_remove (GTK_CONTAINER (priv->requests_list_box), GTK_WIDGET (row));
+      gtk_list_box_insert (priv->contacts_list_box, row, -1);
+      g_object_unref (row);
+    }
 }
 
 
+/* Adds @contact to either the contacts_list_box or the
+   requests_list_box of the @window, depening on whether @contact is a
+   normal contact or a request and maybe activates it. */
 static void
 neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 {
-  g_message ("Adding contact %p to NeulandWindow %p", contact, window);
+  g_debug ("Adding contact %p to NeulandWindow %p", contact, window);
+  g_return_if_fail (NEULAND_IS_WINDOW (window));
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
   NeulandWindowPrivate *priv = window->priv;
 
   g_object_connect (contact,
@@ -296,12 +334,20 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
                     NULL);
 
   GtkWidget *contact_widget = neuland_contact_widget_new (contact);
+  gboolean contact_is_request = neuland_contact_is_request (contact);
+  gboolean showing_requests = g_variant_get_boolean (g_action_group_get_action_state
+                                                     (G_ACTION_GROUP (window), "show-requests"));
+  GtkListBox *list_box = contact_is_request ? priv->requests_list_box : priv->contacts_list_box;
+  GtkWidget *selected_row = GTK_WIDGET (gtk_list_box_get_selected_row (list_box));
 
   g_hash_table_insert (priv->contact_widgets, contact, contact_widget);
-  gtk_list_box_insert (priv->contacts_list_box, contact_widget, -1);
+  gtk_list_box_insert (list_box, contact_widget, -1);
 
-  GtkWidget *selected_row = GTK_WIDGET (gtk_list_box_get_selected_row (priv->contacts_list_box));
-  if (selected_row == NULL || !gtk_widget_get_visible (gtk_bin_get_child (GTK_BIN (selected_row))))
+  if ((contact_is_request && showing_requests && selected_row == NULL)
+      || (!contact_is_request && !showing_requests && selected_row == NULL))
+    /* If the side pane is currently showing contacts/requests and we
+       instert a contact/request and no contact/request in side pane
+       is selected yet, activate the just inserted one. */
     neuland_window_activate_contact (window, contact);
 }
 
@@ -636,47 +682,18 @@ activate_discard_request (GSimpleAction *action,
   neuland_tox_remove_contact (priv->tox, contact);
 }
 
-/* Filter function for showing only existing contacts */
-static gboolean
-contacts_list_box_filter_func_contacts (GtkListBoxRow *row,
-                                        gpointer user_data)
-{
-  NeulandWindow *window = NEULAND_WINDOW (user_data);
-  NeulandContactWidget *contact_widget =
-    NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
-  NeulandContact *contact = neuland_contact_widget_get_contact (contact_widget);
-
-  return !neuland_contact_is_request (contact);
-}
-
-/* Filter function for showing only open friend requests */
-static gboolean
-contacts_list_box_filter_func_requests (GtkListBoxRow *row,
-                                        gpointer user_data)
-{
-  NeulandWindow *window = NEULAND_WINDOW (user_data);
-  NeulandContactWidget *contact_widget =
-    NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
-  NeulandContact *contact = neuland_contact_widget_get_contact (contact_widget);
-
-  return neuland_contact_is_request (contact);
-}
-
 static void
 neuland_window_show_requests_state_changed (GSimpleAction *action,
                                             GVariant *parameter,
                                             gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandWindowPrivate *priv = window->priv;
   gboolean show_requests = g_variant_get_boolean (parameter);
-  GtkListBox *list_box = window->priv->contacts_list_box;
+  GtkWidget *show =
+    GTK_WIDGET (show_requests ? priv->scrolled_window_requests : priv->scrolled_window_contacts);
 
-  if (show_requests)
-    gtk_list_box_set_filter_func (list_box, contacts_list_box_filter_func_requests,
-                                  window, NULL);
-  else
-    gtk_list_box_set_filter_func (list_box, contacts_list_box_filter_func_contacts,
-                                  window, NULL);
+  gtk_stack_set_visible_child (priv->side_pane_stack, show);
 
   g_simple_action_set_state (action, parameter);
 }
@@ -724,7 +741,11 @@ neuland_window_class_init (NeulandWindowClass *klass)
 
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, me_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, contacts_list_box);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_list_box);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, chat_stack);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, side_pane_stack);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, scrolled_window_contacts);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, scrolled_window_requests);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, right_header_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, left_header_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, gear_button);
@@ -735,6 +756,7 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, pending_requests_label);
 
   gtk_widget_class_bind_template_callback(widget_class, contacts_list_box_row_activated_cb);
+  gtk_widget_class_bind_template_callback(widget_class, requests_list_box_row_activated_cb);
 
   gobject_class->set_property = neuland_window_set_property;
   gobject_class->get_property = neuland_window_get_property;
@@ -794,7 +816,7 @@ neuland_window_init (NeulandWindow *window)
 
   /* Set up list box for contacts */
   gtk_list_box_set_header_func (priv->contacts_list_box, contacts_list_box_header_func, NULL, NULL);
-  gtk_list_box_set_filter_func (priv->contacts_list_box, contacts_list_box_filter_func_contacts, window, NULL);
+  gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
   g_object_unref (G_OBJECT (builder));
 }

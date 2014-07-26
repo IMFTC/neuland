@@ -429,8 +429,8 @@ on_friend_request_idle (gpointer user_data)
                     NULL);
 
   g_hash_table_insert (priv->requests_ht, contact, contact);
-  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
   g_signal_emit (tox, signals[CONTACT_ADD], 0, contact);
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
 
   g_free (data->public_key);
   g_free (data->message);
