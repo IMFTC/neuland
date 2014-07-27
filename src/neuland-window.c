@@ -340,13 +340,6 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 
   g_hash_table_insert (priv->contact_widgets, contact, contact_widget);
   gtk_list_box_insert (list_box, contact_widget, -1);
-
-  if ((contact_is_request && showing_requests && selected_row == NULL)
-      || (!contact_is_request && !showing_requests && selected_row == NULL))
-    /* If the side pane is currently showing contacts/requests and we
-       instert a contact/request and no contact/request in side pane
-       is selected yet, activate the just inserted one. */
-    neuland_window_activate_contact (window, contact);
 }
 
 static void
