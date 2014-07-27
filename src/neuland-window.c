@@ -59,6 +59,8 @@ struct _NeulandWindowPrivate
 
   GBinding        *name_binding;
   GBinding        *status_binding;
+
+  NeulandContact  *active_contact;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -132,8 +134,8 @@ neuland_window_update_request_mode (NeulandWindow *window,
 
 
 static void
-neuland_window_show_chat_for_contact (NeulandWindow *window,
-                                      NeulandContact *contact)
+neuland_window_show_contact (NeulandWindow *window,
+                                 NeulandContact *contact)
 {
   g_return_if_fail (NEULAND_IS_WINDOW (window));
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
@@ -170,6 +172,7 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
                                                  G_BINDING_SYNC_CREATE);
 
   gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
+  priv->active_contact = contact;
   neuland_window_update_request_mode (window, contact);
 }
 
@@ -178,11 +181,7 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
 NeulandContact *
 neuland_window_get_active_contact (NeulandWindow *window)
 {
-  NeulandWindowPrivate *priv = window->priv;
-  GtkStack *chat_stack = priv->chat_stack;
-  GtkWidget *active_chat_widget = gtk_stack_get_visible_child (chat_stack);
-
-  return neuland_chat_widget_get_contact (NEULAND_CHAT_WIDGET (active_chat_widget));
+  return window->priv->active_contact;
 }
 
 static void
@@ -193,7 +192,7 @@ requests_list_box_row_activated_cb (NeulandWindow *window,
   NeulandContactWidget *widget = NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
   NeulandContact *contact = neuland_contact_widget_get_contact (widget);
 
-  neuland_window_show_chat_for_contact (window, contact);
+  neuland_window_show_contact (window, contact);
 }
 
 static void
@@ -204,7 +203,7 @@ contacts_list_box_row_activated_cb (NeulandWindow *window,
   NeulandContactWidget *widget = NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
   NeulandContact *contact = neuland_contact_widget_get_contact (widget);
 
-  neuland_window_show_chat_for_contact (window, contact);
+  neuland_window_show_contact (window, contact);
 }
 
 static void
@@ -661,8 +660,9 @@ activate_accept_request (GSimpleAction *action,
                          gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
-  NeulandContact *contact = neuland_window_get_active_contact (window);
-  NeulandTox *tox = window->priv->tox;
+  NeulandWindowPrivate *priv = window->priv;
+  NeulandContact *contact = priv->active_contact;
+  NeulandTox *tox = priv->tox;
 
   neuland_tox_accept_contact_request (tox, contact);
   neuland_window_update_request_mode (window, contact);
@@ -675,7 +675,8 @@ activate_discard_request (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = neuland_window_get_active_contact (window);
+  NeulandContact *contact = priv->active_contact;
+  NeulandTox *tox = priv->tox;
 
   neuland_tox_remove_contact (priv->tox, contact);
 }
