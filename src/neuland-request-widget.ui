@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.1 -->
+<interface>
+  <requires lib="gtk+" version="3.12"/>
+  <object class="GtkTextBuffer" id="request_widget_text_buffer">
+    <property name="text" translatable="yes">Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text vNeuland Test Text v</property>
+  </object>
+  <object class="GtkBox" id="request_widget">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="orientation">vertical</property>
+    <property name="spacing">12</property>
+    <child>
+      <object class="GtkLabel" id="label1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">&lt;b&gt;Contact Request from Tox ID:&lt;/b&gt;</property>
+        <property name="use_markup">True</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="request_widget_tox_id_label">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">00094EC89F29C9FAB0A665A221F37B2D60A2646DD45777C6DDB187994D42CA4266EE462ECF74</property>
+        <property name="justify">center</property>
+        <property name="wrap">True</property>
+        <property name="wrap_mode">word-char</property>
+        <property name="selectable">True</property>
+        <property name="max_width_chars">39</property>
+        <attributes>
+          <attribute name="font-desc" value="Monospace 10"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel" id="label2">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">&lt;b&gt;Message:&lt;/b&gt;</property>
+        <property name="use_markup">True</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+        <property name="position">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolledwindow1">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="hscrollbar_policy">never</property>
+        <property name="shadow_type">in</property>
+        <property name="min_content_height">180</property>
+        <child>
+          <object class="GtkTextView" id="textview1">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="wrap_mode">word-char</property>
+            <property name="buffer">request_widget_text_buffer</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+        <property name="position">3</property>
+      </packing>
+    </child>
+  </object>
+</interface>

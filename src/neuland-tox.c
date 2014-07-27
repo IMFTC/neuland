@@ -421,6 +421,8 @@ on_friend_request_idle (gpointer user_data)
   g_message ("Received contact request from: %s", public_key_string);
 
   NeulandContact *contact = neuland_contact_new (public_key, -1, 0);
+  neuland_contact_set_request_message (contact, data->message);
+
 
   g_object_connect (contact,
                     "signal::outgoing-message", on_outgoing_message_cb, tox,

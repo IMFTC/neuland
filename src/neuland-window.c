@@ -38,8 +38,6 @@ struct _NeulandWindowPrivate
   GtkHeaderBar    *left_header_bar;
   GtkStack        *chat_stack;
   GtkStack        *side_pane_stack;
-  GHashTable      *contact_widgets;
-  GHashTable      *chat_widgets;
   GtkLabel        *pending_requests_label;
   GtkButton       *gear_button;
 
@@ -50,7 +48,15 @@ struct _NeulandWindowPrivate
   GtkToggleButton *select_button;
   gint             me_button_height;
   GtkWidget       *welcome_widget;
-  GtkWidget       *tox_id_label;
+  GtkLabel        *welcome_widget_tox_id_label;
+
+  GtkWidget       *request_widget;
+  GtkLabel        *request_widget_tox_id_label;
+  GtkTextBuffer   *request_widget_text_buffer;
+
+  GHashTable      *contact_widgets;
+  GHashTable      *chat_widgets;
+
   GBinding        *name_binding;
   GBinding        *status_binding;
 };
@@ -110,23 +116,18 @@ neuland_window_get_contact_widget_for_contact (NeulandWindow *window,
   return widget;
 }
 
-/* Show or hide Accept and Discard buttons and set the chat widget's
-   sensitivity depending on whether the currently active contact is a
-   pending request or not. */
+/* Show or hide Accept and Discard buttons depending on whether
+   @contact is a pending request or not. */
 static void
-neuland_window_update_request_mode (NeulandWindow *window)
+neuland_window_update_request_mode (NeulandWindow *window,
+                                    NeulandContact *contact)
 {
-  g_debug ("neuland_window_update_request_mode");
-
+  g_debug ("neuland_window_update_request_mode (window %p, contact %p)", window, contact);
   NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = neuland_window_get_active_contact (window);
-  GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
   gboolean is_request = neuland_contact_is_request (contact);
 
   gtk_revealer_set_reveal_child (priv->accept_button_revealer, is_request);
   gtk_revealer_set_reveal_child (priv->discard_button_revealer, is_request);
-
-  gtk_widget_set_sensitive (GTK_WIDGET (chat_widget), !is_request);
 }
 
 
@@ -141,13 +142,21 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
 
   g_debug ("Showing chat for contact: '%s' (%p)", neuland_contact_get_name (contact), contact);
 
-  GtkWidget *chat_widget = GTK_WIDGET (g_hash_table_lookup (priv->chat_widgets, contact));
+  GtkWidget *chat_widget;
 
-  if (chat_widget == NULL)
-    chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
-
-  gtk_stack_set_visible_child (GTK_STACK (priv->chat_stack), chat_widget);
-  neuland_contact_reset_unread_messages (contact);
+  if (neuland_contact_is_request (contact))
+    {
+      chat_widget = priv->request_widget;
+      gtk_label_set_label (priv->request_widget_tox_id_label,
+                           neuland_contact_get_tox_id_hex (contact));
+      gtk_text_buffer_set_text (priv->request_widget_text_buffer,
+                                neuland_contact_get_request_message (contact), -1);
+    }
+  else
+    {
+      chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
+      neuland_contact_reset_unread_messages (contact);
+    }
 
   // Destroy old bindings
   g_clear_object (&priv->name_binding);
@@ -159,7 +168,9 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   priv->status_binding = g_object_bind_property (contact, "status-message",
                                                  priv->right_header_bar, "subtitle",
                                                  G_BINDING_SYNC_CREATE);
-  neuland_window_update_request_mode (window);
+
+  gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
+  neuland_window_update_request_mode (window, contact);
 }
 
 /* Returns the contact whose chat widget is currently visible in window.
@@ -256,17 +267,6 @@ neuland_window_activate_contact (NeulandWindow *window,
   GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
   if (row != NULL)
     gtk_widget_activate (row);
-}
-
-
-static void
-neuland_window_activate_first_contact (NeulandWindow *window)
-{
-  NeulandWindowPrivate *priv = window->priv;
-  GtkWidget *first_row = GTK_WIDGET (gtk_list_box_get_row_at_index (priv->contacts_list_box, 0));
-
-  if (first_row)
-    gtk_widget_activate (first_row);
 }
 
 /* This function must be called when ever a contact property relevant
@@ -372,8 +372,6 @@ neuland_window_remove_contact (NeulandWindow *window, NeulandContact *contact)
     }
 
   g_hash_table_remove (priv->contact_widgets, contact);
-
-  neuland_window_activate_first_contact (window);
 }
 
 static void
@@ -511,7 +509,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
 
   g_object_get (priv->tox, "tox-id-hex", &id, NULL);
   g_message ("Tox ID for window %p: %s", window, id);
-  gtk_label_set_text (GTK_LABEL (priv->tox_id_label), id);
+  gtk_label_set_text (priv->welcome_widget_tox_id_label, id);
 
   g_object_bind_property (tox, "pending-requests", priv->pending_requests_label, "label", 0);
 
@@ -667,7 +665,7 @@ activate_accept_request (GSimpleAction *action,
   NeulandTox *tox = window->priv->tox;
 
   neuland_tox_accept_contact_request (tox, contact);
-  neuland_window_update_request_mode (window);
+  neuland_window_update_request_mode (window, contact);
 }
 
 static void
@@ -792,18 +790,31 @@ neuland_window_init (NeulandWindow *window)
   builder = gtk_builder_new_from_resource ("/org/tox/neuland/neuland-window-menu.ui");
   gtk_builder_add_from_resource (builder, "/org/tox/neuland/neuland-me-status-menu.ui", NULL);
   gtk_builder_add_from_resource (builder, "/org/tox/neuland/neuland-welcome-widget.ui", NULL);
+  gtk_builder_add_from_resource (builder, "/org/tox/neuland/neuland-request-widget.ui", NULL);
 
   gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (priv->gear_button),
                                   (GMenuModel*) gtk_builder_get_object (builder, "win-menu"));
 
   g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window);
 
+  /* Prepare welcome widget */
   priv->welcome_widget = GTK_WIDGET (gtk_builder_get_object  (builder, "welcome-widget"));
-  GtkWidget *tox_id_label = GTK_WIDGET (gtk_builder_get_object (builder, "tox_id_label"));
-  priv->tox_id_label = tox_id_label;
+  priv->welcome_widget_tox_id_label =
+    GTK_LABEL (gtk_builder_get_object (builder, "welcome_widget_tox_id_label"));
+  g_message ("adding welcome_widget ...");
 
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->welcome_widget);
 
+  /* Prepare contact request widget */
+  priv->request_widget = GTK_WIDGET (gtk_builder_get_object  (builder, "request_widget"));
+  priv->request_widget_text_buffer =
+    GTK_TEXT_BUFFER (gtk_builder_get_object  (builder, "request_widget_text_buffer"));
+  priv->request_widget_tox_id_label =
+    GTK_LABEL (gtk_builder_get_object  (builder, "request_widget_tox_id_label"));
+  g_message ("adding request_widget ...");
+  gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->request_widget);
+
+  /* Me widget */
   priv->me_widget = neuland_contact_widget_new (NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget), "...");
   neuland_contact_widget_set_status (NEULAND_CONTACT_WIDGET (priv->me_widget), NEULAND_CONTACT_STATUS_NONE);
