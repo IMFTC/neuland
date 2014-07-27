@@ -272,6 +272,27 @@ neuland_window_activate_contact (NeulandWindow *window,
     gtk_widget_activate (row);
 }
 
+
+/* Returns TRUE on success, FALSE if there is no row in the list. */
+static gboolean
+neuland_window_activate_first_contact_or_request (NeulandWindow *window)
+{
+  NeulandWindowPrivate *priv = window->priv;
+  gboolean showing_requests =
+    g_variant_get_boolean (g_action_group_get_action_state (G_ACTION_GROUP (window),
+                                                            "show-requests"));
+  GtkListBox *list_box = showing_requests ? priv->requests_list_box : priv->contacts_list_box;
+  GtkWidget *first_row = GTK_WIDGET (gtk_list_box_get_row_at_index (list_box, 0));
+
+  if (first_row != NULL)
+    {
+      gtk_widget_activate (first_row);
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
 /* This function must be called when ever a contact property relevant
    to the filtering or sorting of the contact widget changes, in order
    to re-filter and re-sort it. */
@@ -669,7 +690,7 @@ discard_request_activated (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = priv->active_contact;
+  NeulandContact *contact = priv->active_request;
   NeulandTox *tox = priv->tox;
 
   neuland_tox_remove_contact (priv->tox, contact);
@@ -684,27 +705,40 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
   NeulandWindowPrivate *priv = window->priv;
   gboolean show_requests = g_variant_get_boolean (parameter);
 
+  /* neuland_window_activate_first_contact_or_request() below depends
+     on this being already set. */
+  g_simple_action_set_state (action, parameter);
+
   if (show_requests)
     {
+      /* When switching to requests we make sure to always select one,
+         if there isn't an active selection yet. We can only switch to
+         this state if there are requests anyway. */
       NeulandContact *active_request = priv->active_request;
       gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_requests);
-      if (active_request)
+      if (active_request != NULL)
         neuland_window_activate_contact (window, active_request);
       else
-        neuland_window_show_welcome_widget (window);
+        if (!neuland_window_activate_first_contact_or_request (window))
+          {
+            g_warning ("Switched to requests while there are no requests,"
+                       "going to show the welcome widget.");
+            neuland_window_show_welcome_widget (window);
+          }
     }
   else
     {
+      /* When switching to contacts, we do *not* automatically select
+         one, but show the welcome widget in case there is no active
+         selection yet. */
       NeulandContact *active_contact = priv->active_contact;
       gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
       neuland_window_activate_contact (window, priv->active_request);
-      if (active_contact)
+      if (active_contact != NULL)
         neuland_window_activate_contact (window, active_contact);
       else
         neuland_window_show_welcome_widget (window);
     }
-
-  g_simple_action_set_state (action, parameter);
 }
 
 static GActionEntry win_entries[] = {
