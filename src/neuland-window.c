@@ -60,7 +60,10 @@ struct _NeulandWindowPrivate
   GBinding        *name_binding;
   GBinding        *status_binding;
 
+  /* Remember the selected contact/request when we toggle between
+     contacts and requests. */
   NeulandContact  *active_contact;
+  NeulandContact  *active_request;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -153,11 +156,13 @@ neuland_window_show_contact (NeulandWindow *window,
                            neuland_contact_get_tox_id_hex (contact));
       gtk_text_buffer_set_text (priv->request_widget_text_buffer,
                                 neuland_contact_get_request_message (contact), -1);
+      priv->active_request = contact;
     }
   else
     {
       chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
       neuland_contact_reset_unread_messages (contact);
+      priv->active_contact = contact;
     }
 
   // Destroy old bindings
@@ -172,7 +177,6 @@ neuland_window_show_contact (NeulandWindow *window,
                                                  G_BINDING_SYNC_CREATE);
 
   gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
-  priv->active_contact = contact;
   neuland_window_update_request_mode (window, contact);
 }
 
@@ -654,7 +658,7 @@ accept_request_activated (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = priv->active_contact;
+  NeulandContact *contact = priv->active_request;
   NeulandTox *tox = priv->tox;
 
   neuland_tox_accept_contact_request (tox, contact);
@@ -682,11 +686,26 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
   gboolean show_requests = g_variant_get_boolean (parameter);
-  GtkWidget *show =
-    GTK_WIDGET (show_requests ? priv->scrolled_window_requests : priv->scrolled_window_contacts);
 
-  gtk_stack_set_visible_child (priv->side_pane_stack, show);
-
+  if (show_requests)
+    {
+      NeulandContact *active_request = priv->active_request;
+      gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_requests);
+      if (active_request)
+        neuland_window_activate_contact (window, active_request);
+      else
+        neuland_window_show_welcome_widget (window);
+    }
+  else
+    {
+      NeulandContact *active_contact = priv->active_contact;
+      gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
+      neuland_window_activate_contact (window, priv->active_request);
+      if (active_contact)
+        neuland_window_activate_contact (window, active_contact);
+      else
+        neuland_window_show_welcome_widget (window);
+    }
 
   g_simple_action_set_state (action, parameter);
 }
