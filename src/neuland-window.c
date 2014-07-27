@@ -121,21 +121,6 @@ neuland_window_get_contact_widget_for_contact (NeulandWindow *window,
   return widget;
 }
 
-/* Show or hide Accept and Discard buttons depending on whether
-   @contact is a pending request or not. */
-static void
-neuland_window_update_request_mode (NeulandWindow *window,
-                                    NeulandContact *contact)
-{
-  g_debug ("neuland_window_update_request_mode (window %p, contact %p)", window, contact);
-  NeulandWindowPrivate *priv = window->priv;
-  gboolean is_request = neuland_contact_is_request (contact);
-
-  gtk_revealer_set_reveal_child (priv->accept_button_revealer, is_request);
-  gtk_revealer_set_reveal_child (priv->discard_button_revealer, is_request);
-}
-
-
 static void
 neuland_window_show_contact (NeulandWindow *window,
                                  NeulandContact *contact)
@@ -177,7 +162,6 @@ neuland_window_show_contact (NeulandWindow *window,
                                                  G_BINDING_SYNC_CREATE);
 
   gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
-  neuland_window_update_request_mode (window, contact);
 }
 
 /* Returns the contact whose chat widget is currently visible in window.
@@ -680,7 +664,6 @@ accept_request_activated (GSimpleAction *action,
   NeulandTox *tox = priv->tox;
 
   neuland_tox_accept_contact_request (tox, contact);
-  neuland_window_update_request_mode (window, contact);
 }
 
 static void
@@ -739,6 +722,11 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
       else
         neuland_window_show_welcome_widget (window);
     }
+
+  /* Show or hide Accept and Discard buttons depending on the action's
+     state. */
+  gtk_revealer_set_reveal_child (priv->accept_button_revealer, show_requests);
+  gtk_revealer_set_reveal_child (priv->discard_button_revealer, show_requests);
 }
 
 static GActionEntry win_entries[] = {
