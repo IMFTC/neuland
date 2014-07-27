@@ -29,12 +29,12 @@
       <object class="GtkLabel" id="request_widget_tox_id_label">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">00094EC89F29C9FAB0A665A221F37B2D60A2646DD45777C6DDB187994D42CA4266EE462ECF74</property>
+        <property name="label" translatable="yes">951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F</property>
         <property name="justify">center</property>
         <property name="wrap">True</property>
-        <property name="wrap_mode">word-char</property>
+        <property name="wrap_mode">char</property>
         <property name="selectable">True</property>
-        <property name="max_width_chars">39</property>
+        <property name="max_width_chars">32</property>
         <attributes>
           <attribute name="font-desc" value="Monospace 10"/>
         </attributes>
@@ -69,6 +69,7 @@
           <object class="GtkTextView" id="textview1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="editable">False</property>
             <property name="wrap_mode">word-char</property>
             <property name="buffer">request_widget_text_buffer</property>
           </object>
