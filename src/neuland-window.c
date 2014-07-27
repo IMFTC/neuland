@@ -608,9 +608,9 @@ neuland_window_selection_state_changed (GSimpleAction *action,
 }
 
 void
-neuland_window_change_status (GSimpleAction *action,
-                              GVariant      *parameter,
-                              gpointer       user_data)
+neuland_window_status_state_changed (GSimpleAction *action,
+                                     GVariant      *parameter,
+                                     gpointer       user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandContactStatus status = (NeulandContactStatus)g_variant_get_int32 (parameter);
@@ -641,9 +641,9 @@ on_add_dialog_response (GtkDialog *dialog,
 }
 
 static void
-activate_add_contact (GSimpleAction *action,
-                      GVariant *parameter,
-                      gpointer user_data)
+add_contact_activated (GSimpleAction *action,
+                       GVariant *parameter,
+                       gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   GtkWidget *add_dialog = neuland_add_dialog_new ();
@@ -655,9 +655,9 @@ activate_add_contact (GSimpleAction *action,
 }
 
 static void
-activate_accept_request (GSimpleAction *action,
-                         GVariant *parameter,
-                         gpointer user_data)
+accept_request_activated (GSimpleAction *action,
+                          GVariant *parameter,
+                          gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
@@ -669,9 +669,9 @@ activate_accept_request (GSimpleAction *action,
 }
 
 static void
-activate_discard_request (GSimpleAction *action,
-                          GVariant *parameter,
-                          gpointer user_data)
+discard_request_activated (GSimpleAction *action,
+                           GVariant *parameter,
+                           gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
@@ -694,15 +694,16 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
 
   gtk_stack_set_visible_child (priv->side_pane_stack, show);
 
+
   g_simple_action_set_state (action, parameter);
 }
 
 static GActionEntry win_entries[] = {
-  { "change-status", NULL, "i", "0", neuland_window_change_status },
+  { "change-status", NULL, "i", "0", neuland_window_status_state_changed },
   { "selection-state", NULL, NULL, "false", neuland_window_selection_state_changed },
-  { "add-contact", activate_add_contact },
-  { "accept-request", activate_accept_request },
-  { "discard-request", activate_discard_request },
+  { "add-contact", add_contact_activated },
+  { "accept-request", accept_request_activated },
+  { "discard-request", discard_request_activated },
   { "show-requests", NULL, NULL, "false", neuland_window_show_requests_state_changed }
 };
 
