@@ -337,10 +337,7 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 
   GtkWidget *contact_widget = neuland_contact_widget_new (contact);
   gboolean contact_is_request = neuland_contact_is_request (contact);
-  gboolean showing_requests = g_variant_get_boolean (g_action_group_get_action_state
-                                                     (G_ACTION_GROUP (window), "show-requests"));
   GtkListBox *list_box = contact_is_request ? priv->requests_list_box : priv->contacts_list_box;
-  GtkWidget *selected_row = GTK_WIDGET (gtk_list_box_get_selected_row (list_box));
 
   g_hash_table_insert (priv->contact_widgets, contact, contact_widget);
   gtk_list_box_insert (list_box, contact_widget, -1);
