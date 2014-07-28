@@ -370,6 +370,13 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
           g_debug ("/nick command recognized");
           neuland_tox_set_name (priv->tox, g_strchug(string+6));
         }
+      else if (g_ascii_strncasecmp (string, "/myid", 5) == 0)
+        {
+          /* TODO: We don't have any text type beside messages and
+             actions yet, so using an action here is a workaround. */
+          g_debug ("/myid command recognized");
+          insert_action (widget, neuland_tox_get_tox_id_hex (priv->tox), DIRECTION_IN);
+        }
       else
         g_message ("Unknown command: %s", string);
     }
