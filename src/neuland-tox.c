@@ -619,7 +619,7 @@ neuland_tox_load_contacts (NeulandTox *tox)
   g_mutex_unlock (&priv->mutex);
 }
 
-void *
+void
 neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
                                           const gchar *hex_address,
                                           const gchar *message)
@@ -642,7 +642,7 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
   g_free (tmp_message);
 
   if (friend_number < 0)
-    return NULL;
+    return;
 
   neuland_tox_load_contacts (tox);
 
