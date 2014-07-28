@@ -909,7 +909,7 @@ neuland_tox_get_pending_requests (NeulandTox *tox)
   return g_hash_table_size (tox->priv->requests_ht);
 }
 
-static char *
+const char *
 neuland_tox_get_tox_id_hex (NeulandTox *tox)
 {
   return tox->priv->tox_id_hex;
