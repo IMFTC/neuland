@@ -51,6 +51,7 @@ struct _NeulandToxClass
   /* Signals */
 
   void (* connection_status_changed) (NeulandTox *tox, NeulandContact *contact);
+  void (* remove_contacts) (NeulandTox *tox, GSList *contacts, gpointer user_data);
 };
 
 NeulandTox *

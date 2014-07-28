@@ -123,7 +123,7 @@ neuland_window_get_contact_widget_for_contact (NeulandWindow *window,
 
 static void
 neuland_window_show_contact (NeulandWindow *window,
-                                 NeulandContact *contact)
+                             NeulandContact *contact)
 {
   g_return_if_fail (NEULAND_IS_WINDOW (window));
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
@@ -349,27 +349,31 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 }
 
 static void
-neuland_window_remove_contact (NeulandWindow *window, NeulandContact *contact)
+neuland_window_remove_contacts (NeulandWindow *window, const GSList *contacts)
 {
-  g_message ("Removing contact %p from NeulandWindow %p", contact, window);
+  g_message ("Removing contacts from NeulandWindow %p", window);
   g_return_if_fail (NEULAND_IS_WINDOW (window));
-  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  g_return_if_fail (NEULAND_IS_CONTACT (contacts->data));
 
   NeulandWindowPrivate *priv = window->priv;
-
-  /* Destroy the widgets related to contact */
-  GtkWidget *contact_widget = GTK_WIDGET (g_hash_table_lookup (priv->contact_widgets, contact));
-  GtkWidget *chat_widget = GTK_WIDGET (g_hash_table_lookup (priv->chat_widgets, contact));
-  GtkListBoxRow *row = GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
-
-  gtk_widget_destroy (GTK_WIDGET (row));
-  if (chat_widget)
+  const GSList *l;
+  for (l = contacts; l; l = l->next)
     {
-      g_hash_table_remove (priv->chat_widgets, contact);
-      gtk_widget_destroy (chat_widget);
-    }
+      NeulandContact *contact = l->data;
+      /* Destroy the widgets related to contact */
+      GtkWidget *contact_widget = GTK_WIDGET (g_hash_table_lookup (priv->contact_widgets, contact));
+      GtkWidget *chat_widget = GTK_WIDGET (g_hash_table_lookup (priv->chat_widgets, contact));
+      GtkListBoxRow *row = GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
 
-  g_hash_table_remove (priv->contact_widgets, contact);
+      gtk_widget_destroy (GTK_WIDGET (row));
+      if (chat_widget)
+        {
+          g_hash_table_remove (priv->chat_widgets, contact);
+          gtk_widget_destroy (chat_widget);
+        }
+
+      g_hash_table_remove (priv->contact_widgets, contact);
+    }
 }
 
 static void
@@ -453,13 +457,11 @@ on_contact_add_cb (NeulandWindow *window,
 }
 
 static void
-on_contact_remove_cb (NeulandWindow *window,
-                      GObject *gobject,
-                      gpointer user_data)
+on_remove_contacts_cb (NeulandWindow *window,
+                       GSList *contacts,
+                       gpointer user_data)
 {
-  NeulandContact *contact = NEULAND_CONTACT (gobject);
-
-  neuland_window_remove_contact (window, contact);
+  neuland_window_remove_contacts (window, contacts);
 }
 
 /* This function is not used anywhere yet. */
@@ -515,7 +517,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
                     "signal::notify::self-name", on_name_change_cb, window,
                     "signal::notify::status-message", on_status_message_change_cb, window,
                     "swapped-signal::contact-add", on_contact_add_cb, window,
-                    "swapped-signal::contact-remove", on_contact_remove_cb, window,
+                    "swapped-signal::remove-contacts", on_remove_contacts_cb, window,
                     "swapped-signal::notify::pending-requests", on_pending_requests_cb, window,
                     NULL);
   neuland_contact_widget_set_name (NEULAND_CONTACT_WIDGET (priv->me_widget),
@@ -676,7 +678,9 @@ discard_request_activated (GSimpleAction *action,
   NeulandContact *contact = priv->active_request;
   NeulandTox *tox = priv->tox;
 
-  neuland_tox_remove_contact (priv->tox, contact);
+  GSList *contacts = g_slist_prepend (NULL, contact);
+  neuland_tox_remove_contacts (priv->tox, contacts);
+  g_slist_free (contacts);
 }
 
 static void

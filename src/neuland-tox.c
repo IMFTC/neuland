@@ -70,7 +70,7 @@ enum {
 
 enum {
   CONTACT_ADD,
-  CONTACT_REMOVE,
+  REMOVE_CONTACTS,
   LAST_SIGNAL
 };
 
@@ -652,38 +652,73 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
 }
 
 void
-neuland_tox_remove_contact (NeulandTox *tox, NeulandContact *contact)
+remove_contacts (NeulandTox *tox,
+                 GSList *removed_contacts,
+                 gpointer user_data)
+{
+  NeulandToxPrivate *priv = tox->priv;
+
+  GSList *l;
+  for (l = removed_contacts; l; l = l->next)
+    {
+      NeulandContact *contact = l->data;
+      gint64 number = neuland_contact_get_number (contact);
+
+      if (number < 0)
+        {
+          g_debug ("Removing contact %p from requests hash table");
+          g_hash_table_remove (priv->requests_ht, contact);
+        }
+      else
+        {
+          g_debug ("Removing contact %p from contacts hash table");
+          g_hash_table_remove (priv->contacts_ht, contact);
+        }
+    }
+}
+
+void
+neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
 {
   g_return_if_fail (NEULAND_IS_TOX (tox));
-  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  g_return_if_fail (NEULAND_IS_CONTACT (contacts->data));
 
   g_debug ("neuland_tox_remove_contact");
 
   NeulandToxPrivate *priv = tox->priv;
 
-  if (!neuland_contact_is_request (contact))
+  GSList *removed_contacts = NULL;
+  gboolean pending_requests_changed = FALSE;
+  GSList *l;
+  for (l = contacts; l; l = l->next)
     {
-      g_mutex_lock (&priv->mutex);
-      gint ret = tox_del_friend (priv->tox_struct, neuland_contact_get_number (contact));
-      g_mutex_unlock (&priv->mutex);
+      NeulandContact *contact  = l->data;
 
-      if (ret == -1)
-        g_warning ("Calling tox_del_friend failed for contact %p", contact);
+      if (neuland_contact_is_request (contact))
+        {
+          removed_contacts = g_slist_prepend (removed_contacts, contact);
+          pending_requests_changed = TRUE;
+        }
       else
         {
-          g_signal_emit (tox, signals[CONTACT_REMOVE], 0, contact);
-          g_debug ("Removing contact %p from the contacts hash table", contact);
-          g_hash_table_remove (priv->contacts_ht, contact);
-          g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
+          g_mutex_lock (&priv->mutex);
+          gint ret = tox_del_friend (priv->tox_struct, neuland_contact_get_number (contact));
+          g_mutex_unlock (&priv->mutex);
+
+          if (ret == -1)
+            g_warning ("Calling tox_del_friend failed for contact %p", contact);
+          else
+            removed_contacts = g_slist_prepend (removed_contacts, contact);
         }
     }
-  else
-    {
-      g_signal_emit (tox, signals[CONTACT_REMOVE], 0, contact);
-      g_debug ("Removing contact %p from the requests hash table", contact);
-      g_hash_table_remove (priv->requests_ht, contact);
-      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
-    }
+
+  if (removed_contacts)
+    g_signal_emit (tox, signals[REMOVE_CONTACTS], 0, removed_contacts);
+
+  if (pending_requests_changed)
+    g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
+
+  g_slist_free (removed_contacts);
 }
 
 
@@ -981,6 +1016,8 @@ neuland_tox_class_init (NeulandToxClass *klass)
   gobject_class->dispose = neuland_tox_dispose;
   gobject_class->finalize = neuland_tox_finalize;
 
+  klass->remove_contacts = remove_contacts;
+
   properties[PROP_DATA_PATH] =
     g_param_spec_string ("data-path",
                          "Data path",
@@ -1038,16 +1075,16 @@ neuland_tox_class_init (NeulandToxClass *klass)
                   G_TYPE_NONE,
                   1,
                   NEULAND_TYPE_CONTACT);
-  signals[CONTACT_REMOVE] =
-    g_signal_new ("contact-remove",
+  signals[REMOVE_CONTACTS] =
+    g_signal_new ("remove-contacts",
                   G_TYPE_FROM_CLASS (klass),
-                  G_SIGNAL_RUN_FIRST,
-                  0,
+                  G_SIGNAL_RUN_LAST,
+                  G_STRUCT_OFFSET (NeulandToxClass, remove_contacts),
                   NULL, NULL,
-                  g_cclosure_marshal_VOID__OBJECT,
+                  g_cclosure_marshal_VOID__POINTER,
                   G_TYPE_NONE,
                   1,
-                  NEULAND_TYPE_CONTACT);
+                  G_TYPE_POINTER);
 }
 
 static void
