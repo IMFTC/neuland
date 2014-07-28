@@ -428,7 +428,7 @@ neuland_contact_reset_unread_messages (NeulandContact *contact)
 }
 
 void
-neuland_contact_send_message (NeulandContact *contact, gchar *outgoing_message)
+neuland_contact_send_message (NeulandContact *contact, const gchar *outgoing_message)
 {
   g_signal_emit (contact,
                  signals[OUTGOING_MESSAGE],
@@ -447,7 +447,7 @@ neuland_contact_send_action (NeulandContact *contact, gchar *outgoing_action)
 
 void
 neuland_contact_signal_incoming_message (NeulandContact *contact,
-                                         gchar *incoming_message)
+                                         const gchar *incoming_message)
 {
   /* See note [*0] */
   if (!contact->priv->has_chat_widget)
@@ -465,7 +465,7 @@ neuland_contact_signal_incoming_message (NeulandContact *contact,
 
 void
 neuland_contact_signal_incoming_action (NeulandContact *contact,
-                                        gchar *incoming_action)
+                                        const gchar *incoming_action)
 {
   /* See note [*0] */
   if (!contact->priv->has_chat_widget)
@@ -483,7 +483,7 @@ neuland_contact_signal_incoming_action (NeulandContact *contact,
 
 static void
 incoming_action_or_message (NeulandContact *contact,
-                            gchar *message,
+                            const gchar *message,
                             gpointer user_data)
 {
   g_debug ("incoming_action_or_message");
@@ -513,6 +513,7 @@ neuland_contact_class_init (NeulandContactClass *klass)
   gobject_class->set_property = neuland_contact_set_property;
   gobject_class->get_property = neuland_contact_get_property;
   gobject_class->finalize = neuland_contact_finalize;
+
   klass->incoming_action_or_message = incoming_action_or_message;
 
   /* This differs from int32_t that tox uses, since there is no

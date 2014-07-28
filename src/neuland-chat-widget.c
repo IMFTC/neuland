@@ -136,7 +136,7 @@ neuland_chat_widget_set_show_contact_is_typing (NeulandChatWidget *chat_widget, 
 
 static void
 insert_text (NeulandChatWidget *widget,
-             gchar* message,
+             const gchar* text,
              MessageDirection direction,
              MessageType type)
 {
@@ -213,7 +213,7 @@ insert_text (NeulandChatWidget *widget,
 
   if (type == TYPE_ACTION)
     {
-      prefix = g_strdup_printf ("* %s %s", name, message);
+      prefix = g_strdup_printf ("* %s %s", name, text);
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
                                         priv->action_tag,
                                         NULL);
@@ -229,7 +229,7 @@ insert_text (NeulandChatWidget *widget,
           g_free (prefix);
         }
 
-      gtk_text_buffer_insert (text_buffer, &iter, message, -1);
+      gtk_text_buffer_insert (text_buffer, &iter, text, -1);
     }
 
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
@@ -255,7 +255,7 @@ insert_text (NeulandChatWidget *widget,
 
 static void
 insert_message (NeulandChatWidget *widget,
-                gchar* message,
+                const gchar* message,
                 MessageDirection direction)
 {
   insert_text (widget, message, direction, TYPE_TEXT);
@@ -263,7 +263,7 @@ insert_message (NeulandChatWidget *widget,
 
 static void
 insert_action (NeulandChatWidget *widget,
-               gchar* message,
+               const gchar* message,
                MessageDirection direction)
 {
   insert_text (widget, message, direction, TYPE_ACTION);
@@ -271,7 +271,7 @@ insert_action (NeulandChatWidget *widget,
 
 static void
 on_outgoing_message_cb (NeulandChatWidget *widget,
-                        gchar *message,
+                        const gchar *message,
                         gpointer user_data)
 {
   g_debug ("on_outgoing_message_cb");
@@ -280,7 +280,7 @@ on_outgoing_message_cb (NeulandChatWidget *widget,
 
 static void
 on_outgoing_action_cb (NeulandChatWidget *widget,
-                       gchar *action,
+                       const gchar *action,
                        gpointer user_data)
 {
   g_debug ("on_outgoing_action_cb");
@@ -289,7 +289,7 @@ on_outgoing_action_cb (NeulandChatWidget *widget,
 
 static void
 on_incoming_message_cb (NeulandChatWidget *widget,
-                        gchar *message,
+                        const gchar *message,
                         gpointer user_data)
 {
   g_debug ("on_incoming_message_cb");
@@ -298,7 +298,7 @@ on_incoming_message_cb (NeulandChatWidget *widget,
 
 static void
 on_incoming_action_cb (NeulandChatWidget *widget,
-                       gchar *action,
+                       const gchar *action,
                        gpointer user_data)
 {
   g_debug ("on_incoming_action_cb");

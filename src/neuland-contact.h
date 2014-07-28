@@ -52,7 +52,7 @@ struct _NeulandContactClass
   GObjectClass parent;
 
   void (* incoming_action_or_message) (NeulandContact *contact,
-                                       gchar *message,
+                                       const gchar *message,
                                        gpointer user_data);
 };
 
@@ -66,13 +66,13 @@ void
 neuland_contact_reset_unread_messages (NeulandContact *contact);
 
 void
-neuland_contact_send_message (NeulandContact *contact, gchar *outgoing_message);
+neuland_contact_send_message (NeulandContact *contact, const gchar *outgoing_message);
 
 void
-neuland_contact_signal_incoming_message (NeulandContact *contact, gchar *incoming_message);
+neuland_contact_signal_incoming_message (NeulandContact *contact, const gchar *incoming_message);
 
 void
-neuland_contact_signal_incoming_action (NeulandContact *contact, gchar *incoming_message);
+neuland_contact_signal_incoming_action (NeulandContact *contact, const gchar *incoming_message);
 
 void
 neuland_contact_set_name (NeulandContact *contact, const gchar *name);
