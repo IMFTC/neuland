@@ -9,38 +9,24 @@
     <property name="valign">center</property>
     <property name="orientation">vertical</property>
     <property name="spacing">12</property>
-    <property name="expand">True</property>
     <child>
       <object class="GtkLabel" id="label1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">&lt;b&gt;Welcome to Neuland!&lt;/b&gt;
-Don't have any contacts yet?</property>
-        <property name="use_markup">True</property>
+        <property name="label" translatable="yes">Neuland!</property>
         <property name="justify">center</property>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkButton" id="button1">
-        <property name="label" translatable="yes">Add one now!</property>
-        <property name="visible">True</property>
-        <property name="can_focus">True</property>
-        <property name="receives_default">True</property>
-        <property name="halign">center</property>
-        <property name="action_name">win.add-contact</property>
+        <attributes>
+          <attribute name="font-desc" value="16"/>
+          <attribute name="weight" value="bold"/>
+        </attributes>
         <style>
-          <class name="suggested-action"/>
+          <class name="dim-label"/>
         </style>
       </object>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">0</property>
       </packing>
     </child>
     <child>
@@ -53,7 +39,7 @@ Don't have any contacts yet?</property>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">2</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -72,7 +58,7 @@ Don't have any contacts yet?</property>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">3</property>
+        <property name="position">2</property>
       </packing>
     </child>
   </object>
