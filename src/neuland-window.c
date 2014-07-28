@@ -665,7 +665,9 @@ accept_request_activated (GSimpleAction *action,
   NeulandContact *contact = priv->active_request;
   NeulandTox *tox = priv->tox;
 
-  neuland_tox_accept_contact_request (tox, contact);
+  GSList *contacts = g_slist_prepend (NULL, contact);
+  neuland_tox_accept_contact_requests (tox, contacts);
+  g_slist_free (contacts);
 }
 
 static void

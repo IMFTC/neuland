@@ -722,49 +722,51 @@ neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
 }
 
 
-/* Add @contact (which isn't known to tox yet) to @tox.  Returns the
-   friend number on success, -1 on failure. Notice that we update
-   @contact in place from a 'request' contact with a friend number of
+/* Add each contact in the @contacts list. Notice that we update each
+   contact in place from a 'request' contact with a friend number of
    -1 to a normal contact with the new friend number given by
    tox_add_friend_norequest. */
-gint64
-neuland_tox_accept_contact_request (NeulandTox *tox,
-                                    NeulandContact *contact)
+void
+neuland_tox_accept_contact_requests (NeulandTox *tox,
+                                     GSList *contacts)
 {
-  g_debug ("neuland_tox_accept_contact_request for contact %p", contact);
-
   g_return_if_fail (NEULAND_IS_TOX (tox));
-  g_return_if_fail (NEULAND_IS_CONTACT (contact));
-
   NeulandToxPrivate *priv = tox->priv;
 
-  g_mutex_lock (&priv->mutex);
-  gint32 number = tox_add_friend_norequest (priv->tox_struct,
-                                            neuland_contact_get_tox_id (contact));
-  g_mutex_unlock (&priv->mutex);
-
-  if (number < 0)
-    g_warning ("Failed to add contact request from Tox ID %s",
-               neuland_contact_get_tox_id (contact));
-  else
+  GSList *accepted_contacts = NULL;
+  GSList *l;
+  for (l = contacts; l; l = l->next)
     {
-      /* contact has a tox friend number now, so override the -1 with that new number. */
-      neuland_contact_set_number (contact, number);
+      NeulandContact *contact = l->data;
+      g_return_if_fail (neuland_contact_is_request (contact));
 
-      /* Removing @contact from @requests_ht results in a
-         g_object_unref() call on contact, so we have to call
-         g_object_ref() beforehand, or @contact would be destroyed. */
-      g_object_ref (contact);
-      g_hash_table_remove (priv->requests_ht, contact);
-      g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
+      g_mutex_lock (&priv->mutex);
+      gint32 number = tox_add_friend_norequest (priv->tox_struct,
+                                                neuland_contact_get_tox_id (contact));
+      g_mutex_unlock (&priv->mutex);
 
-      g_message ("Added contact %s (%p) from request as number %i",
-                 neuland_contact_get_tox_id_hex (contact), contact, number);
+      if (number < 0)
+        g_warning ("Failed to add contact request from Tox ID %s",
+                   neuland_contact_get_tox_id (contact));
+      else
+        {
+          /* contact has a tox friend number now, so override the -1 with that new number. */
+          neuland_contact_set_number (contact, number);
 
-      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
+          /* Removing @contact from @requests_ht results in a
+             g_object_unref() call on contact, so we have to call
+             g_object_ref() beforehand, or @contact would be destroyed. */
+          g_object_ref (contact);
+          g_hash_table_remove (priv->requests_ht, contact);
+          g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
+
+          g_message ("Added contact %s (%p) from request as number %i",
+                     neuland_contact_get_preferred_name (contact), contact, number);
+          accepted_contacts = g_slist_prepend (accepted_contacts, contact);
+        }
     }
-
-  return number;
+  if (accepted_contacts)
+    g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
 }
 
 

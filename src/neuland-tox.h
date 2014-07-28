@@ -84,11 +84,11 @@ neuland_tox_set_status_message (NeulandTox *tox, const gchar *status_message);
 const gchar *
 neuland_tox_get_status_message (NeulandTox *tox);
 
-void *
+void
 neuland_tox_add_contact_from_hex_address (NeulandTox *tox, const gchar *hex_address, const gchar *message);
 
-gint64
-neuland_tox_accept_contact_norequest (NeulandTox *tox, NeulandContact *contact);
+void
+neuland_tox_accept_contact_requests (NeulandTox *tox, GSList *contacts);
 
 gint64
 neuland_tox_get_pending_requests (NeulandTox *tox);
