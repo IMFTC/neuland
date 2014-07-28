@@ -134,6 +134,14 @@ neuland_window_get_contact_widget_for_contact (NeulandWindow *window,
   return widget;
 }
 
+static void
+neuland_window_show_welcome_widget (NeulandWindow *window)
+{
+  NeulandWindowPrivate *priv = window->priv;
+  gtk_stack_set_visible_child (priv->chat_stack, priv->welcome_widget);
+  gtk_header_bar_set_title (priv->right_header_bar, "Neuland");
+}
+
 /* This sets the right widget (chat widget or request widget) for
    @contact in the right part (chat_stack) and hooks up the window
    title above it with @contact. Notice that the visibility of the
@@ -152,27 +160,33 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   g_clear_object (&priv->name_binding);
   g_clear_object (&priv->status_binding);
   // Set up new bindings
-  priv->name_binding = g_object_bind_property (contact, "preferred-name",
-                                               priv->right_header_bar, "title",
-                                               G_BINDING_SYNC_CREATE);
-  priv->status_binding = g_object_bind_property (contact, "status-message",
-                                                 priv->right_header_bar, "subtitle",
-                                                 G_BINDING_SYNC_CREATE);
-  if (neuland_contact_is_request (contact))
+
+  if (contact)
     {
-      /* All requests share this single requests widget. */
-      gtk_label_set_label (priv->request_widget_tox_id_label,
-                           neuland_contact_get_tox_id_hex (contact));
-      gtk_text_buffer_set_text (priv->request_widget_text_buffer,
-                                neuland_contact_get_request_message (contact), -1);
-      gtk_stack_set_visible_child (priv->chat_stack, priv->request_widget);
+      priv->name_binding = g_object_bind_property (contact, "preferred-name",
+                                                   priv->right_header_bar, "title",
+                                                   G_BINDING_SYNC_CREATE);
+      priv->status_binding = g_object_bind_property (contact, "status-message",
+                                                     priv->right_header_bar, "subtitle",
+                                                     G_BINDING_SYNC_CREATE);
+      if (neuland_contact_is_request (contact))
+        {
+          /* All requests share this single requests widget. */
+          gtk_label_set_label (priv->request_widget_tox_id_label,
+                               neuland_contact_get_tox_id_hex (contact));
+          gtk_text_buffer_set_text (priv->request_widget_text_buffer,
+                                    neuland_contact_get_request_message (contact), -1);
+          gtk_stack_set_visible_child (priv->chat_stack, priv->request_widget);
+        }
+      else
+        {
+          GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
+          gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
+          neuland_contact_reset_unread_messages (contact);
+        }
     }
   else
-    {
-      GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
-      gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
-      neuland_contact_reset_unread_messages (contact);
-    }
+    neuland_window_show_welcome_widget (window);
 }
 
 static GtkListBoxRow *
@@ -193,7 +207,8 @@ neuland_window_set_active_request (NeulandWindow *window,
                                    NeulandContact *contact)
 {
   g_return_if_fail (NEULAND_IS_WINDOW (window));
-  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  if (contact)
+    g_return_if_fail (NEULAND_IS_CONTACT (contact));
 
   NeulandWindowPrivate *priv = window->priv;
 
@@ -526,13 +541,6 @@ neuland_window_remove_contacts (NeulandWindow *window, GSList *contacts)
 
       g_hash_table_remove (priv->contact_widgets, contact);
     }
-}
-
-static void
-neuland_window_show_welcome_widget (NeulandWindow *window)
-{
-  NeulandWindowPrivate *priv = window->priv;
-  gtk_stack_set_visible_child (priv->chat_stack, priv->welcome_widget);
 }
 
 static void
@@ -1021,6 +1029,8 @@ neuland_window_init (NeulandWindow *window)
   gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
   g_object_unref (G_OBJECT (builder));
+
+  neuland_window_show_welcome_widget (window);
 }
 
 GtkWidget *
