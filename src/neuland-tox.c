@@ -52,6 +52,24 @@ typedef struct
   gboolean is_ipv6;
 } NeulandToxDhtNode;
 
+/* Possible errors returned by tox_add_friend  */
+const gchar*
+tox_faerr_to_string (gint32 error)
+{
+  switch (error)
+    {
+    case TOX_FAERR_TOOLONG: return "TOX_FAERR_TOOLONG";
+    case TOX_FAERR_NOMESSAGE: return "TOX_FAERR_NOMESSAGE";
+    case TOX_FAERR_OWNKEY: return "TOX_FAERR_OWNKEY";
+    case TOX_FAERR_ALREADYSENT: return "TOX_FAERR_ALREADYSENT";
+    case TOX_FAERR_UNKNOWN: return "TOX_FAERR_UNKNOWN";
+    case TOX_FAERR_BADCHECKSUM: return "TOX_FAERR_BADCHECKSUM";
+    case TOX_FAERR_SETNEWNOSPAM: return "TOX_FAERR_SETNEWNOSPAM";
+    case TOX_FAERR_NOMEM: return "TOX_FAERR_NOMEM";
+    default: return "[Unknown error number]";
+    }
+}
+
 static NeulandToxDhtNode bootstrap_nodes[] = {
   { "192.254.75.98"  , 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F", FALSE },
   { "192.210.149.121", 33445, "F404ABAA1C99A9D37D61AB54898F56793E1DEF8BD46B1038B9D822E8460FAB67", FALSE },
@@ -643,7 +661,11 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
   g_free (tmp_message);
 
   if (friend_number < 0)
-    return;
+    {
+      g_message ("Failed to add friend from hex address \"%s\". Tox error number: %i (%s)",
+                 hex_address, friend_number, tox_faerr_to_string (friend_number));
+      return;
+    }
 
   neuland_tox_load_contacts (tox);
 
