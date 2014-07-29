@@ -142,9 +142,9 @@ neuland_window_show_welcome_widget (NeulandWindow *window)
   gtk_header_bar_set_title (priv->right_header_bar, "Neuland");
 }
 
-/* This sets the right widget (chat widget or request widget) for
-   @contact in the right part (chat_stack) and hooks up the window
-   title above it with @contact. Notice that the visibility of the
+/* This shows the 'chat widget' (chat widget or request widget) for
+   @contact in the right part (priv->chat_stack) and hooks up the
+   window title above it. Notice that the visibility of the
    Accept/Discard buttons is controlled by the state of the
    "show-request" action and not by this function. */
 static void
@@ -202,73 +202,46 @@ neuland_window_get_row_for_contact (NeulandWindow *window,
   return GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_widget));
 }
 
-static void
-neuland_window_set_active_request (NeulandWindow *window,
-                                   NeulandContact *contact)
-{
-  g_return_if_fail (NEULAND_IS_WINDOW (window));
-  if (contact)
-    g_return_if_fail (NEULAND_IS_CONTACT (contact));
-
-  NeulandWindowPrivate *priv = window->priv;
-
-  g_debug ("Setting active request contact: '%s' (%p)",
-           contact ? neuland_contact_get_name (contact) : "", contact);
-
-  if (g_variant_get_boolean (g_action_group_get_action_state (G_ACTION_GROUP (window),
-                                                              "show-requests")))
-    {
-      neuland_window_show_chat_for_contact (window, contact);
-      gtk_list_box_select_row (priv->contacts_list_box,
-                               neuland_window_get_row_for_contact (window, contact));
-    }
-
-  priv->active_request = contact;
-}
-
+/* Set the active contact. There are actually two active contacts;
+   priv->active_request and priv->active_contact. This function sets
+   the former if contact is still a request, and the latter if not. */
 static void
 neuland_window_set_active_contact (NeulandWindow *window,
                                    NeulandContact *contact)
 {
   g_return_if_fail (NEULAND_IS_WINDOW (window));
+
   if (contact)
     g_return_if_fail (NEULAND_IS_CONTACT (contact));
 
   NeulandWindowPrivate *priv = window->priv;
+  gboolean contact_is_request = neuland_contact_is_request (contact);
+  gboolean showing_requests = g_variant_get_boolean
+    (g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests"));
 
-  g_debug ("Setting active contact: '%s' (%p)",
-           contact ? neuland_contact_get_name (contact) : "", contact);
+  if (contact_is_request)
+    g_debug ("Setting active contact (is request): '%s' (%p)",
+             contact ? neuland_contact_get_name (contact) : "", contact);
+  else
+    g_debug ("Setting active contact: '%s' (%p)",
+             contact ? neuland_contact_get_name (contact) : "", contact);
 
-  if (!g_variant_get_boolean (g_action_group_get_action_state (G_ACTION_GROUP (window),
-                                                               "show-requests")))
+  if (contact_is_request)
     {
-      neuland_window_show_chat_for_contact (window, contact);
-      gtk_list_box_select_row (priv->contacts_list_box,
-                               neuland_window_get_row_for_contact (window, contact));
+      priv->active_request = contact;
+      if (showing_requests)
+        neuland_window_show_chat_for_contact (window, contact);
     }
-
-  priv->active_contact = contact;
+  else
+    {
+      priv->active_contact = contact;
+      if (!showing_requests)
+        neuland_window_show_chat_for_contact (window, contact);
+    }
 }
 
-/* Returns the contact whose chat widget is currently visible in window.
-   TODO: Maybe active-contact should be a property? */
-NeulandContact *
-neuland_window_get_active_contact (NeulandWindow *window)
-{
-  return window->priv->active_contact;
-}
-
-static void
-requests_list_box_row_activated_cb (NeulandWindow *window,
-                                    GtkListBoxRow *row,
-                                    gpointer user_data)
-{
-  NeulandContactWidget *widget = NEULAND_CONTACT_WIDGET (gtk_bin_get_child (GTK_BIN (row)));
-  NeulandContact *contact = neuland_contact_widget_get_contact (widget);
-
-  neuland_window_set_active_request (window, contact);
-}
-
+/* This signal can come from either of the priv->contacts_list_box or
+   priv->requests_list_box. */
 static void
 contacts_list_box_row_activated_cb (NeulandWindow *window,
                                     GtkListBoxRow *row,
@@ -506,7 +479,7 @@ neuland_window_remove_contacts (NeulandWindow *window, GSList *contacts)
         contact_to_activate = neuland_window_get_contact_from_row (window, row_to_activate);
       else
         contact_to_activate = NULL;
-      neuland_window_set_active_request (window, contact_to_activate);
+      neuland_window_activate_contact (window, contact_to_activate);
     }
   if (deleted_active_contact)
     {
@@ -519,7 +492,7 @@ neuland_window_remove_contacts (NeulandWindow *window, GSList *contacts)
         contact_to_activate = neuland_window_get_contact_from_row (window, row_to_activate);
       else
         contact_to_activate = NULL;
-      neuland_window_set_active_contact (window, contact_to_activate);
+      neuland_window_activate_contact (window, contact_to_activate);
     }
 
   /* Finally, destroy the widgets releated to the contacts.  */
@@ -882,7 +855,6 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
          selection yet. */
       NeulandContact *active_contact = priv->active_contact;
       gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
-      neuland_window_activate_contact (window, priv->active_request);
       if (active_contact != NULL)
         neuland_window_activate_contact (window, active_contact);
       else
@@ -953,7 +925,6 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, pending_requests_label);
 
   gtk_widget_class_bind_template_callback(widget_class, contacts_list_box_row_activated_cb);
-  gtk_widget_class_bind_template_callback(widget_class, requests_list_box_row_activated_cb);
 
   gobject_class->set_property = neuland_window_set_property;
   gobject_class->get_property = neuland_window_get_property;

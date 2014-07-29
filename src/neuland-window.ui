@@ -280,7 +280,7 @@ Author: Volker Sobek <reklov@live.com>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="expand">True</property>
-                                <signal name="row-activated" handler="requests_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
+                                <signal name="row-activated" handler="contacts_list_box_row_activated_cb" object="NeulandWindow" swapped="yes"/>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
