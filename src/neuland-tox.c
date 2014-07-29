@@ -625,8 +625,9 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
                                           const gchar *message)
 {
   g_message ("neuland_tox_add_contact_from_hex_address %s", hex_address);
-  gchar *tmp_message = g_strcmp0 (message, "") != 0 ?
-    g_strdup (message) : g_strdup ("Let's tox?");
+  /* Tox wants at least one byte for the message, so in case the
+     message entry is empty we send one space. */
+  gchar *tmp_message = g_strdup (g_strcmp0 (message, "") == 0 ? " " : message);
   NeulandToxPrivate *priv = tox->priv;
   guint8 bin_address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
   gboolean valid_hex = neuland_hex_string_to_bin (hex_address,

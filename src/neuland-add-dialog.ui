@@ -60,6 +60,7 @@ Author: Volker Sobek <reklov@live.com>
               <object class="GtkEntry" id="message_entry">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="text" translatable="yes">Hey there, let's Tox?</property>
                 <signal name="activate" handler="on_entry_activate" object="NeulandAddDialog" swapped="yes"/>
               </object>
               <packing>
