@@ -316,24 +316,6 @@ neuland_window_activate_first_contact_or_request (NeulandWindow *window)
   return FALSE;
 }
 
-/* This function must be called when ever a contact property relevant
-   to the filtering or sorting of the contact widget changes, in order
-   to re-filter and re-sort it. */
-static void
-neuland_window_contact_row_changed (NeulandWindow *window,
-                                    NeulandContact *contact)
-{
-  NeulandWindowPrivate *priv = window->priv;
-  GtkWidget *contact_row =
-    GTK_WIDGET (g_hash_table_lookup (priv->contact_row_widgets, contact));
-
-  if (contact_row == NULL)
-    return;
-
-  GtkListBoxRow *row = GTK_LIST_BOX_ROW (gtk_widget_get_parent (contact_row));
-  gtk_list_box_row_changed (row);
-}
-
 /* This is used to get notified when a contact request has been
    accepted, in which case the contact's number changes from -1 to n,
    where n > -1. */
