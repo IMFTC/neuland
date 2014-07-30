@@ -55,7 +55,7 @@ neuland_contact_row_finalize (GObject *object)
 
 void
 neuland_contact_row_set_status (NeulandContactRow *contact_row,
-                                   NeulandContactStatus new_status)
+                                NeulandContactStatus new_status)
 {
   gchar *icon_name;
   g_debug ("neuland_contact_row_set_status: %u", new_status);
@@ -82,14 +82,14 @@ neuland_contact_row_set_status (NeulandContactRow *contact_row,
 
 void
 neuland_contact_row_set_message (NeulandContactRow *contact_row,
-                                    const gchar *new_message)
+                                 const gchar *new_message)
 {
   gtk_label_set_text (GTK_LABEL (contact_row->priv->status_label), new_message);
 }
 
 void
 neuland_contact_row_set_status_message (NeulandContactRow *contact_row,
-                                           const gchar *status_message)
+                                        const gchar *status_message)
 {
   gtk_label_set_label (contact_row->priv->status_label, status_message);
 }
@@ -163,8 +163,8 @@ neuland_contact_row_get_contact (NeulandContactRow *contact_row)
 
 static void
 neuland_contact_row_name_changed_cb (GObject *obj,
-                                        GParamSpec *pspec,
-                                        gpointer user_data)
+                                     GParamSpec *pspec,
+                                     gpointer user_data)
 {
   g_debug ("neuland_contact_row_name_changed_cb");
   NeulandContactRow *ncw = NEULAND_CONTACT_ROW (user_data);
@@ -173,8 +173,8 @@ neuland_contact_row_name_changed_cb (GObject *obj,
 
 static void
 neuland_contact_row_status_changed_cb (GObject *obj,
-                                          GParamSpec *pspec,
-                                          gpointer user_data)
+                                       GParamSpec *pspec,
+                                       gpointer user_data)
 {
   g_debug ("neuland_contact_row_status_changed_cb");
   NeulandContact *contact = NEULAND_CONTACT (obj);
@@ -185,7 +185,7 @@ neuland_contact_row_status_changed_cb (GObject *obj,
 }
 
 neuland_contact_row_set_connected (NeulandContactRow *contact_row,
-                                      gboolean connected)
+                                   gboolean connected)
 {
   NeulandContact *contact = contact_row->priv->contact;
 
@@ -224,8 +224,8 @@ neuland_contact_row_set_connected (NeulandContactRow *contact_row,
 
 static void
 neuland_contact_row_connected_changed_cb (GObject *obj,
-                                             GParamSpec *pspec,
-                                             gpointer user_data)
+                                          GParamSpec *pspec,
+                                          gpointer user_data)
 {
   g_debug ("neuland_contact_row_connected_changed_cb");
   NeulandContact *contact = NEULAND_CONTACT (obj);
@@ -237,8 +237,8 @@ neuland_contact_row_connected_changed_cb (GObject *obj,
 
 static void
 neuland_contact_row_unread_messages_cb (NeulandContact *contact,
-                                           GParamSpec *pspec,
-                                           gpointer user_data)
+                                        GParamSpec *pspec,
+                                        gpointer user_data)
 {
   NeulandContactRow *widget = NEULAND_CONTACT_ROW (user_data);
 
@@ -256,8 +256,8 @@ neuland_contact_row_unread_messages_cb (NeulandContact *contact,
 
 static void
 neuland_contact_row_status_message_changed_cb (GObject *obj,
-                                                  GParamSpec *pspec,
-                                                  gpointer user_data)
+                                               GParamSpec *pspec,
+                                               gpointer user_data)
 {
   g_debug ("neuland_contact_row_status_message_changed_cb");
   NeulandContact *contact = NEULAND_CONTACT (obj);
