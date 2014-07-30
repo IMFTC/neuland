@@ -77,9 +77,9 @@ enum {
 static GParamSpec *window_properties[PROP_N] = {NULL, };
 
 void
-contacts_list_box_header_func (GtkListBoxRow  *row,
-                               GtkListBoxRow  *before,
-                               gpointer    user_data)
+list_box_header_func (GtkListBoxRow  *row,
+                      GtkListBoxRow  *before,
+                      gpointer    user_data)
 {
   GtkWidget *current;
 
@@ -1014,7 +1014,8 @@ neuland_window_init (NeulandWindow *window)
   gtk_widget_get_preferred_height (priv->me_button, NULL, &priv->me_button_height);
 
   /* Set up list box for contacts */
-  gtk_list_box_set_header_func (priv->contacts_list_box, contacts_list_box_header_func, NULL, NULL);
+  gtk_list_box_set_header_func (priv->contacts_list_box, list_box_header_func, NULL, NULL);
+  gtk_list_box_set_header_func (priv->contacts_list_box, list_box_header_func, NULL, NULL);
   gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
   g_object_unref (G_OBJECT (builder));
