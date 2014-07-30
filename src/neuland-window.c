@@ -694,14 +694,6 @@ neuland_window_get_property  (GObject    *object,
     }
 }
 
-void
-set_selection_mode (GtkWidget *widget, gboolean *data)
-{
-  GtkWidget *child = gtk_bin_get_child (GTK_BIN (widget));
-  if (NEULAND_IS_CONTACT_ROW (child))
-    neuland_contact_row_show_check_box (NEULAND_CONTACT_ROW (child), *data);
-}
-
 static void
 neuland_window_selection_state_changed (GSimpleAction *action,
                                         GVariant      *parameter,
@@ -721,8 +713,6 @@ neuland_window_selection_state_changed (GSimpleAction *action,
   g_debug (selection_enabled ? "selection enabled" : "selection disabled");
 
   gtk_widget_set_sensitive (GTK_WIDGET (priv->chat_stack), !selection_enabled);
-  gtk_container_foreach (GTK_CONTAINER (contacts_list_box),
-                         (GtkCallback) set_selection_mode, &selection_enabled);
 
   if (selection_enabled)
     {
@@ -734,6 +724,10 @@ neuland_window_selection_state_changed (GSimpleAction *action,
       gtk_style_context_remove_class (context_left, "selection-mode");
       gtk_style_context_remove_class (context_right, "selection-mode");
     }
+
+  gtk_container_foreach (GTK_CONTAINER (priv->contacts_list_box),
+                         (GtkCallback) neuland_contact_row_show_selection, &selection_enabled);
+
   g_simple_action_set_state (action, parameter);
 }
 
@@ -892,7 +886,7 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
 
 static GActionEntry win_entries[] = {
   { "change-status", NULL, "i", "0", neuland_window_status_state_changed },
-  { "selection-state", NULL, NULL, "false", neuland_window_selection_state_changed },
+  { "selection", NULL, NULL, "false", neuland_window_selection_state_changed },
   { "add-contact", add_contact_activated },
   { "accept-request", accept_request_activated },
   { "discard-request", discard_request_activated },

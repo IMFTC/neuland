@@ -269,18 +269,19 @@ neuland_contact_row_status_message_changed_cb (GObject *obj,
 }
 
 void
-neuland_contact_row_show_check_box (NeulandContactRow *contact_row,
-                                       gboolean show)
+neuland_contact_row_show_selection (NeulandContactRow *contact_row,
+                                    gboolean *show_selection)
 {
-  g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
-  GtkNotebook *notebook = contact_row->priv->indicator_notebook;
+  if NEULAND_IS_CONTACT_ROW (contact_row)
+    {
+      GtkNotebook *notebook = contact_row->priv->indicator_notebook;
 
-  if (show)
-    gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_CHECKBOX);
-  else
-    gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_COUNTER);
+      if (*show_selection)
+        gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_CHECKBOX);
+      else
+        gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_COUNTER);
+    }
 }
-
 
 GtkWidget *
 neuland_contact_row_new (NeulandContact *contact)

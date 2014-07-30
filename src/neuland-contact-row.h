@@ -70,7 +70,7 @@ void
 neuland_contact_row_set_message (NeulandContactRow *contact_row, const gchar *new_message);
 
 void
-neuland_contact_row_show_check_box (NeulandContactRow *contact_row, gboolean show);
+neuland_contact_row_show_selection (NeulandContactRow *contact_row, gboolean *show_selection);
 
 GtkWidget*
 neuland_contact_row_new (NeulandContact *contact);
