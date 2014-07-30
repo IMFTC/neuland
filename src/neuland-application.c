@@ -22,7 +22,6 @@
 #include <tox/tox.h>
 #include <string.h>
 
-#include "neuland-contact-widget.h"
 #include "neuland-window.h"
 #include "neuland-application.h"
 #include "neuland-contact.h"

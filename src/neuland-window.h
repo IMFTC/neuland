@@ -24,7 +24,7 @@
 #include <gtk/gtk.h>
 
 #include "neuland-tox.h"
-#include "neuland-contact-widget.h"
+#include "neuland-contact-row.h"
 
 #define NEULAND_TYPE_WINDOW            (neuland_window_get_type ())
 #define NEULAND_WINDOW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), NEULAND_TYPE_WINDOW, NeulandWindow))

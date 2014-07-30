@@ -18,8 +18,8 @@ neuland_SOURCES = \
 	neuland-application.c \
 	neuland-utils.c \
 	neuland-utils.h \
-	neuland-contact-widget.c \
-	neuland-contact-widget.h \
+	neuland-contact-row.c \
+	neuland-contact-row.h \
 	neuland-contact.c \
 	neuland-contact.h \
 	neuland-enums.c \
