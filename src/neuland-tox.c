@@ -676,12 +676,12 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
 
 void
 remove_contacts (NeulandTox *tox,
-                 GSList *removed_contacts,
+                 GList *removed_contacts,
                  gpointer user_data)
 {
   NeulandToxPrivate *priv = tox->priv;
 
-  GSList *l;
+  GList *l;
   for (l = removed_contacts; l; l = l->next)
     {
       NeulandContact *contact = l->data;
@@ -701,7 +701,7 @@ remove_contacts (NeulandTox *tox,
 }
 
 void
-neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
+neuland_tox_remove_contacts (NeulandTox *tox, GList *contacts)
 {
   g_return_if_fail (NEULAND_IS_TOX (tox));
   g_return_if_fail (contacts != NULL);
@@ -711,16 +711,16 @@ neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
 
   NeulandToxPrivate *priv = tox->priv;
 
-  GSList *removed_contacts = NULL;
+  GList *removed_contacts = NULL;
   gboolean pending_requests_changed = FALSE;
-  GSList *l;
+  GList *l;
   for (l = contacts; l; l = l->next)
     {
       NeulandContact *contact  = l->data;
 
       if (neuland_contact_is_request (contact))
         {
-          removed_contacts = g_slist_prepend (removed_contacts, contact);
+          removed_contacts = g_list_prepend (removed_contacts, contact);
           pending_requests_changed = TRUE;
         }
       else
@@ -732,7 +732,7 @@ neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
           if (ret == -1)
             g_warning ("Calling tox_del_friend failed for contact %p", contact);
           else
-            removed_contacts = g_slist_prepend (removed_contacts, contact);
+            removed_contacts = g_list_prepend (removed_contacts, contact);
         }
     }
 
@@ -742,7 +742,7 @@ neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
   if (pending_requests_changed)
     g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
 
-  g_slist_free (removed_contacts);
+  g_list_free (removed_contacts);
 }
 
 
@@ -752,13 +752,13 @@ neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
    tox_add_friend_norequest. */
 void
 neuland_tox_accept_contact_requests (NeulandTox *tox,
-                                     GSList *contacts)
+                                     GList *contacts)
 {
   g_return_if_fail (NEULAND_IS_TOX (tox));
   NeulandToxPrivate *priv = tox->priv;
 
-  GSList *accepted_contacts = NULL;
-  GSList *l;
+  GList *accepted_contacts = NULL;
+  GList *l;
   for (l = contacts; l; l = l->next)
     {
       NeulandContact *contact = l->data;
@@ -786,7 +786,7 @@ neuland_tox_accept_contact_requests (NeulandTox *tox,
 
           g_message ("Added contact %s (%p) from request as number %i",
                      neuland_contact_get_preferred_name (contact), contact, number);
-          accepted_contacts = g_slist_prepend (accepted_contacts, contact);
+          accepted_contacts = g_list_prepend (accepted_contacts, contact);
         }
     }
   if (accepted_contacts)

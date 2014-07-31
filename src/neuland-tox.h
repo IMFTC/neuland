@@ -51,7 +51,7 @@ struct _NeulandToxClass
   /* Signals */
 
   void (* connection_status_changed) (NeulandTox *tox, NeulandContact *contact);
-  void (* remove_contacts) (NeulandTox *tox, GSList *contacts, gpointer user_data);
+  void (* remove_contacts) (NeulandTox *tox, GList *contacts, gpointer user_data);
 };
 
 NeulandTox *
@@ -88,7 +88,7 @@ void
 neuland_tox_add_contact_from_hex_address (NeulandTox *tox, const gchar *hex_address, const gchar *message);
 
 void
-neuland_tox_accept_contact_requests (NeulandTox *tox, GSList *contacts);
+neuland_tox_accept_contact_requests (NeulandTox *tox, GList *contacts);
 
 gint64
 neuland_tox_get_pending_requests (NeulandTox *tox);

@@ -42,8 +42,6 @@ struct _NeulandWindowPrivate
   GtkButton       *gear_button;
 
   GtkRevealer     *requests_button_revealer;
-  GtkRevealer     *discard_button_revealer;
-  GtkRevealer     *accept_button_revealer;
 
   GtkToggleButton *select_button;
   gint             me_button_height;
@@ -66,7 +64,10 @@ struct _NeulandWindowPrivate
   NeulandContact  *active_contact;
   NeulandContact  *active_request;
 
+  GtkBox          *add_button_box;
+
   GtkActionBar    *action_bar;
+  GtkActionBar    *action_bar_accept_button;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -251,15 +252,7 @@ contacts_list_box_row_activated_cb (NeulandWindow *window,
      if we want that. */
   GVariant *state =  g_action_group_get_action_state (G_ACTION_GROUP (window), "selection");
 
-  if (g_variant_get_boolean (state))
-    neuland_contact_row_toggle_selected (contact_row);
-  else
-    /* TODO: With this in an else clause we don't change the active
-       contact when in selection mode, but maybe we should? But it
-       feels weird to unselect a contact and activate it at the same
-       time. Maybe the proper solution would be to not show any chat
-       widget at all, when in selection mode.*/
-    neuland_window_set_active_contact (window, contact);
+  neuland_window_set_active_contact (window, contact);
 
   g_variant_unref (state);
 }
@@ -365,16 +358,27 @@ neuland_window_on_row_selected_changed (NeulandWindow *window,
   NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (user_data);
   NeulandContact *contact = neuland_contact_row_get_contact (contact_row);
 
+  GVariant *variant = g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests");
+  gboolean show_requests = g_variant_get_boolean (variant);
+  g_variant_unref (variant);
+
+  /* Add or remove the contact from the (window-internal) selection. */
   if (neuland_contact_row_get_selected (contact_row))
     g_hash_table_insert (priv->selected_contacts, contact, contact);
   else
     g_hash_table_remove (priv->selected_contacts, contact);
 
-  gint number = g_hash_table_size (priv->selected_contacts);
-  GAction *action = g_action_map_lookup_action (G_ACTION_MAP (window), "delete-selected");
+  gboolean have_selection = g_hash_table_size (priv->selected_contacts) > 0;
+  GAction *some_action;
 
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (action), number > 0);
-  g_debug ("window %p has %i selected contacts", window, number);
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "delete-selected");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), have_selection);
+
+  if (show_requests)
+    {
+      some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "accept-selected");
+      g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), have_selection);
+    }
 }
 
 /* Adds @contact to either the contacts_list_box or the
@@ -760,11 +764,29 @@ neuland_window_selection_state_changed (GSimpleAction *action,
       gtk_style_context_remove_class (context_right, "selection-mode");
     }
 
-  gtk_container_foreach (GTK_CONTAINER (priv->contacts_list_box),
-                         (GtkCallback) neuland_contact_row_show_selection, &selection_enabled);
+  /* Disable/Enable actions would get in the way of selecting. */
+  GAction *other_action;
+  other_action = g_action_map_lookup_action (G_ACTION_MAP (window), "show-requests");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (other_action), !selection_enabled);
+  other_action = g_action_map_lookup_action (G_ACTION_MAP (window), "add-contact");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (other_action), !selection_enabled);
 
+  /* Show/hide the action bar at the bottom of the contacts list and hide/show
+     the add and request button. */
   gtk_widget_set_visible (GTK_WIDGET (priv->action_bar), selection_enabled);
+  gtk_widget_set_visible (GTK_WIDGET (priv->add_button_box), !selection_enabled);
+
+  GVariant *variant_b = g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests");
+
+  if (g_variant_get_boolean (variant_b))
+    gtk_container_foreach (GTK_CONTAINER (priv->requests_list_box),
+                           (GtkCallback) neuland_contact_row_show_selection, &selection_enabled);
+  else
+    gtk_container_foreach (GTK_CONTAINER (priv->contacts_list_box),
+                           (GtkCallback) neuland_contact_row_show_selection, &selection_enabled);
+
   g_simple_action_set_state (action, parameter);
+  g_variant_unref (variant_b);
 }
 
 void
@@ -815,33 +837,19 @@ add_contact_activated (GSimpleAction *action,
 }
 
 static void
-accept_request_activated (GSimpleAction *action,
+accept_selected_activated (GSimpleAction *action,
                           GVariant *parameter,
                           gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = priv->active_request;
-  NeulandTox *tox = priv->tox;
+  GList *list = g_hash_table_get_keys (priv->selected_contacts);
 
-  GSList *contacts = g_slist_prepend (NULL, contact);
-  neuland_tox_accept_contact_requests (tox, contacts);
-  g_slist_free (contacts);
-}
+  neuland_tox_accept_contact_requests (priv->tox, list);
+  g_action_group_change_action_state
+    (G_ACTION_GROUP (window), "selection", g_variant_new_boolean (FALSE));
 
-static void
-discard_request_activated (GSimpleAction *action,
-                           GVariant *parameter,
-                           gpointer user_data)
-{
-  NeulandWindow *window = NEULAND_WINDOW (user_data);
-  NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = priv->active_request;
-  NeulandTox *tox = priv->tox;
-
-  GSList *contacts = g_slist_prepend (NULL, contact);
-  neuland_tox_remove_contacts (priv->tox, contacts);
-  g_slist_free (contacts);
+  g_list_free (list);
 }
 
 static void
@@ -852,7 +860,11 @@ delete_selected_activated (GSimpleAction *action,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
   GList *list = g_hash_table_get_keys (priv->selected_contacts);
+
   neuland_tox_remove_contacts (priv->tox, list);
+  g_action_group_change_action_state
+    (G_ACTION_GROUP (window), "selection", g_variant_new_boolean (FALSE));
+
   g_list_free (list);
 }
 
@@ -899,18 +911,14 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
         neuland_window_show_welcome_widget (window);
     }
 
-  /* Show or hide Accept and Discard buttons depending on the action's
-     state. */
-  gtk_revealer_set_reveal_child (priv->accept_button_revealer, show_requests);
-  gtk_revealer_set_reveal_child (priv->discard_button_revealer, show_requests);
+  gtk_widget_set_visible (GTK_WIDGET (priv->action_bar_accept_button), show_requests);
 }
 
 static GActionEntry win_entries[] = {
   { "change-status", NULL, "i", "0", neuland_window_status_state_changed },
   { "selection", NULL, NULL, "false", neuland_window_selection_state_changed },
   { "add-contact", add_contact_activated },
-  { "accept-request", accept_request_activated },
-  { "discard-request", discard_request_activated },
+  { "accept-selected", accept_selected_activated },
   { "delete-selected", delete_selected_activated },
   { "show-requests", NULL, NULL, "false", neuland_window_show_requests_state_changed }
 };
@@ -959,11 +967,11 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, left_header_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, gear_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, select_button);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, accept_button_revealer);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, discard_button_revealer);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button_revealer);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, pending_requests_label);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, action_bar);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, action_bar_accept_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, add_button_box);
 
   gtk_widget_class_bind_template_callback(widget_class, contacts_list_box_row_activated_cb);
 
@@ -1042,9 +1050,15 @@ neuland_window_init (NeulandWindow *window)
   gtk_list_box_set_header_func (priv->requests_list_box, list_box_header_func, NULL, NULL);
   gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
-  GAction *action;
-  action = g_action_map_lookup_action (G_ACTION_MAP (window), "delete-selected");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (action), FALSE);
+
+  /* Disable some actions */
+  gchar *actions_to_disable[] = { "delete-selected", "accept-selected" };
+  gint i;
+  for (i = 0; i < G_N_ELEMENTS (actions_to_disable); i++)
+    {
+      GAction *action = g_action_map_lookup_action (G_ACTION_MAP (window), actions_to_disable[i]);
+      g_simple_action_set_enabled (G_SIMPLE_ACTION (action), FALSE);
+    }
 
   g_object_unref (G_OBJECT (builder));
 

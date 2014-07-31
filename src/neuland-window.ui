@@ -172,29 +172,6 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-right-titlebar"/>
             </style>
             <child>
-              <object class="GtkRevealer" id="discard_button_revealer">
-                <property name="transition_type">crossfade</property>
-                <child>
-                  <object class="GtkButton" id="discard_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="valign">fill</property>
-                    <property name="action_name">win.discard-request</property>
-                    <child>
-                      <object class="GtkLabel" id="discard_button_label">
-                        <property name="visible">True</property>
-                        <property name="label">Discard</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="pack_type">start</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkMenuButton" id="gear_button">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -209,32 +186,6 @@ Author: Volker Sobek <reklov@live.com>
                     <property name="can_focus">False</property>
                     <property name="icon_name">emblem-system-symbolic</property>
                     <property name="icon_size">1</property>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="pack_type">end</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkRevealer" id="accept_button_revealer">
-                <property name="transition_type">crossfade</property>
-                <child>
-                  <object class="GtkButton" id="accept_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="valign">fill</property>
-                    <property name="action-name">win.accept-request</property>
-                    <style>
-                      <class name="suggested-action"/>
-                    </style>
-                    <child>
-                      <object class="GtkLabel" id="accept_button_label">
-                        <property name="visible">True</property>
-                        <property name="label">Accept</property>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
@@ -317,6 +268,24 @@ Author: Volker Sobek <reklov@live.com>
                       <object class="GtkActionBar" id="action_bar">
                         <property name="no_show_all">True</property>
                         <child>
+                          <object class="GtkButton" id="action_bar_accept_button">
+                            <property name="visible">False</property>
+                            <property name="action_name">win.accept-selected</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="label">Accept</property>
+                              </object>
+                              <style>
+                                <class name="suggested-action"/>
+                              </style>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="pack_type">end</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkButton" id="action_bar_delete_button">
                             <property name="visible">True</property>
                             <property name="action_name">win.delete-selected</property>
@@ -328,7 +297,7 @@ Author: Volker Sobek <reklov@live.com>
                             </child>
                           </object>
                           <packing>
-                            <property name="pack_type">end</property>
+                            <property name="pack_type">start</property>
                           </packing>
                         </child>
                       </object>
