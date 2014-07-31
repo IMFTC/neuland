@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.1 -->
 <!--
 
 Copyright (C) Volker Sobek <reklov@live.com>
@@ -103,6 +104,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="receives_default">False</property>
                 <property name="halign">center</property>
                 <property name="valign">center</property>
+                <property name="xalign">0.5</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>

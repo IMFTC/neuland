@@ -29,6 +29,8 @@ struct _NeulandContactRowPrivate {
   GtkNotebook *indicator_notebook;
   GtkLabel *unread_messages;
   GtkImage *status_image;
+  GtkCheckButton *selected_check_button;
+  gboolean selected;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandContactRow, neuland_contact_row, GTK_TYPE_LIST_BOX_ROW)
@@ -37,6 +39,14 @@ enum {
   NOTEBOOK_PAGE_COUNTER,
   NOTEBOOK_PAGE_CHECKBOX
 };
+
+enum {
+  PROP_0,
+  PROP_SELECTED,
+  PROP_N
+};
+
+static GParamSpec *properties[PROP_N] = {NULL, };
 
 static void
 neuland_contact_row_dispose (GObject *object)
@@ -94,6 +104,62 @@ neuland_contact_row_set_status_message (NeulandContactRow *contact_row,
   gtk_label_set_label (contact_row->priv->status_label, status_message);
 }
 
+void
+neuland_contact_row_set_selected (NeulandContactRow *contact_row,
+                                  gboolean selected)
+{
+  NeulandContactRowPrivate *priv = contact_row->priv;
+
+  g_object_notify_by_pspec (G_OBJECT (contact_row), properties[PROP_SELECTED]);
+}
+
+gboolean
+neuland_contact_row_get_selected (NeulandContactRow *contact_row)
+{
+  NeulandContactRowPrivate *priv = contact_row->priv;
+  return priv->selected;
+}
+
+static void
+neuland_contact_row_set_property (GObject      *object,
+                                  guint         property_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
+{
+  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (object);
+
+  switch (property_id)
+    {
+    case PROP_SELECTED:
+      neuland_contact_row_set_selected (contact_row, g_value_get_boolean (value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+neuland_contact_row_get_property (GObject      *object,
+                                  guint         property_id,
+                                  GValue       *value,
+                                  GParamSpec   *pspec)
+{
+  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (object);
+
+  switch (property_id)
+    {
+    case PROP_SELECTED:
+      g_value_set_boolean (value, neuland_contact_row_get_selected (contact_row));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+
+
 
 static void
 neuland_contact_row_class_init (NeulandContactRowClass *klass)
@@ -108,9 +174,25 @@ neuland_contact_row_class_init (NeulandContactRowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, unread_messages);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_image);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, indicator_notebook);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, selected_check_button);
 
   gobject_class->dispose = neuland_contact_row_dispose;
   gobject_class->finalize = neuland_contact_row_finalize;
+
+  gobject_class->set_property = neuland_contact_row_set_property;
+  gobject_class->get_property = neuland_contact_row_get_property;
+
+  properties[PROP_SELECTED] =
+    g_param_spec_boolean ("selected",
+                          "Selected",
+                          "TRUE if the row is selected (check box is activated), FALSE if not",
+                          FALSE,
+                          G_PARAM_READWRITE |
+                          G_PARAM_CONSTRUCT);
+
+  g_object_class_install_properties (gobject_class,
+                                     PROP_N,
+                                     properties);
 }
 
 static void
@@ -120,7 +202,12 @@ neuland_contact_row_init (NeulandContactRow *contact_row)
   gtk_widget_init_template (GTK_WIDGET (contact_row));
 
   contact_row->priv = neuland_contact_row_get_instance_private (contact_row);
-  gtk_notebook_set_current_page (contact_row->priv->indicator_notebook, 0);
+  NeulandContactRowPrivate *priv = contact_row->priv;
+
+  gtk_notebook_set_current_page (priv->indicator_notebook, 0);
+
+  g_object_bind_property (priv->selected_check_button, "active", contact_row, "selected",
+                          G_BINDING_BIDIRECTIONAL);
 }
 
 void
