@@ -680,6 +680,14 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
 
 }
 
+NeulandTox *
+neuland_window_get_tox (NeulandWindow *window)
+{
+  NeulandWindowPrivate *priv = window->priv;
+
+  return priv->tox;
+}
+
 static void
 neuland_window_set_property (GObject      *object,
                              guint         property_id,
@@ -713,7 +721,7 @@ neuland_window_get_property  (GObject    *object,
   switch (property_id)
     {
     case PROP_NEULAND_TOX:
-      neuland_window_set_tox (window, NEULAND_TOX (g_value_get_object (value)));
+      g_value_set_object (value, neuland_window_get_tox (window));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);

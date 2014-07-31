@@ -62,4 +62,7 @@ neuland_window_set_status_activated (GSimpleAction *action,
 NeulandContact *
 neuland_window_get_active_contact (NeulandWindow *window);
 
+NeulandTox *
+neuland_window_get_tox (NeulandWindow *window);
+
 #endif /* __NEULAND_WINDOW__ */
