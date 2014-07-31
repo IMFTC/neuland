@@ -53,6 +53,7 @@ neuland_contact_row_dispose (GObject *object)
 {
   g_debug ("neuland_contact_row_dispose (%p)", object);
   NeulandContactRow *widget = NEULAND_CONTACT_ROW (object);
+
   G_OBJECT_CLASS (neuland_contact_row_parent_class)->dispose (object);
 }
 

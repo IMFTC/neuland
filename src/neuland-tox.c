@@ -704,6 +704,7 @@ void
 neuland_tox_remove_contacts (NeulandTox *tox, GSList *contacts)
 {
   g_return_if_fail (NEULAND_IS_TOX (tox));
+  g_return_if_fail (contacts != NULL);
   g_return_if_fail (NEULAND_IS_CONTACT (contacts->data));
 
   g_debug ("neuland_tox_remove_contact");

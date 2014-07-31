@@ -309,13 +309,39 @@ Author: Volker Sobek <reklov@live.com>
                           </object>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkActionBar" id="action_bar">
+                        <property name="no_show_all">True</property>
+                        <child>
+                          <object class="GtkButton" id="action_bar_delete_button">
+                            <property name="visible">True</property>
+                            <property name="action_name">win.delete-selected</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="label">Delete</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="pack_type">end</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
                     <child>
                       <object class="GtkSeparator">
                         <property name="orientation">horizontal</property>
                       </object>
                       <packing>
-                        <property name="position">1</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                     <child>
@@ -337,7 +363,7 @@ Author: Volker Sobek <reklov@live.com>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">2</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                   </object>
