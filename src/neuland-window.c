@@ -997,7 +997,7 @@ neuland_window_init (NeulandWindow *window)
 
   /* Set up list box for contacts */
   gtk_list_box_set_header_func (priv->contacts_list_box, list_box_header_func, NULL, NULL);
-  gtk_list_box_set_header_func (priv->contacts_list_box, list_box_header_func, NULL, NULL);
+  gtk_list_box_set_header_func (priv->requests_list_box, list_box_header_func, NULL, NULL);
   gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
   g_object_unref (G_OBJECT (builder));
