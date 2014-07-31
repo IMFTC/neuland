@@ -128,7 +128,7 @@ neuland_window_get_contact_from_row (NeulandWindow *window,
 
 static GtkWidget *
 neuland_window_get_contact_row_for_contact (NeulandWindow *window,
-                                               NeulandContact *contact)
+                                            NeulandContact *contact)
 {
   GHashTable *contact_row_widgets = window->priv->contact_row_widgets;
   GtkWidget *widget = GTK_WIDGET (g_hash_table_lookup (contact_row_widgets, contact));
@@ -582,8 +582,8 @@ on_name_change_cb (GObject *object,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
 
   neuland_contact_row_set_name (NEULAND_CONTACT_ROW
-                                   (window->priv->me_widget),
-                                   neuland_tox_get_name (tox));
+                                (window->priv->me_widget),
+                                neuland_tox_get_name (tox));
 }
 
 static void
@@ -595,8 +595,8 @@ on_status_message_change_cb (GObject *object,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
 
   neuland_contact_row_set_status_message (NEULAND_CONTACT_ROW
-                                             (window->priv->me_widget),
-                                             neuland_tox_get_status_message (tox));
+                                          (window->priv->me_widget),
+                                          neuland_tox_get_status_message (tox));
 }
 
 static void
@@ -674,9 +674,9 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
                     "swapped-signal::notify::pending-requests", on_pending_requests_cb, window,
                     NULL);
   neuland_contact_row_set_name (NEULAND_CONTACT_ROW (priv->me_widget),
-                                   neuland_tox_get_name (tox));
+                                neuland_tox_get_name (tox));
   neuland_contact_row_set_message (NEULAND_CONTACT_ROW (priv->me_widget),
-                                      neuland_tox_get_status_message (tox));
+                                   neuland_tox_get_status_message (tox));
 
 }
 
