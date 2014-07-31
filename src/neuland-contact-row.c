@@ -105,11 +105,23 @@ neuland_contact_row_set_status_message (NeulandContactRow *contact_row,
 }
 
 void
+neuland_contact_row_toggle_selected (NeulandContactRow *contact_row)
+{
+  NeulandContactRowPrivate *priv = contact_row->priv;
+
+  priv->selected = !priv->selected;
+  g_object_notify_by_pspec (G_OBJECT (contact_row), properties[PROP_SELECTED]);
+}
+
+void
 neuland_contact_row_set_selected (NeulandContactRow *contact_row,
                                   gboolean selected)
 {
   NeulandContactRowPrivate *priv = contact_row->priv;
+  if (priv->selected == selected)
+    return;
 
+  priv->selected = selected;
   g_object_notify_by_pspec (G_OBJECT (contact_row), properties[PROP_SELECTED]);
 }
 
@@ -157,9 +169,6 @@ neuland_contact_row_get_property (GObject      *object,
       break;
     }
 }
-
-
-
 
 static void
 neuland_contact_row_class_init (NeulandContactRowClass *klass)
@@ -366,7 +375,10 @@ neuland_contact_row_show_selection (NeulandContactRow *contact_row,
       if (*show_selection)
         gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_CHECKBOX);
       else
-        gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_COUNTER);
+        {
+          gtk_notebook_set_current_page (notebook, NOTEBOOK_PAGE_COUNTER);
+          neuland_contact_row_set_selected (contact_row, FALSE);
+        }
     }
 }
 

@@ -72,6 +72,15 @@ neuland_contact_row_set_message (NeulandContactRow *contact_row, const gchar *ne
 void
 neuland_contact_row_show_selection (NeulandContactRow *contact_row, gboolean *show_selection);
 
+void
+neuland_contact_row_toggle_selected (NeulandContactRow *contact_row);
+
+void
+neuland_contact_row_set_selected (NeulandContactRow *contact_row, gboolean selected);
+
+gboolean
+neuland_contact_row_get_selected (NeulandContactRow *contact_row);
+
 GtkWidget*
 neuland_contact_row_new (NeulandContact *contact);
 

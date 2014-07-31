@@ -241,9 +241,24 @@ contacts_list_box_row_activated_cb (NeulandWindow *window,
                                     GtkListBoxRow *row,
                                     gpointer user_data)
 {
-  NeulandContact *contact = neuland_contact_row_get_contact (NEULAND_CONTACT_ROW (row));
+  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (row);
+  NeulandContact *contact = neuland_contact_row_get_contact (contact_row);
 
-  neuland_window_set_active_contact (window, contact);
+  /* This allows selection by clicking anywhere on the row, not sure
+     if we want that. */
+  GVariant *state =  g_action_group_get_action_state (G_ACTION_GROUP (window), "selection");
+
+  if (g_variant_get_boolean (state))
+    neuland_contact_row_toggle_selected (contact_row);
+  else
+    /* TODO: With this in an else clause we don't change the active
+       contact when in selection mode, but maybe we should? But it
+       feels weird to unselect a contact and activate it at the same
+       time. Maybe the proper solution would be to not show any chat
+       widget at all, when in selection mode.*/
+    neuland_window_set_active_contact (window, contact);
+
+  g_variant_unref (state);
 }
 
 static void
