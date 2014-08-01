@@ -146,9 +146,7 @@ neuland_window_show_welcome_widget (NeulandWindow *window)
 
 /* This shows the 'chat widget' (chat widget or request widget) for
    @contact in the right part (priv->chat_stack) and hooks up the
-   window title above it. Notice that the visibility of the
-   Accept/Discard buttons is controlled by the state of the
-   "show-request" action and not by this function. */
+   window title above it. */
 static void
 neuland_window_show_chat_for_contact (NeulandWindow *window,
                                       NeulandContact *contact)
@@ -248,13 +246,7 @@ contacts_list_box_row_activated_cb (NeulandWindow *window,
   NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (row);
   NeulandContact *contact = neuland_contact_row_get_contact (contact_row);
 
-  /* This allows selection by clicking anywhere on the row, not sure
-     if we want that. */
-  GVariant *state =  g_action_group_get_action_state (G_ACTION_GROUP (window), "selection");
-
   neuland_window_set_active_contact (window, contact);
-
-  g_variant_unref (state);
 }
 
 static void
