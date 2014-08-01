@@ -830,16 +830,17 @@ add_contact_activated (GSimpleAction *action,
 
 static void
 accept_selected_activated (GSimpleAction *action,
-                          GVariant *parameter,
-                          gpointer user_data)
+                           GVariant *parameter,
+                           gpointer user_data)
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
   GList *list = g_hash_table_get_keys (priv->selected_contacts);
 
-  neuland_tox_accept_contact_requests (priv->tox, list);
   g_action_group_change_action_state
     (G_ACTION_GROUP (window), "selection", g_variant_new_boolean (FALSE));
+
+  neuland_tox_accept_contact_requests (priv->tox, list);
 
   g_list_free (list);
 }
