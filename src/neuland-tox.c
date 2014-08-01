@@ -695,7 +695,8 @@ remove_contacts (NeulandTox *tox,
       else
         {
           g_debug ("Removing contact %p from contacts hash table");
-          g_hash_table_remove (priv->contacts_ht, contact);
+          g_hash_table_remove (priv->contacts_ht,
+                               GINT_TO_POINTER (neuland_contact_get_number (contact)));
         }
     }
 }
