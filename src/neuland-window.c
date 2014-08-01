@@ -126,16 +126,6 @@ neuland_window_get_contact_from_row (NeulandWindow *window,
   return neuland_contact_row_get_contact (NEULAND_CONTACT_ROW (row));
 }
 
-
-static GtkWidget *
-neuland_window_get_contact_row_for_contact (NeulandWindow *window,
-                                            NeulandContact *contact)
-{
-  GHashTable *contact_row_widgets = window->priv->contact_row_widgets;
-  GtkWidget *widget = GTK_WIDGET (g_hash_table_lookup (contact_row_widgets, contact));
-  return widget;
-}
-
 static void
 neuland_window_show_welcome_widget (NeulandWindow *window)
 {
@@ -298,6 +288,27 @@ neuland_window_activate_contact (NeulandWindow *window,
     gtk_widget_activate (row);
 }
 
+static void
+neuland_window_accept_requests (NeulandWindow *window,
+                                GSList *contacts)
+{
+
+  NeulandWindowPrivate *priv = window->priv;
+
+  GSList *l;
+  for (l = contacts; l; l = l->next)
+    {
+      NeulandContact *contact = NEULAND_CONTACT (l->data);
+      GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
+      g_return_if_fail (neuland_contact_get_number (contact) > -1);
+
+      /* Move contact from requests_list_box to contacts_list_box. */
+      g_object_ref (row);
+      gtk_container_remove (GTK_CONTAINER (priv->requests_list_box), GTK_WIDGET (row));
+      gtk_list_box_insert (priv->contacts_list_box, row, -1);
+      g_object_unref (row);
+    }
+}
 
 /* Returns TRUE on success, FALSE if there is no row in the list. */
 static gboolean
@@ -317,28 +328,6 @@ neuland_window_activate_first_contact_or_request (NeulandWindow *window)
     }
 
   return FALSE;
-}
-
-/* This is used to get notified when a contact request has been
-   accepted, in which case the contact's number changes from -1 to n,
-   where n > -1. */
-static void
-neuland_window_on_number_changed_cb (NeulandWindow *window,
-                                     GParamSpec *pspec,
-                                     gpointer user_data)
-{
-  NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = NEULAND_CONTACT (user_data);
-  GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
-
-  if (neuland_contact_get_number (contact) > -1)
-    {
-      /* Move contact from requests_list_box to contacts_list_box. */
-      g_object_ref (row);
-      gtk_container_remove (GTK_CONTAINER (priv->requests_list_box), GTK_WIDGET (row));
-      gtk_list_box_insert (priv->contacts_list_box, row, -1);
-      g_object_unref (row);
-    }
 }
 
 static void
@@ -385,8 +374,6 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
   NeulandWindowPrivate *priv = window->priv;
 
   g_object_connect (contact,
-                    "swapped-signal::notify::number",
-                    neuland_window_on_number_changed_cb, window,
                     "swapped-signal::ensure-chat-widget",
                     neuland_window_on_ensure_chat_widget, window,
                     "swapped-signal::incoming-message",
@@ -606,6 +593,14 @@ on_contact_add_cb (NeulandWindow *window,
 }
 
 static void
+on_accept_requests_cb (NeulandWindow *window,
+                       GSList *contacts,
+                       gpointer user_data)
+{
+  neuland_window_accept_requests (window, contacts);
+}
+
+static void
 on_remove_contacts_cb (NeulandWindow *window,
                        GSList *contacts,
                        gpointer user_data)
@@ -668,6 +663,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
                     "swapped-signal::contact-add", on_contact_add_cb, window,
                     "swapped-signal::remove-contacts", on_remove_contacts_cb, window,
                     "swapped-signal::notify::pending-requests", on_pending_requests_cb, window,
+                    "swapped-signal::accept-requests", on_accept_requests_cb, window,
                     NULL);
   neuland_contact_row_set_name (NEULAND_CONTACT_ROW (priv->me_widget),
                                 neuland_tox_get_name (tox));

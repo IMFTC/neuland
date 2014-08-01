@@ -88,6 +88,7 @@ enum {
 enum {
   CONTACT_ADD,
   REMOVE_CONTACTS,
+  ACCEPT_REQUESTS,
   LAST_SIGNAL
 };
 
@@ -789,11 +790,13 @@ neuland_tox_accept_contact_requests (NeulandTox *tox,
           accepted_contacts = g_list_prepend (accepted_contacts, contact);
         }
     }
+
   if (accepted_contacts)
-    g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
+    {
+      g_signal_emit (tox, signals[ACCEPT_REQUESTS], 0, accepted_contacts);
+      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
+    }
 }
-
-
 
 void
 neuland_tox_save_and_kill (NeulandTox *tox)
@@ -1106,6 +1109,16 @@ neuland_tox_class_init (NeulandToxClass *klass)
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   G_STRUCT_OFFSET (NeulandToxClass, remove_contacts),
+                  NULL, NULL,
+                  g_cclosure_marshal_VOID__POINTER,
+                  G_TYPE_NONE,
+                  1,
+                  G_TYPE_POINTER);
+  signals[ACCEPT_REQUESTS] =
+    g_signal_new ("accept-requests",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_FIRST,
+                  0,
                   NULL, NULL,
                   g_cclosure_marshal_VOID__POINTER,
                   G_TYPE_NONE,
