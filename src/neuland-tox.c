@@ -18,7 +18,6 @@
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO: Thread-safety
 #include <string.h>
 
 #include "neuland-tox.h"
