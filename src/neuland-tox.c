@@ -796,6 +796,8 @@ neuland_tox_accept_contact_requests (NeulandTox *tox,
       g_signal_emit (tox, signals[ACCEPT_REQUESTS], 0, accepted_contacts);
       g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_PENDING_REQUESTS]);
     }
+
+  g_list_free (accepted_contacts);
 }
 
 void

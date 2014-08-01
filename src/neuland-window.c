@@ -286,28 +286,73 @@ neuland_window_activate_contact (NeulandWindow *window,
   GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
   if (row != NULL)
     gtk_widget_activate (row);
+  else
+    g_warning ("Activating NULL contact");
 }
 
+/* Move contact row from requests_list_box to contacts_list_box. */
 static void
 neuland_window_accept_requests (NeulandWindow *window,
                                 GSList *contacts)
 {
-
+  g_return_if_fail (NEULAND_WINDOW (window));
   NeulandWindowPrivate *priv = window->priv;
 
+  gint min_index = -1;
+  gint max_index = -1;
+
+  gboolean active_request_accepted = FALSE;
   GSList *l;
-  for (l = contacts; l; l = l->next)
+  GSList *rows_to_move = NULL;
+  for (l= contacts; l; l = l->next)
     {
       NeulandContact *contact = NEULAND_CONTACT (l->data);
       GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
+      rows_to_move = g_slist_prepend (rows_to_move, row);
       g_return_if_fail (neuland_contact_get_number (contact) > -1);
 
-      /* Move contact from requests_list_box to contacts_list_box. */
+      gint index = gtk_list_box_row_get_index (GTK_LIST_BOX_ROW (row));
+      if (contact == priv->active_request)
+        active_request_accepted = TRUE;
+      if (min_index = -1)
+        min_index = max_index = index;
+      else
+        {
+          min_index = MIN (min_index, index);
+          max_index = MAX (max_index, index);
+        }
+    }
+
+  /* If we are about to remove the active request from the list, make
+     sure to activate another one, if any are left. */
+  GtkListBoxRow *row_to_activate = NULL;
+  NeulandContact *contact_to_activate = NULL;
+  if (active_request_accepted)
+    {
+      row_to_activate = gtk_list_box_get_row_at_index (priv->requests_list_box, max_index + 1);
+      if (row_to_activate == NULL)
+        row_to_activate = gtk_list_box_get_row_at_index (priv->requests_list_box, min_index - 1);
+      if (row_to_activate != NULL)
+        {
+          contact_to_activate = neuland_window_get_contact_from_row (window, row_to_activate);
+          neuland_window_activate_contact (window, contact_to_activate);
+        }
+    }
+
+  /* Move the contact rows from the requests list box to the contacts list box.  */
+  for (l = rows_to_move; l; l = l->next)
+    {
+      GtkWidget *row = GTK_WIDGET (l->data);
+
+      g_debug ("Moving contact row %p for contact %p from requests to contacts",
+               row, neuland_contact_row_get_contact (NEULAND_CONTACT_ROW (row)));
       g_object_ref (row);
       gtk_container_remove (GTK_CONTAINER (priv->requests_list_box), GTK_WIDGET (row));
       gtk_list_box_insert (priv->contacts_list_box, row, -1);
       g_object_unref (row);
     }
+
+  g_slist_free (rows_to_move);
 }
 
 /* Returns TRUE on success, FALSE if there is no row in the list. */
