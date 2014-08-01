@@ -2,8 +2,8 @@
   <menu id='app-menu'>
     <section>
       <item>
-        <attribute name='label' translatable='yes'>_New Window</attribute>
-        <attribute name='action'>app.new</attribute>
+        <attribute name='label' translatable='yes'>_New Transient Identity</attribute>
+        <attribute name='action'>app.new-transient-identity</attribute>
       </item>
     </section>
     <section>

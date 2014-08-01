@@ -59,7 +59,7 @@ neuland_application_new_window (NeulandApplication *app, gchar *data_path)
 {
   g_debug ("neuland_application_new_window");
 
-  NeulandTox *tox = neuland_tox_new(data_path);
+  NeulandTox *tox = neuland_tox_new (data_path);
 
   GtkWidget *window;
   window = neuland_window_new (tox);
@@ -69,11 +69,11 @@ neuland_application_new_window (NeulandApplication *app, gchar *data_path)
   gtk_widget_show_all (GTK_WIDGET (window));
 }
 
-/* Start a throw-away session, no data will be saved */
+/* Start a throw-away session, no data will be saved. Useful for testing. */
 static void
-neuland_application_new_activated (GSimpleAction *action,
-                                   GVariant      *parameter,
-                                   gpointer       user_data)
+neuland_application_new_transient_identity_activated (GSimpleAction *action,
+                                                      GVariant      *parameter,
+                                                      gpointer       user_data)
 {
   NeulandApplication *app = NEULAND_APPLICATION (user_data);
   neuland_application_new_window (app, NULL);
@@ -107,7 +107,7 @@ neuland_application_quit_activated (GSimpleAction *action,
 
 
 static GActionEntry app_entries[] = {
-  { "new", neuland_application_new_activated, NULL, NULL, NULL },
+  { "new-transient-identity", neuland_application_new_transient_identity_activated, NULL, NULL, NULL },
   { "about", neuland_application_about_activated, NULL, NULL, NULL },
   { "quit", neuland_application_quit_activated, NULL, NULL, NULL },
   { "tox_info", neuland_application_tox_info_activated, NULL, NULL, NULL },
@@ -172,7 +172,7 @@ neuland_application_startup (GApplication *application)
     const gchar *target_dot_action;
     const gchar *accelerators[2];
   } accels[] = {
-    { "app.new", { "<Primary>n", NULL } },
+    { "app.new-transient-identity", { "<Primary>n", NULL } },
     { "app.quit", { "<Primary>q", NULL } },
     { "win.add-contact", { "<Primary>a", NULL} }
   };
