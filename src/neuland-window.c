@@ -703,7 +703,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
   g_object_bind_property (tox, "pending-requests", priv->pending_requests_label, "label", 0);
 
   g_object_connect (tox,
-                    "signal::notify::self-name", on_name_change_cb, window,
+                    "signal::notify::name", on_name_change_cb, window,
                     "signal::notify::status-message", on_status_message_change_cb, window,
                     "swapped-signal::contact-add", on_contact_add_cb, window,
                     "swapped-signal::remove-contacts", on_remove_contacts_cb, window,

@@ -519,13 +519,12 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
 
       if (g_file_get_contents (data_path, &data, &length, &error))
         {
-          g_debug ("Setting tox data_path to: %s", priv->data_path);
+          g_debug ("Setting tox data_path to: %s", data_path);
+          priv->data_path = data_path;
 
           g_mutex_lock (&priv->mutex);
           tox_load (priv->tox_struct, data, length);
           g_mutex_unlock (&priv->mutex);
-
-          priv->data_path = data_path;
         }
       else
         {
@@ -555,22 +554,22 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
 
   tox_get_address (priv->tox_struct, address);
   neuland_bin_to_hex_string (address, hex_string, TOX_FRIEND_ADDRESS_SIZE);
-  tox->priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
-
-  l = tox_get_self_status_message (tox_struct, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
-  tox->priv->status_message = g_strndup (status_message, l);
+  priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
 
   l = tox_get_self_name (tox_struct, name);
-  tox->priv->name = g_strndup (name, l);
+  priv->name = g_strndup (name, l);
+  g_debug ("Got our name from tox: \"%s\"", priv->name);
+  if (strlen (priv->name) == 0)
+    {
+      g_debug ("Got emtpy name, going to use the default one (\"%s\")", NEULAND_DEFAULT_NAME);
+      priv->name = g_strdup (NEULAND_DEFAULT_NAME);
+    }
+
+  l = tox_get_self_status_message (tox_struct, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
+  priv->status_message = g_strndup (status_message, l);
+  g_debug ("Got our status message from tox: \"%s\"", priv->status_message);
 
   g_mutex_unlock (&priv->mutex);
-
-  /* If we have no name yet, set a default name and status message */
-  if (l <= 0)
-    {
-      tox->priv->name = g_strdup (NEULAND_DEFAULT_NAME);
-      tox->priv->status_message = g_strdup (NEULAND_DEFAULT_STATUS_MESSAGE);
-    }
 }
 
 static void
@@ -836,7 +835,7 @@ void
 neuland_tox_set_name (NeulandTox *tox,
                       const gchar *name)
 {
-  g_debug ("neuland_tox_set_name: %s ...", name);
+  g_debug ("neuland_tox_set_name: %s", name);
   NeulandToxPrivate *priv = tox->priv;
 
   g_free (priv->name);
@@ -991,7 +990,7 @@ neuland_tox_get_property (GObject *object,
       g_value_set_string (value, neuland_tox_get_tox_id_hex (nt));
       break;
     case PROP_NAME:
-      g_value_set_string (value, priv->name);
+      g_value_set_string (value, neuland_tox_get_name (nt));
       break;
     case PROP_STATUS_MESSAGE:
       g_value_set_string (value, priv->status_message);
@@ -1063,12 +1062,11 @@ neuland_tox_class_init (NeulandToxClass *klass)
                          NULL,
                          G_PARAM_READABLE);
   properties[PROP_NAME] =
-    g_param_spec_string ("self-name",
-                         "Self name",
+    g_param_spec_string ("name",
+                         "Name",
                          "Our own name",
                          NEULAND_DEFAULT_NAME,
-                         G_PARAM_READWRITE |
-                         G_PARAM_CONSTRUCT);
+                         G_PARAM_READWRITE);
   properties[PROP_STATUS] =
     g_param_spec_enum ("status",
                        "Status",
