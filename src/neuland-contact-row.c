@@ -284,37 +284,47 @@ neuland_contact_row_status_changed_cb (GObject *obj,
 neuland_contact_row_set_connected (NeulandContactRow *contact_row,
                                    gboolean connected)
 {
-  NeulandContact *contact = contact_row->priv->contact;
+  g_message ("neuland_contact_row_set_connected");
 
-  if (contact == NULL)
-    /* (contact == NULL) is a bit of a hack because this widget is
-     * currently used without a contact for our own status button,
-     * too. */
+  NeulandContactRowPrivate *priv = contact_row->priv;
+  NeulandContact *contact = priv->contact;
+
+  /* If the widget has a contact (the 'me' one has none), check if we
+   * have seen this contact online before. If we have, use the
+   * 'user-offline' icon, if not, use the 'user-invisible' icon (The
+   * user might not have accepted our contact request yet). */
+  if (contact)
     {
-      if (!connected)
-        gtk_image_set_from_icon_name (contact_row->priv->status_image,
-                                      "user-offline",
-                                      GTK_ICON_SIZE_MENU);
+      if (connected)
+        neuland_contact_row_set_status_message
+          (contact_row, neuland_contact_get_status_message (contact));
+      else
+        {
+          guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
+          if (last_connected_change != 0)
+            /* Seen online before */
+            gtk_image_set_from_icon_name (contact_row->priv->status_image,
+                                          "user-offline",
+                                          GTK_ICON_SIZE_MENU);
+          else
+            /* Not seen online yet */
+            gtk_image_set_from_icon_name (contact_row->priv->status_image,
+                                          "user-invisible",
+                                          GTK_ICON_SIZE_MENU);
+
+          gchar *string = g_strdup_printf ("Last seen: %s", neuland_contact_get_last_seen (contact));
+          gtk_label_set_text (priv->status_label, string);
+          g_free (string);
+        }
+
     }
   else
-    /* If the widget has a contact, check if we have seen this
-     * contact online before. If we have, use the 'user-offline'
-     * icon, if not, use the 'user-invisible' icon (The user might
-     * not have accepted our contact request yet). */
     {
-      guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
-      {
-        if (last_connected_change != 0)
-          /* Seen online before */
-          gtk_image_set_from_icon_name (contact_row->priv->status_image,
-                                        "user-offline",
-                                        GTK_ICON_SIZE_MENU);
-        else
-          /* Not seen online yet */
-          gtk_image_set_from_icon_name (contact_row->priv->status_image,
-                                        "user-invisible",
-                                        GTK_ICON_SIZE_MENU);
-      }
+      /* TODO: This isn't used, we still lack the ability to be
+         offline while the window is being shown. */
+      gtk_image_set_from_icon_name (contact_row->priv->status_image,
+                                    "user-offline",
+                                    GTK_ICON_SIZE_MENU);
     }
 }
 

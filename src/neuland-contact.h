@@ -92,6 +92,9 @@ neuland_contact_set_last_online (NeulandContact *contact, guint64 last_online);
 guint64
 neuland_contact_get_last_online (NeulandContact *contact);
 
+const char *
+neuland_contact_get_last_seen (NeulandContact *contact);
+
 void
 neuland_contact_set_connected (NeulandContact *contact, gboolean connected);
 

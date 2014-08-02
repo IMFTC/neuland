@@ -40,6 +40,7 @@ struct _NeulandContactPrivate
   gboolean is_typing;
   guint unread_messages;
   guint64 last_connected_change;
+  gchar *last_seen;
 
   gboolean has_chat_widget;
   guint show_typing_timeout_id;
@@ -58,6 +59,7 @@ enum {
   PROP_CONNECTED,
   PROP_STATUS,
   PROP_STATUS_MESSAGE,
+  PROP_LAST_SEEN,
   PROP_UNREAD_MESSAGES,
   PROP_IS_TYPING,
   PROP_SHOW_TYPING,
@@ -170,16 +172,77 @@ neuland_contact_get_last_connected_change (NeulandContact *contact)
   return contact->priv->last_connected_change;
 }
 
-/* construct-only property, so this is not public */
+static void
+neuland_contact_update_last_seen (NeulandContact *contact)
+{
+  NeulandContactPrivate *priv = contact->priv;
+  guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
+
+  g_free (priv->last_seen);
+
+  if (priv->connected)
+    /* This shouldn't be displayed */
+    priv->last_seen = g_strdup ("Now Online");
+  else if (last_connected_change == 0)
+    priv->last_seen = g_strdup ("Never");
+  else
+    {
+      gchar *format;
+      GDateTime *now = g_date_time_new_now_local ();
+      GDateTime *last = g_date_time_new_from_unix_local (last_connected_change);
+      gint y_now, m_now, d_now;  /* year, month, day */
+      g_date_time_get_ymd (now, &y_now, &m_now, &d_now);
+
+      GDateTime *start_today = g_date_time_new_local (y_now, m_now, d_now, 0, 0, 0);
+      GDateTime *start_yesterday = g_date_time_add_days (start_today, -1);
+      GDateTime *start_6_days_ago = g_date_time_add_days (start_today, -6);
+      GDateTime *start_year = g_date_time_new_local (y_now, 1, 1, 0, 0, 0);
+
+      if (g_date_time_compare (start_today, last) != 1)
+        /* start_today <= last */
+        format = "%H:%M";
+      else if (g_date_time_compare (start_yesterday, last) != 1)
+        /* start_yesterday <= last */
+        format = "Yesterday %H:%M";
+      else if (g_date_time_compare (start_6_days_ago, last) != 1)
+        /* 6 or less days ago (not 7 days ago, because we don't want
+           to show Monday 10:12 when today is Monday, too). */
+        format = "%a %H:%M";
+      else if (g_date_time_compare (start_year, last) != 1)
+        /* start_month <= last */
+        format = "%b %d";
+      else
+        format = "%x";
+
+      priv->last_seen = g_date_time_format (last, format);
+
+      g_date_time_unref (now);
+      g_date_time_unref (last);
+      g_date_time_unref (start_today);
+      g_date_time_unref (start_yesterday);
+      g_date_time_unref (start_6_days_ago);
+      g_date_time_unref (start_year);
+    }
+
+  g_object_notify_by_pspec (G_OBJECT (contact),
+                            properties[PROP_LAST_SEEN]);
+}
+
 static void
 neuland_contact_set_last_connected_change (NeulandContact *contact,
                                            guint64 last_connected_change)
 {
   contact->priv->last_connected_change = last_connected_change;
-  g_object_notify_by_pspec (G_OBJECT (contact),
-                            properties[PROP_LAST_CONNECTED_CHANGE]);
   g_debug ("setting last_connected_change to %llus since epoche",
            last_connected_change);
+
+  g_object_freeze_notify (G_OBJECT (contact));
+
+  neuland_contact_update_last_seen (contact);
+  g_object_notify_by_pspec (G_OBJECT (contact),
+                            properties[PROP_LAST_CONNECTED_CHANGE]);
+
+  g_object_thaw_notify (G_OBJECT (contact));
 }
 
 void
@@ -197,9 +260,18 @@ neuland_contact_set_connected (NeulandContact *contact,
   priv->connected = connected;
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_CONNECTED]);
 
+  neuland_contact_update_last_seen (contact);
+
   g_object_thaw_notify (G_OBJECT (contact));
 }
 
+gboolean
+neuland_contact_is_connected (NeulandContact *contact)
+{
+  NeulandContactPrivate *priv = contact->priv;
+
+  return priv->connected;
+}
 
 gboolean
 neuland_contact_get_is_typing (NeulandContact *contact)
@@ -358,6 +430,14 @@ neuland_contact_get_preferred_name (NeulandContact *contact)
   return contact->priv->preferred_name;
 }
 
+const gchar *
+neuland_contact_get_last_seen (NeulandContact *contact)
+{
+  NeulandContactPrivate *priv = contact->priv;
+
+  return priv->last_seen;
+}
+
 static void
 neuland_contact_get_property (GObject *object,
                               guint property_id,
@@ -400,6 +480,9 @@ neuland_contact_get_property (GObject *object,
       break;
     case PROP_STATUS_MESSAGE:
       g_value_set_string (value, contact->priv->status_message);
+      break;
+    case PROP_LAST_SEEN:
+      g_value_set_string (value, neuland_contact_get_last_seen (contact));
       break;
     case PROP_UNREAD_MESSAGES:
       g_value_set_uint (value, contact->priv->unread_messages);
@@ -606,6 +689,14 @@ neuland_contact_class_init (NeulandContactClass *klass)
                          "",
                          G_PARAM_READWRITE |
                          G_PARAM_CONSTRUCT);
+
+  properties[PROP_LAST_SEEN] =
+    g_param_spec_string ("last-seen",
+                         "Last seen",
+                         "A string informing in a human friendly way when we "
+                         "last saw the contact online",
+                         "Last Seen: Never",
+                         G_PARAM_READABLE);
 
   properties[PROP_UNREAD_MESSAGES] =
     g_param_spec_uint ("unread-messages",
