@@ -512,19 +512,26 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
   gchar *data;
   gsize length;
   GError *error = NULL;
+  gboolean data_path_exists = TRUE;
 
-  g_message ("data_path: %s", data_path);
+  g_message ("Setting data path for tox instance %p to \"%s\".", tox, data_path);
+
   if (data_path != NULL)
     {
-
       if (g_file_get_contents (data_path, &data, &length, &error))
         {
-          g_debug ("Setting tox data_path to: %s", data_path);
-          priv->data_path = data_path;
-
           g_mutex_lock (&priv->mutex);
-          tox_load (priv->tox_struct, data, length);
+          gint ret = tox_load (priv->tox_struct, data, length);
           g_mutex_unlock (&priv->mutex);
+
+          if (ret == 0)
+            priv->data_path = data_path;
+          else
+            {
+              g_warning ("tox_load () for data path \"%s\" failed with return value %i. Setting data path to NULL.",
+                         data_path, ret);
+              priv->data_path = NULL;
+            }
         }
       else
         {
@@ -535,41 +542,58 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
                  location. */
               g_message ("File %s not found. Will try to save new data to it on exit.", data_path);
               priv->data_path = data_path;
+              data_path_exists = FALSE;
             }
           else
             {
-              g_debug ("%s", error->message);
+              g_warning ("Failed to get file content from file \"%s\", "
+                         "reason: %s, setting data path to NULL", data_path, error->message);
               priv->data_path = NULL;
             }
         }
     }
 
-  g_mutex_lock (&priv->mutex);
 
   guint8 address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
   guint8 name[TOX_MAX_NAME_LENGTH] = {0, };
   guint8 status_message[TOX_MAX_STATUSMESSAGE_LENGTH] = {0,};
   guchar hex_string[TOX_FRIEND_ADDRESS_SIZE * 2 + 1] = {0,};
-  guint16 l;
+
+  g_mutex_lock (&priv->mutex);
 
   tox_get_address (priv->tox_struct, address);
+
+  g_mutex_unlock (&priv->mutex);
+
   neuland_bin_to_hex_string (address, hex_string, TOX_FRIEND_ADDRESS_SIZE);
   priv->tox_id_hex = g_strndup (hex_string, TOX_FRIEND_ADDRESS_SIZE * 2);
 
-  l = tox_get_self_name (tox_struct, name);
-  priv->name = g_strndup (name, l);
-  g_debug ("Got our name from tox: \"%s\"", priv->name);
-  if (strlen (priv->name) == 0)
+  if (priv->data_path == NULL || !data_path_exists)
     {
-      g_debug ("Got emtpy name, going to use the default one (\"%s\")", NEULAND_DEFAULT_NAME);
-      priv->name = g_strdup (NEULAND_DEFAULT_NAME);
+      g_message ("Got NULL data path or path to a not existing data file, going to use"
+                 "the default name and status message",
+               NEULAND_DEFAULT_STATUS_MESSAGE);
+      neuland_tox_set_name (tox, NEULAND_DEFAULT_NAME);
+      neuland_tox_set_status_message (tox, NEULAND_DEFAULT_STATUS_MESSAGE);
+    }
+  else
+    {
+      guint16 l;
+
+      g_mutex_lock (&priv->mutex);
+
+      l = tox_get_self_name (tox_struct, name);
+      priv->name = g_strndup (name, l);
+
+      l = tox_get_self_status_message (tox_struct, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
+      priv->status_message = g_strndup (status_message, l);
+
+      g_mutex_unlock (&priv->mutex);
+
+      g_debug ("Setting our name from tox data file: \"%s\"", priv->name);
+      g_debug ("Setting our status message from tox data file: \"%s\"", priv->status_message);
     }
 
-  l = tox_get_self_status_message (tox_struct, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
-  priv->status_message = g_strndup (status_message, l);
-  g_debug ("Got our status message from tox: \"%s\"", priv->status_message);
-
-  g_mutex_unlock (&priv->mutex);
 }
 
 static void
