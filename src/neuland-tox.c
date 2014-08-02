@@ -540,7 +540,7 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
               /* Tox will start up without a file, creating a new identity.
                  when closing we will try to save the tox data to this
                  location. */
-              g_message ("File %s not found. Will try to save new data to it on exit.", data_path);
+              g_message ("File \"%s\" not found. Will try to save new data to it on exit.", data_path);
               priv->data_path = data_path;
               data_path_exists = FALSE;
             }
@@ -570,9 +570,9 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
 
   if (priv->data_path == NULL || !data_path_exists)
     {
-      g_message ("Got NULL data path or path to a not existing data file, going to use"
+      g_message ("Got NULL data path or path to a not existing data file, going to use "
                  "the default name and status message",
-               NEULAND_DEFAULT_STATUS_MESSAGE);
+                 NEULAND_DEFAULT_STATUS_MESSAGE);
       neuland_tox_set_name (tox, NEULAND_DEFAULT_NAME);
       neuland_tox_set_status_message (tox, NEULAND_DEFAULT_STATUS_MESSAGE);
     }
@@ -665,7 +665,7 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
                                           const gchar *hex_address,
                                           const gchar *message)
 {
-  g_message ("neuland_tox_add_contact_from_hex_address %s", hex_address);
+  g_debug ("neuland_tox_add_contact_from_hex_address %s", hex_address);
   /* Tox wants at least one byte for the message, so in case the
      message entry is empty we send one space. */
   gchar *tmp_message = g_strdup (g_strcmp0 (message, "") == 0 ? " " : message);
@@ -685,7 +685,7 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
 
   if (friend_number < 0)
     {
-      g_message ("Failed to add friend from hex address \"%s\". Tox error number: %i (%s)",
+      g_warning ("Failed to add friend from hex address \"%s\". Tox error number: %i (%s)",
                  hex_address, friend_number, tox_faerr_to_string (friend_number));
       return;
     }
@@ -808,7 +808,7 @@ neuland_tox_accept_contact_requests (NeulandTox *tox,
           g_hash_table_remove (priv->requests_ht, contact);
           g_hash_table_insert (priv->contacts_ht, GINT_TO_POINTER (number), contact);
 
-          g_message ("Added contact %s (%p) from request as number %i",
+          g_message ("Added contact \"%s\" (%p) from request as number %i",
                      neuland_contact_get_preferred_name (contact), contact, number);
           accepted_contacts = g_list_prepend (accepted_contacts, contact);
         }
@@ -895,7 +895,7 @@ neuland_tox_set_status (NeulandTox *tox, NeulandContactStatus status)
 
   GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_CONTACT_STATUS);
   GEnumValue *eval = g_enum_get_value (eclass, status);
-  g_message ("Setting NeulandTox (%p) status to: %s", tox, eval->value_name);
+  g_debug ("Setting status for tox instance %p to: %s", tox, eval->value_name);
 
   g_mutex_lock (&priv->mutex);
 
@@ -1233,7 +1233,7 @@ neuland_tox_start (NeulandTox *tox)
       g_usleep ((gulong) 1000 * interval);
     }
 
-  g_message ("Leaving tox_do thread");
+  g_debug ("Leaving tox_do thread");
 }
 
 NeulandTox *

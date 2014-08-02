@@ -284,7 +284,7 @@ neuland_contact_row_status_changed_cb (GObject *obj,
 neuland_contact_row_set_connected (NeulandContactRow *contact_row,
                                    gboolean connected)
 {
-  g_message ("neuland_contact_row_set_connected");
+  g_debug ("neuland_contact_row_set_connected");
 
   NeulandContactRowPrivate *priv = contact_row->priv;
   NeulandContact *contact = priv->contact;

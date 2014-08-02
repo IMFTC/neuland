@@ -123,7 +123,7 @@ neuland_application_open (GApplication  *application,
   for (i = 0; i < n_files; i++)
     {
       gchar *path = g_file_get_path (files[i]);
-      g_message ("Creating window for tox data '%s'", path);
+      g_message ("Creating window for data path \"%s\"", path);
       neuland_application_new_window (NEULAND_APPLICATION (application), path);
     }
 }

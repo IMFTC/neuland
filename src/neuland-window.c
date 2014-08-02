@@ -443,7 +443,7 @@ neuland_window_add_contact (NeulandWindow *window, NeulandContact *contact)
 static void
 neuland_window_remove_contacts (NeulandWindow *window, GSList *contacts)
 {
-  g_message ("Removing contacts from NeulandWindow %p", window);
+  g_debug ("Removing contacts from NeulandWindow %p", window);
   g_return_if_fail (NEULAND_IS_WINDOW (window));
   g_return_if_fail (contacts);
   g_return_if_fail (NEULAND_IS_CONTACT (contacts->data));
@@ -927,7 +927,7 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
       else
         if (!neuland_window_activate_first_contact_or_request (window))
           {
-            g_warning ("Switched to requests while there are no requests,"
+            g_warning ("Switched to requests while there are no requests, "
                        "going to show the welcome widget.");
             neuland_window_show_welcome_widget (window);
           }
@@ -1055,8 +1055,7 @@ neuland_window_init (NeulandWindow *window)
   priv->welcome_widget = GTK_WIDGET (gtk_builder_get_object  (builder, "welcome-widget"));
   priv->welcome_widget_tox_id_label =
     GTK_LABEL (gtk_builder_get_object (builder, "welcome_widget_tox_id_label"));
-  g_message ("adding welcome_widget ...");
-
+  g_debug ("adding welcome_widget");
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->welcome_widget);
 
   /* Prepare contact request widget */
@@ -1065,7 +1064,7 @@ neuland_window_init (NeulandWindow *window)
     GTK_TEXT_BUFFER (gtk_builder_get_object  (builder, "request_widget_text_buffer"));
   priv->request_widget_tox_id_label =
     GTK_LABEL (gtk_builder_get_object  (builder, "request_widget_tox_id_label"));
-  g_message ("adding request_widget ...");
+  g_debug ("adding request_widget");
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->request_widget);
 
   /* Me widget */
