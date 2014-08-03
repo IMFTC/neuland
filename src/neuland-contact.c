@@ -24,6 +24,7 @@
 #include "neuland-contact.h"
 
 #define NEULAND_CONTACT_SHOW_TYPING_TIMEOUT 3 /* Seconds */
+#define MAX_PREFERRED_NAME_LENGTH 12 /* characters, not bytes */
 
 struct _NeulandContactPrivate
 {
@@ -86,14 +87,16 @@ neuland_contact_update_preferred_name (NeulandContact *contact)
 {
   NeulandContactPrivate *priv = contact->priv;
   const gchar *name = priv->name;
-  glong name_length = g_utf8_strlen (name, 12);
+  glong name_length = g_utf8_strlen (name, MAX_PREFERRED_NAME_LENGTH);
 
   g_free (priv->preferred_name);
 
   if (name_length > 0)
-    priv->preferred_name = g_strndup (name, MIN (name_length, 12));
+    priv->preferred_name = g_utf8_substring (name, 0, name_length - 1);
   else
     priv->preferred_name = g_strndup (neuland_contact_get_tox_id_hex (contact), 12);
+
+  g_debug ("Preferred name for contact %p changed to: \"%s\"", contact, priv->preferred_name);
 }
 
 void
