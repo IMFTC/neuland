@@ -172,9 +172,9 @@ neuland_application_startup (GApplication *application)
     const gchar *target_dot_action;
     const gchar *accelerators[2];
   } accels[] = {
-    { "app.new-transient-identity", { "<Primary>n", NULL } },
+    { "app.new-transient-identity", { "<Primary>t", NULL } },
     { "app.quit", { "<Primary>q", NULL } },
-    { "win.add-contact", { "<Primary>a", NULL} }
+    { "win.add-contact", { "<Primary>n", NULL} }
   };
 
   int i;
