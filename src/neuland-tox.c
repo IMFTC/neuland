@@ -51,6 +51,11 @@ typedef struct
   gboolean is_ipv6;
 } NeulandToxDhtNode;
 
+typedef enum {
+  SEND_TYPE_MESSAGE,
+  SEND_TYPE_ACTION,
+} NeulandToxSendType;
+
 /* Possible errors returned by tox_add_friend  */
 const gchar*
 tox_faerr_to_string (gint32 error)
@@ -340,24 +345,6 @@ on_typing_change (Tox *tox_struct,
                               is_typing, NEULAND_TOX (user_data));
 }
 
-void
-neuland_tox_send_message (NeulandTox *tox,
-                          NeulandContact *contact,
-                          gchar *message)
-{
-  NeulandToxPrivate *priv = tox->priv;
-
-  gint contact_number;
-  g_object_get (contact, "contact-number", &contact_number, NULL);
-
-  g_mutex_lock (&priv->mutex);
-
-  tox_send_message (tox->priv->tox_struct, contact_number,
-                    message, strlen (message));
-
-  g_mutex_unlock (&priv->mutex);
-}
-
 typedef struct {
   guint8 *public_key;
   guint8 *message;
@@ -365,45 +352,80 @@ typedef struct {
 } DataStructFriendRequest;
 
 static void
+neuland_tox_send (NeulandTox *tox,
+                  NeulandContact *contact,
+                  gchar *text,
+                  NeulandToxSendType type)
+{
+  g_return_if_fail (NEULAND_IS_TOX (tox));
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  NeulandToxPrivate *priv = tox->priv;
+  Tox *tox_struct = priv->tox_struct;
+  gchar *start_of_text = g_strndup (text, 10);
+  gint contact_number = neuland_contact_get_number (contact);
+  gint64 total_bytes = strlen (text);
+
+  if (type == SEND_TYPE_MESSAGE)
+    g_debug ("neuland_tox_send message to contact %p: %s", contact, start_of_text);
+  else if (type == SEND_TYPE_ACTION)
+    g_debug ("neuland_tox_send action to contact %p: %s", contact, start_of_text);
+  else
+    {
+      g_warning ("Unknown NeulandToxSendType enum value: %i", type);
+      g_return_if_reached ();
+    }
+
+  gint64 sent_bytes = 0;
+  while (sent_bytes < total_bytes)
+    {
+      gint64 bytes_to_send = total_bytes - sent_bytes;
+
+      if (bytes_to_send > TOX_MAX_MESSAGE_LENGTH)
+        {
+          /* Don't send chopped UTF-8 chars! */
+          gchar *first_char_start = text + sent_bytes;
+          /* After an equation with - 1 and + 1 it boils down to this */
+          bytes_to_send = g_utf8_prev_char (first_char_start + TOX_MAX_MESSAGE_LENGTH) - first_char_start;
+        }
+
+      g_debug ("neuland_tox_send: Sending %i of %i bytes (bytes %i to %i)",
+               bytes_to_send, total_bytes, sent_bytes + 1, sent_bytes + bytes_to_send);
+
+      g_mutex_lock (&priv->mutex);
+
+      if (type == SEND_TYPE_MESSAGE)
+        tox_send_message (tox->priv->tox_struct, contact_number,
+                          text + sent_bytes, bytes_to_send);
+      else if (type == SEND_TYPE_ACTION)
+        tox_send_action (tox->priv->tox_struct, contact_number,
+                         text + sent_bytes, bytes_to_send);
+
+      g_mutex_unlock (&priv->mutex);
+
+      sent_bytes = sent_bytes + bytes_to_send;
+    }
+
+  g_free (start_of_text);
+}
+
+static void
 on_outgoing_message_cb (NeulandContact *contact,
                         gchar *message,
                         gpointer user_data)
 {
-  g_debug ("on_outgoing_message_cb contact: %p message: %s", contact, message);
   NeulandTox *tox = NEULAND_TOX (user_data);
-  NeulandToxPrivate *priv = tox->priv;
-  Tox *tox_struct = priv->tox_struct;
-
-  gint contact_number;
-  g_object_get (contact, "number", &contact_number, NULL);
-  guint ret;
-
-  g_mutex_lock (&priv->mutex);
-
-  ret = tox_send_message (tox_struct, contact_number, message, strlen (message));
-
-  g_mutex_unlock (&priv->mutex);
+  neuland_tox_send (tox, contact, message, SEND_TYPE_MESSAGE);
 }
+
 
 static void
 on_outgoing_action_cb (NeulandContact *contact,
                        gchar *action,
                        gpointer user_data)
 {
-  g_debug ("on_outgoing_action_cb contact: %p action: %s", contact, action);
   NeulandTox *tox = NEULAND_TOX (user_data);
-  NeulandToxPrivate *priv = tox->priv;
-  Tox *tox_struct = priv->tox_struct;
-
-  gint contact_number;
-  g_object_get (contact, "number", &contact_number, NULL);
-  guint ret;
-
-  g_mutex_lock (&priv->mutex);
-
-  ret = tox_send_action (tox_struct, contact_number, action, strlen (action));
-
-  g_mutex_unlock (&priv->mutex);
+  neuland_tox_send (tox, contact, action, SEND_TYPE_ACTION);
 }
 
 static void
