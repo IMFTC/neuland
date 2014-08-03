@@ -362,14 +362,14 @@ neuland_tox_send (NeulandTox *tox,
 
   NeulandToxPrivate *priv = tox->priv;
   Tox *tox_struct = priv->tox_struct;
-  gchar *start_of_text = g_strndup (text, 10);
   gint contact_number = neuland_contact_get_number (contact);
   gint64 total_bytes = strlen (text);
+  gchar *preview = g_utf8_substring (text, 0, MIN (g_utf8_strlen (text, 40), 10));
 
   if (type == SEND_TYPE_MESSAGE)
-    g_debug ("neuland_tox_send message to contact %p: %s", contact, start_of_text);
+    g_debug ("neuland_tox_send message to contact %p: %s", contact, preview);
   else if (type == SEND_TYPE_ACTION)
-    g_debug ("neuland_tox_send action to contact %p: %s", contact, start_of_text);
+    g_debug ("neuland_tox_send action to contact %p: %s", contact, preview);
   else
     {
       g_warning ("Unknown NeulandToxSendType enum value: %i", type);
@@ -406,7 +406,7 @@ neuland_tox_send (NeulandTox *tox,
       sent_bytes = sent_bytes + bytes_to_send;
     }
 
-  g_free (start_of_text);
+  g_free (preview);
 }
 
 static void
