@@ -365,16 +365,21 @@ neuland_tox_send (NeulandTox *tox,
   gint contact_number = neuland_contact_get_number (contact);
   gint64 total_bytes = strlen (text);
   gchar *preview = g_utf8_substring (text, 0, MIN (g_utf8_strlen (text, 40), 10));
+  gint preview_bytes = strlen (preview);
+
+  gchar *format_string;
 
   if (type == SEND_TYPE_MESSAGE)
-    g_debug ("neuland_tox_send message to contact %p: %s", contact, preview);
+    format_string = "neuland_tox_send message to contact %p: \"%s%s\"";
   else if (type == SEND_TYPE_ACTION)
-    g_debug ("neuland_tox_send action to contact %p: %s", contact, preview);
+    format_string = "neuland_tox_send action to contact %p: \"%s%s\"";
   else
     {
       g_warning ("Unknown NeulandToxSendType enum value: %i", type);
       g_return_if_reached ();
     }
+
+  g_debug (format_string, contact, preview, preview_bytes < total_bytes ? "…" : "");
 
   gint64 sent_bytes = 0;
   while (sent_bytes < total_bytes)
