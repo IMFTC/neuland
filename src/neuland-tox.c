@@ -384,31 +384,42 @@ neuland_tox_send (NeulandTox *tox,
   gint64 sent_bytes = 0;
   while (sent_bytes < total_bytes)
     {
-      gint64 bytes_to_send = total_bytes - sent_bytes;
+      gint64 remaining_bytes = total_bytes - sent_bytes;
+      gint64 bytes;
 
-      if (bytes_to_send > TOX_MAX_MESSAGE_LENGTH)
+      /* Start address of the first char we will be sending in *this* loop run */
+      gchar *first_char = text + sent_bytes;
+
+      if (remaining_bytes <= TOX_MAX_MESSAGE_LENGTH)
+        bytes = remaining_bytes;
+      else
         {
-          /* Don't send chopped UTF-8 chars! */
-          gchar *first_char_start = text + sent_bytes;
-          /* After an equation with - 1 and + 1 it boils down to this */
-          bytes_to_send = g_utf8_prev_char (first_char_start + TOX_MAX_MESSAGE_LENGTH) - first_char_start;
+          /* Don't split UTF-8 chars!
+           *
+           * Start address of the first character we will be sending
+           * in the *next* loop run. Notice: g_utf8_prev_char (x) < x,
+           * hence the + 1, or we could waste one byte.
+           */
+          gchar *first_char_next = g_utf8_prev_char (first_char + TOX_MAX_MESSAGE_LENGTH + 1);
+
+          bytes =  first_char_next - first_char;
         }
 
       g_debug ("neuland_tox_send: Sending %i of %i bytes (bytes %i to %i)",
-               bytes_to_send, total_bytes, sent_bytes + 1, sent_bytes + bytes_to_send);
+               bytes, total_bytes, sent_bytes + 1, sent_bytes + bytes);
 
       g_mutex_lock (&priv->mutex);
 
       if (type == SEND_TYPE_MESSAGE)
         tox_send_message (tox->priv->tox_struct, contact_number,
-                          text + sent_bytes, bytes_to_send);
+                          first_char, bytes);
       else if (type == SEND_TYPE_ACTION)
         tox_send_action (tox->priv->tox_struct, contact_number,
-                         text + sent_bytes, bytes_to_send);
+                         first_char, bytes);
 
       g_mutex_unlock (&priv->mutex);
 
-      sent_bytes = sent_bytes + bytes_to_send;
+      sent_bytes = sent_bytes + bytes;
     }
 
   g_free (preview);
