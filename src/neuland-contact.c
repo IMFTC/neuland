@@ -92,7 +92,7 @@ neuland_contact_update_preferred_name (NeulandContact *contact)
   g_free (priv->preferred_name);
 
   if (name_length > 0)
-    priv->preferred_name = g_utf8_substring (name, 0, name_length - 1);
+    priv->preferred_name = g_utf8_substring (name, 0, name_length);
   else
     priv->preferred_name = g_strndup (neuland_contact_get_tox_id_hex (contact), 12);
 
