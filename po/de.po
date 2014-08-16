@@ -1,0 +1,119 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-08-16 14:19+0200\n"
+"PO-Revision-Date: 2014-08-16 14:28+0200\n"
+"Last-Translator: Volker Sobek <reklov@live.com>\n"
+"Language-Team: Deutsch\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/neuland-add-dialog.ui.h:1
+msgid "Add a New Contact"
+msgstr "Neuen Kontakt hinzufügen"
+
+#: ../src/neuland-add-dialog.ui.h:2
+msgid "Hey there, let's Tox?"
+msgstr "Hallo, lass uns toxen?"
+
+#: ../src/neuland-add-dialog.ui.h:3
+msgid "Tox ID:"
+msgstr "Tox ID:"
+
+#: ../src/neuland-add-dialog.ui.h:4
+msgid "Message:"
+msgstr "Nachricht:"
+
+#: ../src/neuland-add-dialog.ui.h:5
+msgid "_Cancel"
+msgstr "Abbrechen"
+
+#: ../src/neuland-add-dialog.ui.h:6
+msgid "_Add"
+msgstr "Hinzufügen"
+
+#: ../src/neuland-application-menu.ui.h:1
+msgid "New Transient Identity"
+msgstr "Neue flüchtige Identität"
+
+#: ../src/neuland-application-menu.ui.h:2
+msgid "About Neuland"
+msgstr "Über Neuland"
+
+#: ../src/neuland-application-menu.ui.h:3
+msgid "Quit"
+msgstr "Beenden"
+
+#: ../src/neuland-application-menu.ui.h:4
+msgid "Tox info"
+msgstr "Tox Information"
+
+#: ../src/neuland-chat-widget.ui.h:1
+msgid ""
+"Sending messages is currently not possible because the contact is offline."
+msgstr "Das Senden von Nachrichten ist momentan nicht möglich, da der Kontakt offline ist."
+
+#: ../src/neuland-me-status-menu.ui.h:1
+msgid "Available"
+msgstr "Verfügbar"
+
+#: ../src/neuland-me-status-menu.ui.h:2
+msgid "Away"
+msgstr "Abwesend"
+
+#: ../src/neuland-me-status-menu.ui.h:3
+msgid "Busy"
+msgstr "Beschäftigt"
+
+#: ../src/neuland-request-widget.ui.h:1
+msgid "<b>Contact Request from Tox ID:</b>"
+msgstr "<b>Kontaktanfrage der Tox ID:</b>"
+
+#. This is the header for the text message that was sent to us as part of a contact request.
+#: ../src/neuland-request-widget.ui.h:3
+msgid "<b>Message:</b>"
+msgstr "<b>Nachricht</b>"
+
+#: ../src/neuland-welcome-widget.ui.h:1
+msgid "Neuland!"
+msgstr "Neuland!"
+
+#: ../src/neuland-welcome-widget.ui.h:2
+msgid "Your own <b>Tox ID</b> to give to others is:"
+msgstr "Ihre eigene <b>Tox ID</b> zum Weitergeben lautet:"
+
+#: ../src/neuland-window.ui.h:1
+msgid "Neuland"
+msgstr "Neuland"
+
+#: ../src/neuland-window.ui.h:2
+msgid "Requests"
+msgstr "Anfragen"
+
+#: ../src/neuland-window.ui.h:3
+msgid "0"
+msgstr ""
+
+#: ../src/neuland-chat-widget.c:126
+#, c-format
+msgid "%s is typing..."
+msgstr "%s tippt gerade ..."
+
+#: ../src/neuland-chat-widget.c:217
+#, c-format
+msgid "* %s %s"
+msgstr "* %s %s"
+
+#: ../src/neuland-chat-widget.c:227
+#, c-format
+msgid "%s: "
+msgstr "%s: "
