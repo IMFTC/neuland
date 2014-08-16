@@ -312,7 +312,10 @@ neuland_contact_row_set_connected (NeulandContactRow *contact_row,
                                           "user-invisible",
                                           GTK_ICON_SIZE_MENU);
 
-          gchar *string = g_strdup_printf ("Last seen: %s", neuland_contact_get_last_seen (contact));
+          /* Translators: %s will be replaced by a localized time
+             string of the time when we last saw the contact
+             online. For example: "Last seen: Tuesday, 23:12" */
+          gchar *string = g_strdup_printf (_("Last seen: %s"), neuland_contact_get_last_seen (contact));
           gtk_label_set_text (priv->status_label, string);
           g_free (string);
         }
