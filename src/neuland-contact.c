@@ -19,6 +19,8 @@
  */
 
 #include <tox/tox.h>
+#include <gio/gio.h>
+#include <glib/gi18n.h>
 
 #include "neuland-enums.h"
 #include "neuland-contact.h"
@@ -185,9 +187,11 @@ neuland_contact_update_last_seen (NeulandContact *contact)
 
   if (priv->connected)
     /* This shouldn't be displayed */
-    priv->last_seen = g_strdup ("Now Online");
+    /* Translators: This is the status message when the contact is currently online. */
+    priv->last_seen = g_strdup (_("Now Online"));
   else if (last_connected_change == 0)
-    priv->last_seen = g_strdup ("Never");
+    /* Translators: This is schown when we haven't seen this contact online yet. */
+    priv->last_seen = g_strdup (_("Never"));
   else
     {
       gchar *format;
@@ -201,23 +205,78 @@ neuland_contact_update_last_seen (NeulandContact *contact)
       GDateTime *start_6_days_ago = g_date_time_add_days (start_today, -6);
       GDateTime *start_year = g_date_time_new_local (y_now, 1, 1, 0, 0, 0);
 
-      if (g_date_time_compare (start_today, last) != 1)
-        /* start_today <= last */
-        format = "%H:%M";
-      else if (g_date_time_compare (start_yesterday, last) != 1)
-        /* start_yesterday <= last */
-        format = "Yesterday %H:%M";
-      else if (g_date_time_compare (start_6_days_ago, last) != 1)
-        /* 6 or less days ago (not 7 days ago, because we don't want
-           to show Monday 10:12 when today is Monday, too). */
-        format = "%a %H:%M";
-      else if (g_date_time_compare (start_year, last) != 1)
-        /* start_month <= last */
-        format = "%b %d";
+      GSettings *interface_settings = g_settings_new ("org.gnome.desktop.interface");
+      gchar *clock_format = g_settings_get_string (interface_settings, "clock-format");
+      gchar *am_pm = g_date_time_format (now, "%p");
+      gboolean has_am_pm = g_strcmp0 (am_pm, "") != 0;
+
+      if (g_strcmp0 (clock_format, "24h") == 0 || !has_am_pm)
+        {
+          if (g_date_time_compare (start_today, last) != 1)
+            /* start_today <= last */
+            /* Translators: Time in 24h format */
+            format = _("%H:%M");
+          else if (g_date_time_compare (start_yesterday, last) != 1)
+            /* start_yesterday <= last */
+            /* Translators: This is "Yesterday" followed by a time string in 24h format */
+            format = _("Yesterday, %H:%M");
+
+          else if (g_date_time_compare (start_6_days_ago, last) != 1)
+            /* 6 or less days ago (not 7 days ago, because we don't want
+               to show Monday 10:12 when today is Monday, too). */
+            /* Translators: This is a week day name followed by a time
+               string in 24h format */
+            format = _("%A, %H:%M");
+
+          else if (g_date_time_compare (start_year, last) != 1)
+            /* start_year <= last */
+            /* Translators: This is the month name and day number
+               followed by a time string in 24h format */
+            format = _("%B %d, %H:%M");
+
+          else
+            /* last < start_year */
+            /* Translators: This is the month name, day number, year
+               number followed by a time string in 24h format. i.e.  */
+            format = _("%B %d %Y, %H:%M");
+        }
       else
-        format = "%x";
+        {
+          if (g_date_time_compare (start_today, last) != 1)
+            /* start_today <= last */
+            /* Translators: Time in 12h format */
+            format = _("%l:%M %p");
+          else if (g_date_time_compare (start_yesterday, last) != 1)
+            /* start_yesterday <= last */
+            /* Translators: This is "Yesterday" followed by a time string in 12h format */
+            format = _("Yesterday, %l:%M %p");
+
+          else if (g_date_time_compare (start_6_days_ago, last) != 1)
+            /* 6 or less days ago (not 7 days ago, because we don't want
+               to show Monday 10:12 when today is Monday, too). */
+            /* Translators: This is a week day name followed by a time
+               string in 12h format */
+            format = _("%A, %l:%M %p");
+
+          else if (g_date_time_compare (start_year, last) != 1)
+            /* start_year <= last */
+            /* Translators: This is the month name and day number
+               followed by a time string in 12h format */
+            format = _("%B %d, %l:%M %p");
+
+          else
+            /* last < start_year */
+            /* Translators: This is the month name, day number, year
+               number followed by a time string in 12h format. i.e.  */
+            format = _("%B %d %Y, %l:%M %p");
+        }
+
 
       priv->last_seen = g_date_time_format (last, format);
+
+      g_object_unref (interface_settings);
+      g_free (clock_format);
+      g_free (am_pm);
 
       g_date_time_unref (now);
       g_date_time_unref (last);

@@ -2,9 +2,7 @@
 <!-- Generated with glade 3.18.1 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkTextBuffer" id="request_widget_text_buffer">
-    <property name="text" translatable="yes">Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text Neuland Test Text vNeuland Test Text v</property>
-  </object>
+  <object class="GtkTextBuffer" id="request_widget_text_buffer"/>
   <object class="GtkBox" id="request_widget">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -29,7 +27,7 @@
       <object class="GtkLabel" id="request_widget_tox_id_label">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F</property>
+        <property name="label">951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F</property>
         <property name="justify">center</property>
         <property name="wrap">True</property>
         <property name="wrap_mode">char</property>
@@ -49,7 +47,7 @@
       <object class="GtkLabel" id="label2">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">&lt;b&gt;Message:&lt;/b&gt;</property>
+        <property name="label" translatable="yes" comments="This is the header for the text message that was sent to us as part of a contact request.">&lt;b&gt;Message:&lt;/b&gt;</property>
         <property name="use_markup">True</property>
       </object>
       <packing>

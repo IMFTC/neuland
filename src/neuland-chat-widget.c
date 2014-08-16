@@ -21,6 +21,7 @@
 #include "neuland-chat-widget.h"
 
 #include <string.h>
+#include <glib/gi18n.h>
 
 #define MIN_TIME_INTERVAL (5 * G_TIME_SPAN_MINUTE)
 
@@ -122,7 +123,7 @@ neuland_chat_widget_set_show_contact_is_typing (NeulandChatWidget *chat_widget, 
   if (is_typing && (is_typing_start_mark == NULL))
     {
       gtk_text_buffer_create_mark (buffer, "is-typing-start", &end_iter, TRUE);
-      string = g_strdup_printf ("%s is typing...", name);
+      string = g_strdup_printf (_("%s is typing..."), name);
       gtk_text_buffer_insert_with_tags (buffer, &end_iter, string, -1, priv->is_typing_tag, NULL);
       g_free (string);
     }
@@ -213,7 +214,7 @@ insert_text (NeulandChatWidget *widget,
 
   if (type == TYPE_ACTION)
     {
-      prefix = g_strdup_printf ("* %s %s", name, text);
+      prefix = g_strdup_printf (_("* %s %s"), name, text);
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
                                         priv->action_tag,
                                         NULL);
@@ -223,7 +224,7 @@ insert_text (NeulandChatWidget *widget,
     {
       if (insert_nick)
         {
-          prefix = g_strdup_printf ("%s: ", name);
+          prefix = g_strdup_printf (_("%s: "), name);
           gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
                                             name_tag, NULL);
           g_free (prefix);

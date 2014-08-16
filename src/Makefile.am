@@ -50,6 +50,10 @@ EXTRA_DIST = \
 	$(resource_files) \
 	$(NULL)
 
+AM_CPPFLAGS = \
+	-DPACKAGE_LOCALE_DIR=\""${datadir}/locale"\" \
+	$(NULL)
+
 neuland_CFLAGS = $(NEULAND_CFLAGS)
 neuland_LDADD = $(NEULAND_LIBS)
 

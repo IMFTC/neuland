@@ -1,0 +1,9 @@
+[type: gettext/glade]src/neuland-add-dialog.ui
+[type: gettext/glade]src/neuland-application-menu.ui
+[type: gettext/glade]src/neuland-chat-widget.ui
+[type: gettext/glade]src/neuland-contact-row.ui
+[type: gettext/glade]src/neuland-me-status-menu.ui
+[type: gettext/glade]src/neuland-request-widget.ui
+[type: gettext/glade]src/neuland-welcome-widget.ui
+[type: gettext/glade]src/neuland-window.ui
+src/neuland-chat-widget.c

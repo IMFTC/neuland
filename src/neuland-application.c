@@ -18,9 +18,12 @@
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+
 #include <gtk/gtk.h>
 #include <tox/tox.h>
 #include <string.h>
+#include <glib/gi18n.h>
 
 #include "neuland-window.h"
 #include "neuland-application.h"
@@ -88,8 +91,8 @@ neuland_application_about_activated (GSimpleAction *action,
 
   gtk_show_about_dialog (gtk_application_get_active_window (application),
                          "program-name", "Neuland",
-                         "title", "About Neuland",
-                         "comments", "no commets",
+                         "title", _("About Neuland"),
+                         "comments", _("A simple chat client for Tox"),
                          "authors", neuland_authors,
                          NULL);
 }
@@ -242,6 +245,10 @@ main (int argc, char **argv)
 {
   NeulandApplication *neuland;
   int status;
+
+  bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+  textdomain (GETTEXT_PACKAGE);
 
   neuland = neuland_application_new ();
 

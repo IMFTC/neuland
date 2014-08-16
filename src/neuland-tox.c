@@ -379,7 +379,7 @@ neuland_tox_send (NeulandTox *tox,
       g_return_if_reached ();
     }
 
-  g_debug (format_string, contact, preview, preview_bytes < total_bytes ? "…" : "");
+  g_debug (format_string, contact, preview, preview_bytes < total_bytes ? "..." : "");
 
   gint64 sent_bytes = 0;
   while (sent_bytes < total_bytes)
