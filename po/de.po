@@ -127,3 +127,11 @@ msgstr "* %s %s"
 #, c-format
 msgid "%s: "
 msgstr "%s: "
+
+#. Translators: %s will be replaced by a localized time
+#. string of the time when we last saw the contact
+#. online. For example: "Last seen: Tuesday, 23:12"
+#: ../src/neuland-contact-row.c:319
+#, c-format
+msgid "Last seen: %s"
+msgstr ""

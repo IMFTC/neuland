@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include <glib/gi18n.h>
 
 #include "neuland-contact-row.h"
 

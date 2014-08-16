@@ -7,3 +7,4 @@
 [type: gettext/glade]src/neuland-welcome-widget.ui
 [type: gettext/glade]src/neuland-window.ui
 src/neuland-chat-widget.c
+src/neuland-contact-row.c
