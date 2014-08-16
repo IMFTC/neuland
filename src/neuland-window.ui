@@ -274,7 +274,7 @@ Author: Volker Sobek <reklov@live.com>
                             <child>
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
-                                <property name="label">Accept</property>
+                                <property name="label" translatable="yes">Accept</property>
                               </object>
                               <style>
                                 <class name="suggested-action"/>
@@ -292,7 +292,7 @@ Author: Volker Sobek <reklov@live.com>
                             <child>
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
-                                <property name="label">Delete</property>
+                                <property name="label" translatable="yes">Delete</property>
                               </object>
                             </child>
                           </object>
