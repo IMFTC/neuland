@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-16 14:19+0200\n"
-"PO-Revision-Date: 2014-08-16 14:28+0200\n"
+"POT-Creation-Date: 2014-08-16 14:37+0200\n"
+"PO-Revision-Date: 2014-08-16 14:38+0200\n"
 "Last-Translator: Volker Sobek <reklov@live.com>\n"
 "Language-Team: Deutsch\n"
 "Language: de_DE\n"
@@ -60,7 +60,9 @@ msgstr "Tox Information"
 #: ../src/neuland-chat-widget.ui.h:1
 msgid ""
 "Sending messages is currently not possible because the contact is offline."
-msgstr "Das Senden von Nachrichten ist momentan nicht möglich, da der Kontakt offline ist."
+msgstr ""
+"Das Senden von Nachrichten ist momentan nicht möglich, da der Kontakt "
+"offline ist."
 
 #: ../src/neuland-me-status-menu.ui.h:1
 msgid "Available"
@@ -102,6 +104,14 @@ msgstr "Anfragen"
 #: ../src/neuland-window.ui.h:3
 msgid "0"
 msgstr ""
+
+#: ../src/neuland-window.ui.h:4
+msgid "Accept"
+msgstr "Annehmen"
+
+#: ../src/neuland-window.ui.h:5
+msgid "Delete"
+msgstr "Löschen"
 
 #: ../src/neuland-chat-widget.c:126
 #, c-format
