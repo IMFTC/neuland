@@ -1194,7 +1194,7 @@ neuland_tox_init (NeulandTox *tox)
   tox->priv = neuland_tox_get_instance_private (tox);
   NeulandToxPrivate *priv = tox->priv;
 
-  priv->tox_struct = tox_new (TOX_ENABLE_IPV6_DEFAULT);
+  priv->tox_struct = tox_new (NULL);
 
   priv->contacts_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
                                              NULL, g_object_unref);
@@ -1225,8 +1225,7 @@ neuland_tox_bootstrap (NeulandTox *tox)
 
           int ret = tox_bootstrap_from_address (tox_struct,
                                                 node.address,
-                                                node.is_ipv6,
-                                                g_htons (node.port),
+                                                node.port,
                                                 pub_key_bin);
 
           g_mutex_unlock (&priv->mutex);
