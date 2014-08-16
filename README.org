@@ -1,1 +1,23 @@
-* Neuland
+* Neuland!
+
+** About
+   Neuland is a chat client for Tox, mainly targeting the GNOME
+   desktop.
+
+   For more information about Tox see https://github.com/irungentoo/toxcore.
+
+   For more information about GNOME see https://www.gnome.org.
+
+** Requirements
+   Neuland requires toxcore and gtk+-3.13.x (which will be released as
+   gtk+-3.14 soon).
+
+** Installation
+   Compile and install Neuland from a fresh git checkout with:
+
+   ./autogen.sh && make && make install
+
+   You can set PKG_CONFIG_PATH and pass the usual Autotools configure
+   options such as --prefix to autogen.sh (they will be passed on to
+   ./configure) if your toxcore and gtk+ installs reside in custom
+   locations.
