@@ -1,5 +1,7 @@
 * Neuland!
 
+  [[https://raw.githubusercontent.com/IMFTC/neuland/master/screenshot.png]]
+
 ** About
    Neuland is a chat client for Tox, mainly targeting the GNOME
    desktop.
