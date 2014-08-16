@@ -3,13 +3,12 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: neuland\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-16 14:49+0200\n"
-"PO-Revision-Date: 2014-08-16 14:51+0200\n"
+"POT-Creation-Date: 2014-08-16 15:04+0200\n"
+"PO-Revision-Date: 2014-08-16 15:14+0200\n"
 "Last-Translator: Volker Sobek <reklov@live.com>\n"
 "Language-Team: Deutsch\n"
 "Language: de_DE\n"
@@ -45,7 +44,7 @@ msgstr "Hinzufügen"
 msgid "New Transient Identity"
 msgstr "Neue flüchtige Identität"
 
-#: ../src/neuland-application-menu.ui.h:2
+#: ../src/neuland-application-menu.ui.h:2 ../src/neuland-application.c:94
 msgid "About Neuland"
 msgstr "Über Neuland"
 
@@ -113,6 +112,10 @@ msgstr "Annehmen"
 msgid "Delete"
 msgstr "Löschen"
 
+#: ../src/neuland-application.c:95
+msgid "A simple chat client for Tox"
+msgstr "Ein einfacher Chat Client für Tox"
+
 #: ../src/neuland-chat-widget.c:126
 #, c-format
 msgid "%s is typing..."
@@ -135,3 +138,82 @@ msgstr "%s: "
 #, c-format
 msgid "Last seen: %s"
 msgstr "Zuletzt gesehen: %s"
+
+#. This shouldn't be displayed
+#. Translators: This is the status message when the contact is currently online.
+#: ../src/neuland-contact.c:191
+msgid "Now Online"
+msgstr "Jetzt online"
+
+#. Translators: This is schown when we haven't seen this contact online yet.
+#: ../src/neuland-contact.c:194
+msgid "Never"
+msgstr "Nie"
+
+#. start_today <= last
+#. Translators: Time in 24h format
+#: ../src/neuland-contact.c:218
+msgid "%H:%M"
+msgstr "%H:%M"
+
+#. start_yesterday <= last
+#. Translators: This is "Yesterday" followed by a time string in 24h format
+#: ../src/neuland-contact.c:222
+msgid "Yesterday, %H:%M"
+msgstr "Gestern, %H:%M"
+
+#. 6 or less days ago (not 7 days ago, because we don't want
+#. to show Monday 10:12 when today is Monday, too).
+#. Translators: This is a week day name followed by a time
+#. string in 24h format
+#: ../src/neuland-contact.c:229
+msgid "%A, %H:%M"
+msgstr "%A, %H:%M"
+
+#. start_year <= last
+#. Translators: This is the month name and day number
+#. followed by a time string in 24h format
+#: ../src/neuland-contact.c:235
+msgid "%B %d, %H:%M"
+msgstr "%d. %B, %H:%M"
+
+#. last < start_year
+#. Translators: This is the month name, day number, year
+#. number followed by a time string in 24h format. i.e.
+#: ../src/neuland-contact.c:241
+msgid "%B %d %Y, %H:%M"
+msgstr "%d.%m.%Y, %H:%M"
+
+#. start_today <= last
+#. Translators: Time in 12h format
+#: ../src/neuland-contact.c:248
+msgid "%l:%M %p"
+msgstr "%l:%M %p"
+
+#. start_yesterday <= last
+#. Translators: This is "Yesterday" followed by a time string in 12h format
+#: ../src/neuland-contact.c:252
+msgid "Yesterday, %l:%M %p"
+msgstr "Gestern, %l:%M %p"
+
+#. 6 or less days ago (not 7 days ago, because we don't want
+#. to show Monday 10:12 when today is Monday, too).
+#. Translators: This is a week day name followed by a time
+#. string in 12h format
+#: ../src/neuland-contact.c:259
+msgid "%A, %l:%M %p"
+msgstr "%A, %l:%M %p"
+
+#. start_year <= last
+#. Translators: This is the month name and day number
+#. followed by a time string in 12h format
+#: ../src/neuland-contact.c:265
+msgid "%B %d, %l:%M %p"
+msgstr "%d. %B, %l:%M %p"
+
+#. last < start_year
+#. Translators: This is the month name, day number, year
+#. number followed by a time string in 12h format. i.e.
+#: ../src/neuland-contact.c:271
+msgid "%B %d %Y, %l:%M %p"
+msgstr "%d.%m.%Y, %l:%M %p"
