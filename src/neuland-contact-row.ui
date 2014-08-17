@@ -46,21 +46,23 @@ Author: Volker Sobek <reklov@live.com>
             <property name="show_tabs">False</property>
             <property name="show_border">False</property>
             <child>
-              <object class="GtkBox" id="box3">
+              <object class="GtkBox" id="box1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel" id="unread_messages">
+                  <object class="GtkLabel" id="time_label">
                     <property name="visible">True</property>
-                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
-                    <property name="no_show_all">True</property>
-                    <property name="opacity">0</property>
                     <property name="halign">end</property>
                     <property name="valign">start</property>
+                    <property name="ellipsize">end</property>
+                    <property name="max_width_chars">12</property>
+                    <attributes>
+                      <attribute name="font-desc" value="8"/>
+                    </attributes>
                     <style>
-                      <class name="pending-messages-count"/>
+                      <class name="dim-label"/>
                     </style>
                   </object>
                   <packing>
@@ -70,22 +72,20 @@ Author: Volker Sobek <reklov@live.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="time_label">
+                  <object class="GtkLabel" id="unread_messages">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
+                    <property name="no_show_all">True</property>
+                    <property name="opacity">0</property>
                     <property name="halign">end</property>
                     <property name="valign">end</property>
-                    <property name="ellipsize">middle</property>
-                    <property name="max_width_chars">5</property>
-                    <attributes>
-                      <attribute name="font-desc" value="&lt;Geben Sie den Wert ein&gt; 8"/>
-                    </attributes>
                     <style>
-                      <class name="dim-label"/>
+                      <class name="pending-messages-count"/>
                     </style>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
+                    <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
                   </packing>
@@ -100,7 +100,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="halign">center</property>
+                <property name="halign">end</property>
                 <property name="valign">center</property>
                 <property name="draw_indicator">True</property>
               </object>

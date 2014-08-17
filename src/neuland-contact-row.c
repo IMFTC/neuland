@@ -27,6 +27,7 @@ struct _NeulandContactRowPrivate {
   NeulandContact *contact;
   GtkLabel *name_label;
   GtkLabel *status_label;
+  GtkLabel *time_label;
   GtkNotebook *indicator_notebook;
   GtkLabel *unread_messages;
   GtkImage *status_image;
@@ -182,6 +183,7 @@ neuland_contact_row_class_init (NeulandContactRowClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-contact-row.ui");
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, name_label);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_label);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, time_label);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, unread_messages);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_image);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, indicator_notebook);
@@ -297,8 +299,11 @@ neuland_contact_row_set_connected (NeulandContactRow *contact_row,
   if (contact)
     {
       if (connected)
-        neuland_contact_row_set_status_message
-          (contact_row, neuland_contact_get_status_message (contact));
+        {
+          neuland_contact_row_set_status_message
+            (contact_row, neuland_contact_get_status_message (contact));
+          gtk_label_set_text (priv->time_label, "");
+        }
       else
         {
           guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
@@ -313,14 +318,8 @@ neuland_contact_row_set_connected (NeulandContactRow *contact_row,
                                           "user-invisible",
                                           GTK_ICON_SIZE_MENU);
 
-          /* Translators: %s will be replaced by a localized time
-             string of the time when we last saw the contact
-             online. For example: "Last seen: Tuesday, 23:12" */
-          gchar *string = g_strdup_printf (_("Last seen: %s"), neuland_contact_get_last_seen (contact));
-          gtk_label_set_text (priv->status_label, string);
-          g_free (string);
+          gtk_label_set_text (priv->time_label, neuland_contact_get_last_seen (contact));
         }
-
     }
   else
     {
