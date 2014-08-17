@@ -31,7 +31,7 @@
 struct _NeulandContactPrivate
 {
   gint64 number;
-  gpointer *tox_id;
+  gpointer tox_id;
   gchar *tox_id_hex;
   gchar *name;
   gchar *preferred_name;
@@ -408,7 +408,7 @@ neuland_contact_set_tox_id (NeulandContact *contact, gpointer tox_id)
   priv->tox_id = g_memdup (tox_id, TOX_CLIENT_ID_SIZE);
   priv->tox_id_hex = g_malloc0 (TOX_CLIENT_ID_SIZE * 2 + 1);
 
-  neuland_bin_to_hex_string (priv->tox_id, priv->tox_id_hex, TOX_CLIENT_ID_SIZE);
+  neuland_bin_to_hex_string ((guint8 *)priv->tox_id, priv->tox_id_hex, TOX_CLIENT_ID_SIZE);
 }
 
 const gpointer
