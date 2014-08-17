@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neuland\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-16 15:04+0200\n"
-"PO-Revision-Date: 2014-08-16 15:14+0200\n"
+"POT-Creation-Date: 2014-08-17 15:32+0200\n"
+"PO-Revision-Date: 2014-08-17 15:30+0200\n"
 "Last-Translator: Volker Sobek <reklov@live.com>\n"
 "Language-Team: Deutsch\n"
 "Language: de_DE\n"
@@ -101,14 +101,10 @@ msgid "Requests"
 msgstr "Anfragen"
 
 #: ../src/neuland-window.ui.h:3
-msgid "0"
-msgstr ""
-
-#: ../src/neuland-window.ui.h:4
 msgid "Accept"
 msgstr "Annehmen"
 
-#: ../src/neuland-window.ui.h:5
+#: ../src/neuland-window.ui.h:4
 msgid "Delete"
 msgstr "Löschen"
 
@@ -116,28 +112,20 @@ msgstr "Löschen"
 msgid "A simple chat client for Tox"
 msgstr "Ein einfacher Chat Client für Tox"
 
-#: ../src/neuland-chat-widget.c:126
+#: ../src/neuland-chat-widget.c:123
 #, c-format
 msgid "%s is typing..."
 msgstr "%s tippt gerade ..."
 
-#: ../src/neuland-chat-widget.c:217
+#: ../src/neuland-chat-widget.c:209
 #, c-format
 msgid "* %s %s"
 msgstr "* %s %s"
 
-#: ../src/neuland-chat-widget.c:227
+#: ../src/neuland-chat-widget.c:219
 #, c-format
 msgid "%s: "
 msgstr "%s: "
-
-#. Translators: %s will be replaced by a localized time
-#. string of the time when we last saw the contact
-#. online. For example: "Last seen: Tuesday, 23:12"
-#: ../src/neuland-contact-row.c:319
-#, c-format
-msgid "Last seen: %s"
-msgstr "Zuletzt gesehen: %s"
 
 #. This shouldn't be displayed
 #. Translators: This is the status message when the contact is currently online.
@@ -152,68 +140,73 @@ msgstr "Nie"
 
 #. start_today <= last
 #. Translators: Time in 24h format
-#: ../src/neuland-contact.c:218
+#: ../src/neuland-contact.c:214
 msgid "%H:%M"
 msgstr "%H:%M"
 
 #. start_yesterday <= last
 #. Translators: This is "Yesterday" followed by a time string in 24h format
-#: ../src/neuland-contact.c:222
+#: ../src/neuland-contact.c:220
 msgid "Yesterday, %H:%M"
 msgstr "Gestern, %H:%M"
 
 #. 6 or less days ago (not 7 days ago, because we don't want
 #. to show Monday 10:12 when today is Monday, too).
-#. Translators: This is a week day name followed by a time
-#. string in 24h format
-#: ../src/neuland-contact.c:229
-msgid "%A, %H:%M"
-msgstr "%A, %H:%M"
+#. Translators: This is a abbreviated week day name
+#. followed by a time string in 24h format
+#: ../src/neuland-contact.c:228
+msgid "%a, %H:%M"
+msgstr "%a, %H:%M"
 
 #. start_year <= last
-#. Translators: This is the month name and day number
-#. followed by a time string in 24h format
+#. Translators: This is the abbreviated month name and day
+#. number followed by a time string in 24h format
 #: ../src/neuland-contact.c:235
-msgid "%B %d, %H:%M"
-msgstr "%d. %B, %H:%M"
+msgid "%b %d, %H:%M"
+msgstr "%d. %b, %H:%M"
 
 #. last < start_year
-#. Translators: This is the month name, day number, year
-#. number followed by a time string in 24h format. i.e.
-#: ../src/neuland-contact.c:241
-msgid "%B %d %Y, %H:%M"
+#. Translators: This is the abbreviated month name, day
+#. number, year number followed by a time string in 24h
+#. format
+#: ../src/neuland-contact.c:243
+msgid "%b %d %Y, %H:%M"
 msgstr "%d.%m.%Y, %H:%M"
 
 #. start_today <= last
 #. Translators: Time in 12h format
-#: ../src/neuland-contact.c:248
+#: ../src/neuland-contact.c:250
 msgid "%l:%M %p"
 msgstr "%l:%M %p"
 
 #. start_yesterday <= last
 #. Translators: This is "Yesterday" followed by a time string in 12h format
-#: ../src/neuland-contact.c:252
+#: ../src/neuland-contact.c:254
 msgid "Yesterday, %l:%M %p"
 msgstr "Gestern, %l:%M %p"
 
 #. 6 or less days ago (not 7 days ago, because we don't want
 #. to show Monday 10:12 when today is Monday, too).
-#. Translators: This is a week day name followed by a time
-#. string in 12h format
-#: ../src/neuland-contact.c:259
-msgid "%A, %l:%M %p"
-msgstr "%A, %l:%M %p"
+#. Translators: This is a abbreviated week day name
+#. followed by a time string in 12h format
+#: ../src/neuland-contact.c:262
+msgid "%a, %l:%M %p"
+msgstr "%a, %l:%M %p"
 
 #. start_year <= last
-#. Translators: This is the month name and day number
-#. followed by a time string in 12h format
-#: ../src/neuland-contact.c:265
-msgid "%B %d, %l:%M %p"
-msgstr "%d. %B, %l:%M %p"
+#. Translators: This is the abbreviated month name, day
+#. number followed by a time string in 12h format
+#: ../src/neuland-contact.c:268
+msgid "%b %d, %l:%M %p"
+msgstr "%d. %b, %l:%M %p"
 
 #. last < start_year
-#. Translators: This is the month name, day number, year
-#. number followed by a time string in 12h format. i.e.
-#: ../src/neuland-contact.c:271
-msgid "%B %d %Y, %l:%M %p"
+#. Translators: This is the abbreviated month name, day
+#. number, year number followed by a time string in 12h
+#. format.
+#: ../src/neuland-contact.c:275
+msgid "%b %d %Y, %l:%M %p"
 msgstr "%d.%m.%Y, %l:%M %p"
+
+#~ msgid "Last seen: %s"
+#~ msgstr "Zuletzt gesehen: %s"
