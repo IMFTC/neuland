@@ -122,7 +122,6 @@ neuland_add_dialog_get_message (NeulandAddDialog *add_dialog)
 static void
 neuland_add_dialog_init (NeulandAddDialog *add_dialog)
 {
-  GtkBuilder *builder;
   gtk_widget_init_template (GTK_WIDGET (add_dialog));
 
   add_dialog->priv = neuland_add_dialog_get_instance_private (add_dialog);
