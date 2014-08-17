@@ -209,31 +209,38 @@ neuland_contact_update_last_seen (NeulandContact *contact)
         {
           if (g_date_time_compare (start_today, last) != 1)
             /* start_today <= last */
+
             /* Translators: Time in 24h format */
             format = _("%H:%M");
+
           else if (g_date_time_compare (start_yesterday, last) != 1)
             /* start_yesterday <= last */
+
             /* Translators: This is "Yesterday" followed by a time string in 24h format */
             format = _("Yesterday, %H:%M");
 
           else if (g_date_time_compare (start_6_days_ago, last) != 1)
             /* 6 or less days ago (not 7 days ago, because we don't want
                to show Monday 10:12 when today is Monday, too). */
-            /* Translators: This is a week day name followed by a time
-               string in 24h format */
-            format = _("%A, %H:%M");
+
+            /* Translators: This is a abbreviated week day name
+               followed by a time string in 24h format */
+            format = _("%a, %H:%M");
 
           else if (g_date_time_compare (start_year, last) != 1)
             /* start_year <= last */
-            /* Translators: This is the month name and day number
-               followed by a time string in 24h format */
-            format = _("%B %d, %H:%M");
+
+            /* Translators: This is the abbreviated month name and day
+               number followed by a time string in 24h format */
+            format = _("%b %d, %H:%M");
 
           else
             /* last < start_year */
-            /* Translators: This is the month name, day number, year
-               number followed by a time string in 24h format. i.e.  */
-            format = _("%B %d %Y, %H:%M");
+
+            /* Translators: This is the abbreviated month name, day
+               number, year number followed by a time string in 24h
+               format */
+            format = _("%b %d %Y, %H:%M");
         }
       else
         {
@@ -249,21 +256,23 @@ neuland_contact_update_last_seen (NeulandContact *contact)
           else if (g_date_time_compare (start_6_days_ago, last) != 1)
             /* 6 or less days ago (not 7 days ago, because we don't want
                to show Monday 10:12 when today is Monday, too). */
-            /* Translators: This is a week day name followed by a time
-               string in 12h format */
-            format = _("%A, %l:%M %p");
+
+            /* Translators: This is a abbreviated week day name
+               followed by a time string in 12h format */
+            format = _("%a, %l:%M %p");
 
           else if (g_date_time_compare (start_year, last) != 1)
             /* start_year <= last */
-            /* Translators: This is the month name and day number
-               followed by a time string in 12h format */
-            format = _("%B %d, %l:%M %p");
+            /* Translators: This is the abbreviated month name, day
+               number followed by a time string in 12h format */
+            format = _("%b %d, %l:%M %p");
 
           else
             /* last < start_year */
-            /* Translators: This is the month name, day number, year
-               number followed by a time string in 12h format. i.e.  */
-            format = _("%B %d %Y, %l:%M %p");
+            /* Translators: This is the abbreviated month name, day
+               number, year number followed by a time string in 12h
+               format. */
+            format = _("%b %d %Y, %l:%M %p");
         }
 
 
