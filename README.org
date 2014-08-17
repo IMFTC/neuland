@@ -19,7 +19,6 @@
 
    ./autogen.sh && make && make install
 
-   You can set PKG_CONFIG_PATH and pass the usual Autotools configure
-   options such as --prefix to autogen.sh (they will be passed on to
-   ./configure) if your toxcore and gtk+ installs reside in custom
-   locations.
+   If you are using custom locations you can set PKG_CONFIG_PATH and
+   pass the usual Autotools configure options such as --prefix to
+   autogen.sh (they will be passed on to ./configure).
