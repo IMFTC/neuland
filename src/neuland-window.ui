@@ -113,7 +113,7 @@ Author: Volker Sobek <reklov@live.com>
                                 <property name="can_focus">False</property>
                                 <property name="halign">center</property>
                                 <property name="valign">center</property>
-                                <property name="label" translatable="yes">0</property>
+                                <property name="label">0</property>
                                 <property name="justify">right</property>
                                 <style>
                                   <class name="pending-messages-count"/>
