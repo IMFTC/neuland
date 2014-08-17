@@ -19,6 +19,7 @@
  */
 
 #include "neuland-chat-widget.h"
+#include "neuland-utils.h"
 
 #include <string.h>
 #include <glib/gi18n.h>
@@ -184,7 +185,15 @@ insert_text (NeulandChatWidget *widget,
 
   if (insert_time_stamp)
     {
-      time_string = g_date_time_format (time_now, "%R\n");
+      if (neuland_use_24h_time_format ())
+        /* Translators: This is the hour and minute timestamp shown
+           the chat view in 24h format followed by a newline */
+        time_string = g_date_time_format (time_now, "%H:%M\n");
+      else
+        /* Translators: This is the hour and minute timestamp shown
+           the chat view in 12h format followed by a newline */
+        time_string = g_date_time_format (time_now, "%l:%M %p\n");
+
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, time_string, -1,
                                         priv->timestamp_tag, NULL);
 

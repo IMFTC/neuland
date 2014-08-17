@@ -19,9 +19,9 @@
  */
 
 #include <tox/tox.h>
-#include <gio/gio.h>
 #include <glib/gi18n.h>
 
+#include "neuland-utils.h"
 #include "neuland-enums.h"
 #include "neuland-contact.h"
 
@@ -205,12 +205,7 @@ neuland_contact_update_last_seen (NeulandContact *contact)
       GDateTime *start_6_days_ago = g_date_time_add_days (start_today, -6);
       GDateTime *start_year = g_date_time_new_local (y_now, 1, 1, 0, 0, 0);
 
-      GSettings *interface_settings = g_settings_new ("org.gnome.desktop.interface");
-      gchar *clock_format = g_settings_get_string (interface_settings, "clock-format");
-      gchar *am_pm = g_date_time_format (now, "%p");
-      gboolean has_am_pm = g_strcmp0 (am_pm, "") != 0;
-
-      if (g_strcmp0 (clock_format, "24h") == 0 || !has_am_pm)
+      if (neuland_use_24h_time_format ())
         {
           if (g_date_time_compare (start_today, last) != 1)
             /* start_today <= last */
@@ -273,10 +268,6 @@ neuland_contact_update_last_seen (NeulandContact *contact)
 
 
       priv->last_seen = g_date_time_format (last, format);
-
-      g_object_unref (interface_settings);
-      g_free (clock_format);
-      g_free (am_pm);
 
       g_date_time_unref (now);
       g_date_time_unref (last);
