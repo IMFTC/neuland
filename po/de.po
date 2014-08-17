@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: neuland\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-08-17 15:32+0200\n"
-"PO-Revision-Date: 2014-08-17 15:30+0200\n"
+"PO-Revision-Date: 2014-08-17 15:38+0200\n"
 "Last-Translator: Volker Sobek <reklov@live.com>\n"
 "Language-Team: Deutsch\n"
 "Language: de_DE\n"
@@ -82,7 +82,7 @@ msgstr "<b>Kontaktanfrage der Tox ID:</b>"
 #. This is the header for the text message that was sent to us as part of a contact request.
 #: ../src/neuland-request-widget.ui.h:3
 msgid "<b>Message:</b>"
-msgstr "<b>Nachricht</b>"
+msgstr "<b>Nachricht:</b>"
 
 #: ../src/neuland-welcome-widget.ui.h:1
 msgid "Neuland!"
