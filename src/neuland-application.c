@@ -88,12 +88,25 @@ neuland_application_about_activated (GSimpleAction *action,
                                      gpointer       user_data)
 {
   GtkApplication *application = GTK_APPLICATION (user_data);
-
   gtk_show_about_dialog (gtk_application_get_active_window (application),
                          "program-name", "Neuland",
-                         "title", _("About Neuland"),
-                         "comments", _("A simple chat client for Tox"),
+                         "version", VERSION,
+                         "comments", _("A simple chat client for Tox\n"
+                                       "For more information about Tox see https://tox.im"),
+                         "copyright", "Copyright © 2014 Volker Sobek",
                          "authors", neuland_authors,
+                         /* Translators: This is a special message that shouldn't be translated
+                          * literally. It is used in the about box to give credits to
+                          * the translators.
+                          * Thus, you should translate it to your name and email address.
+                          * You should also include other translators who have contributed to
+                          * this translation; in that case, please write each of them on a separate
+                          * line seperated by newlines (\n).
+                          */
+                         "translator-credits", _("translator-credits"),
+                         "website", "https://github.com/IMFTC/neuland",
+                         "website-label", _("Neuland Website"),
+                         "license-type", GTK_LICENSE_GPL_3_0,
                          NULL);
 }
 
