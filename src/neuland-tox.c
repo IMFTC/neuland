@@ -897,26 +897,30 @@ void
 neuland_tox_set_name (NeulandTox *tox,
                       const gchar *name)
 {
-  g_debug ("neuland_tox_set_name: %s", name);
   NeulandToxPrivate *priv = tox->priv;
 
-  g_free (priv->name);
+  g_return_if_fail (name != NULL);
 
-  gchar *name_dup = g_strdup (name ? name : "");
+  if (g_strcmp0 (name, priv->name) == 0)
+    return;
 
   g_mutex_lock (&priv->mutex);
 
-  gint ret = tox_set_name (priv->tox_struct, name_dup, MIN (strlen (name), TOX_MAX_NAME_LENGTH));
+  gint ret = tox_set_name (priv->tox_struct, name,
+                           MIN (strlen (name), TOX_MAX_NAME_LENGTH));
 
   g_mutex_unlock (&priv->mutex);
 
-  if (ret != 0)
-    g_warning ("Failed to set our own name. Tried to set name: '%s'", name);
-  else
+  if (ret == 0)
     {
-      priv->name = name_dup;
+      g_debug ("Set name for NeulandTox %p to \"%s\"", tox, name);
+      g_free (priv->name);
+      priv->name = g_strdup (name);
       g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_NAME]);
     }
+  else
+    g_warning ("Failed to set name for NeulandTox %p to name: \"%s\"",
+               tox, name);
 }
 
 const gchar *
@@ -958,33 +962,33 @@ neuland_tox_set_status_message (NeulandTox *tox,
   NeulandToxPrivate *priv = tox->priv;
   Tox *tox_struct = priv->tox_struct;
 
-  gchar *status_message_tmp = status_message ? g_strdup (status_message) : "";
+  g_return_if_fail (status_message != NULL);
+
+  if (g_strcmp0 (status_message, priv->status_message) == 0)
+    return;
 
   g_mutex_lock (&priv->mutex);
 
-  gint ret = tox_set_status_message (tox_struct, status_message_tmp,
-                                     MIN (strlen (status_message_tmp),
+  gint ret = tox_set_status_message (tox_struct, status_message,
+                                     MIN (strlen (status_message),
                                           TOX_MAX_STATUSMESSAGE_LENGTH));
 
   g_mutex_unlock (&priv->mutex);
 
   if (ret == 0)
     {
-      g_debug ("Successfully called tox_set_status_message"
-               "for tox instance %p with message: '%s'",
-               tox_struct, status_message_tmp);
+      g_debug ("Set status message for NeulandTox %p to \"%s\"",
+               tox, status_message);
       g_free (priv->status_message);
-      priv->status_message = status_message_tmp;
+      priv->status_message = g_strdup (status_message);
+      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_STATUS_MESSAGE]);
     }
   else
     {
       // keep old message on failure
-      g_free (status_message_tmp);
-      g_warning ("Failure on calling tox_set_status_message"
-                 "for tox instance %p with message '%s'",
-                 tox_struct, status_message);
+      g_warning ("Failed to set status message for NeulandTox %p to \"%s\"",
+                 tox, status_message);
     }
-  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_STATUS_MESSAGE]);
 }
 
 const gchar *
