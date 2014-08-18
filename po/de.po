@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neuland\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-17 15:32+0200\n"
-"PO-Revision-Date: 2014-08-17 15:38+0200\n"
+"POT-Creation-Date: 2014-08-18 15:55+0200\n"
+"PO-Revision-Date: 2014-08-18 15:42+0200\n"
 "Last-Translator: Volker Sobek <reklov@live.com>\n"
 "Language-Team: Deutsch\n"
 "Language: de_DE\n"
@@ -28,7 +28,7 @@ msgstr "Hallo, lass uns toxen?"
 msgid "Tox ID:"
 msgstr "Tox ID:"
 
-#: ../src/neuland-add-dialog.ui.h:4
+#: ../src/neuland-add-dialog.ui.h:4 ../src/neuland-me-popover.ui.h:3
 msgid "Message:"
 msgstr "Nachricht:"
 
@@ -44,17 +44,13 @@ msgstr "Hinzufügen"
 msgid "New Transient Identity"
 msgstr "Neue flüchtige Identität"
 
-#: ../src/neuland-application-menu.ui.h:2 ../src/neuland-application.c:94
-msgid "About Neuland"
-msgstr "Über Neuland"
+#: ../src/neuland-application-menu.ui.h:2
+msgid "About"
+msgstr "Info"
 
 #: ../src/neuland-application-menu.ui.h:3
 msgid "Quit"
 msgstr "Beenden"
-
-#: ../src/neuland-application-menu.ui.h:4
-msgid "Tox info"
-msgstr "Tox Information"
 
 #: ../src/neuland-chat-widget.ui.h:1
 msgid ""
@@ -63,15 +59,27 @@ msgstr ""
 "Das Senden von Nachrichten ist momentan nicht möglich, da der Kontakt "
 "offline ist."
 
-#: ../src/neuland-me-status-menu.ui.h:1
+#: ../src/neuland-me-popover.ui.h:1
+msgid "My Details"
+msgstr "Meine Details"
+
+#: ../src/neuland-me-popover.ui.h:2
+msgid "Name:"
+msgstr "Name:"
+
+#: ../src/neuland-me-popover.ui.h:4
+msgid "My Status"
+msgstr "Mein Status"
+
+#: ../src/neuland-me-popover.ui.h:5
 msgid "Available"
 msgstr "Verfügbar"
 
-#: ../src/neuland-me-status-menu.ui.h:2
+#: ../src/neuland-me-popover.ui.h:6
 msgid "Away"
 msgstr "Abwesend"
 
-#: ../src/neuland-me-status-menu.ui.h:3
+#: ../src/neuland-me-popover.ui.h:7
 msgid "Busy"
 msgstr "Beschäftigt"
 
@@ -108,9 +116,29 @@ msgstr "Annehmen"
 msgid "Delete"
 msgstr "Löschen"
 
-#: ../src/neuland-application.c:95
-msgid "A simple chat client for Tox"
-msgstr "Ein einfacher Chat Client für Tox"
+#: ../src/neuland-application.c:85
+msgid ""
+"A simple chat client for Tox\n"
+"For more information about Tox see https://tox.im"
+msgstr ""
+"Ein einfacher Chat Client for Tox\n"
+"Für mehr Informationen über Tox besuchen Sie https://tox.im"
+
+#. Translators: This is a special message that shouldn't be translated
+#. * literally. It is used in the about box to give credits to
+#. * the translators.
+#. * Thus, you should translate it to your name and email address.
+#. * You should also include other translators who have contributed to
+#. * this translation; in that case, please write each of them on a separate
+#. * line seperated by newlines (\n).
+#.
+#: ../src/neuland-application.c:97
+msgid "translator-credits"
+msgstr "Volker Sobek <reklov@live.com>"
+
+#: ../src/neuland-application.c:99
+msgid "Neuland Website"
+msgstr "Neuland Webseite"
 
 #: ../src/neuland-chat-widget.c:123
 #, c-format
@@ -207,6 +235,3 @@ msgstr "%d. %b, %l:%M %p"
 #: ../src/neuland-contact.c:275
 msgid "%b %d %Y, %l:%M %p"
 msgstr "%d.%m.%Y, %l:%M %p"
-
-#~ msgid "Last seen: %s"
-#~ msgstr "Zuletzt gesehen: %s"
