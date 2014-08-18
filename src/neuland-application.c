@@ -43,15 +43,6 @@ struct _NeulandApplicationPrivate
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandApplication, neuland_application, GTK_TYPE_APPLICATION)
 
 static void
-neuland_application_tox_info_activated (GSimpleAction *action,
-                                        GVariant      *parameter,
-                                        gpointer       user_data)
-{
-  NeulandTox *nt;
-  g_debug ("neuland_tox_info_activated");
-}
-
-static void
 neuland_application_finalize (GObject *object)
 {
   G_OBJECT_CLASS (neuland_application_parent_class)->finalize (object);
@@ -126,7 +117,6 @@ static GActionEntry app_entries[] = {
   { "new-transient-identity", neuland_application_new_transient_identity_activated, NULL, NULL, NULL },
   { "about", neuland_application_about_activated, NULL, NULL, NULL },
   { "quit", neuland_application_quit_activated, NULL, NULL, NULL },
-  { "tox_info", neuland_application_tox_info_activated, NULL, NULL, NULL },
 };
 
 static void
