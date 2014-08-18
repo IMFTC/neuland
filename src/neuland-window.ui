@@ -54,9 +54,7 @@ Author: Volker Sobek <reklov@live.com>
             </style>
             <child>
               <object class="GtkBox" id="add_button_box">
-                <style>
-                  <class name="linked"/>
-                </style>
+                <property name="spacing">6</property>
                 <child>
                   <object class="GtkButton" id="add_button">
                     <property name="visible">True</property>
@@ -66,7 +64,6 @@ Author: Volker Sobek <reklov@live.com>
                     <property name="action-name">win.add-contact</property>
                     <style>
                       <class name="image-button"/>
-                      <class name="connected"/>
                     </style>
                     <child>
                       <object class="GtkImage" id="image1">
@@ -83,7 +80,7 @@ Author: Volker Sobek <reklov@live.com>
                 </child>
                 <child>
                   <object class="GtkRevealer" id="requests_button_revealer">
-                    <property name="transition_type">slide-right</property>
+                    <property name="transition_type">crossfade</property>
                     <child>
                       <object class="GtkToggleButton" id="requests_button">
                         <property name="visible">True</property>
