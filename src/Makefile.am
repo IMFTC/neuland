@@ -32,6 +32,8 @@ neuland_SOURCES = \
 	neuland-chat-widget.h \
 	neuland-add-dialog.c \
 	neuland-add-dialog.h \
+	neuland-me-popover.c \
+	neuland-me-popover.h \
 	$(NULL)
 
 nodist_neuland_SOURCES = \

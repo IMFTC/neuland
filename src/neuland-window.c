@@ -24,6 +24,7 @@
 #include "neuland-contact-row.h"
 #include "neuland-chat-widget.h"
 #include "neuland-add-dialog.h"
+#include "neuland-me-popover.h"
 
 struct _NeulandWindowPrivate
 {
@@ -710,11 +711,13 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
                     "swapped-signal::notify::pending-requests", on_pending_requests_cb, window,
                     "swapped-signal::accept-requests", on_accept_requests_cb, window,
                     NULL);
+
   neuland_contact_row_set_name (NEULAND_CONTACT_ROW (priv->me_widget),
                                 neuland_tox_get_name (tox));
   neuland_contact_row_set_message (NEULAND_CONTACT_ROW (priv->me_widget),
                                    neuland_tox_get_status_message (tox));
 
+  gtk_menu_button_set_popover (GTK_MENU_BUTTON (priv->me_button), neuland_me_popover_new (priv->tox));
 }
 
 NeulandTox *
@@ -1071,11 +1074,7 @@ neuland_window_init (NeulandWindow *window)
   priv->me_widget = neuland_contact_row_new (NULL);
   neuland_contact_row_set_name (NEULAND_CONTACT_ROW (priv->me_widget), "...");
   neuland_contact_row_set_status (NEULAND_CONTACT_ROW (priv->me_widget), NEULAND_CONTACT_STATUS_NONE);
-
   gtk_container_add (GTK_CONTAINER (priv->me_button), priv->me_widget);
-  gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (priv->me_button),
-                                  (GMenuModel*) gtk_builder_get_object (builder, "me-status-menu"));
-
   gtk_widget_get_preferred_height (priv->me_button, NULL, &priv->me_button_height);
 
   /* Set up list box for contacts */
