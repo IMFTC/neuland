@@ -43,6 +43,8 @@ neuland_SOURCES = \
 	neuland-add-dialog.h \
 	neuland-me-popover.c \
 	neuland-me-popover.h \
+	neuland-file-transfer.c \
+	neuland-file-transfer.h \
 	$(NULL)
 
 nodist_neuland_SOURCES = \
@@ -68,6 +70,7 @@ CLEANFILES = \
 
 enum_headers = \
 	neuland-contact.h \
+	neuland-file-transfer.h \
 	$(NULL)
 
 neuland-enums.h: neuland-enums.h.template $(enum_headers)

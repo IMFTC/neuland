@@ -6,6 +6,7 @@
 /*** BEGIN file-production ***/
 /* enumerations from "@filename@" */
 #include "@filename@"
+
 /*** END file-production ***/
 
 /*** BEGIN value-header ***/
@@ -30,6 +31,7 @@ GType
 
   return etype;
 }
+
 /*** END value-tail ***/
 
 /*** BEGIN file-tail ***/

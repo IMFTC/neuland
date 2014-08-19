@@ -96,4 +96,7 @@ neuland_tox_get_pending_requests (NeulandTox *tox);
 const char *
 neuland_tox_get_tox_id_hex (NeulandTox *tox);
 
+void
+neuland_tox_add_file_transfer_sending (NeulandTox *tox, NeulandFileTransfer *file_transfer);
+
 #endif /* __NEULAND_TOX_H__ */

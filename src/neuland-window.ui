@@ -169,6 +169,29 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-right-titlebar"/>
             </style>
             <child>
+              <object class="GtkButton" id="send_file_button">
+                <property name="visible">False</property>
+                <property name="no_show_all">True</property>
+                <property name="can_focus">True</property>
+                <property name="valign">center</property>
+                <property name="action_name">win.send-file</property>
+                <style>
+                  <class name="image-button"/>
+                </style>
+                <child>
+                  <object class="GtkImage" id="image3">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">mail-attachment-symbolic</property>
+                    <property name="icon_size">1</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="pack_type">start</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkMenuButton" id="gear_button">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -178,7 +201,7 @@ Author: Volker Sobek <reklov@live.com>
                   <class name="image-button"/>
                 </style>
                 <child>
-                  <object class="GtkImage" id="image3">
+                  <object class="GtkImage" id="image4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="icon_name">emblem-system-symbolic</property>

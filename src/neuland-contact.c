@@ -21,9 +21,9 @@
 #include <tox/tox.h>
 #include <glib/gi18n.h>
 
+#include "neuland-contact.h"
 #include "neuland-utils.h"
 #include "neuland-enums.h"
-#include "neuland-contact.h"
 
 #define NEULAND_CONTACT_SHOW_TYPING_TIMEOUT 3 /* Seconds */
 #define MAX_PREFERRED_NAME_LENGTH 12 /* characters, not bytes */
@@ -47,6 +47,9 @@ struct _NeulandContactPrivate
 
   gboolean has_chat_widget;
   guint show_typing_timeout_id;
+
+  GHashTable *file_transfers_send;
+  GHashTable *file_transfers_receive;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandContact, neuland_contact, G_TYPE_OBJECT)
@@ -434,6 +437,51 @@ gint64
 neuland_contact_get_number (NeulandContact *contact)
 {
   return contact->priv->number;
+}
+
+/* This function should only be called inside
+   neuland_tox_add_file_transfer() right now! */
+void
+neuland_contact_add_file_transfer (NeulandContact *contact,
+                                   NeulandFileTransfer *file_transfer)
+{
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+  g_return_if_fail (neuland_file_transfer_get_file_number (file_transfer) != -1);
+
+  NeulandContactPrivate *priv = contact->priv;
+  NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
+
+  if (direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
+    {
+      g_hash_table_insert (priv->file_transfers_receive,
+                           GINT_TO_POINTER (neuland_file_transfer_get_file_number
+                                            (file_transfer)), file_transfer);
+    }
+  else if (direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND)
+    {
+      g_hash_table_insert (priv->file_transfers_send,
+                           GINT_TO_POINTER (neuland_file_transfer_get_file_number
+                                            (file_transfer)), file_transfer);
+    }
+  else
+    g_warn_if_reached ();
+}
+
+NeulandFileTransfer *
+neuland_contact_get_file_transfer (NeulandContact *contact,
+                                   NeulandFileTransferDirection direction,
+                                   gint file_number)
+{
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  NeulandContactPrivate *priv = contact->priv;
+
+  GHashTable *table =
+    direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE ?
+    priv->file_transfers_receive :
+    priv->file_transfers_send;
+
+  return g_hash_table_lookup (table, GINT_TO_POINTER (file_number));
 }
 
 static void
@@ -844,7 +892,17 @@ neuland_contact_init (NeulandContact *contact)
 {
   g_debug ("neuland_contact_init");
   NEULAND_IS_CONTACT (contact);
+
   contact->priv = neuland_contact_get_instance_private (contact);
+
+  NeulandContactPrivate *priv = contact->priv;
+
+  priv->file_transfers_receive =
+    g_hash_table_new (NULL, NULL);
+
+  priv->file_transfers_send =
+    g_hash_table_new (NULL, NULL);
+
 }
 
 NeulandContact *

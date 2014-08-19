@@ -20,8 +20,10 @@
 
 #include <string.h>
 
-#include "neuland-tox.h"
 #include "neuland-enums.h"
+
+#include "neuland-tox.h"
+#include "neuland-file-transfer.h"
 
 #define NEULAND_DEFAULT_STATUS_MESSAGE "I'm testing Neuland!"
 #define NEULAND_DEFAULT_NAME "Neuland User"
@@ -38,6 +40,10 @@ struct _NeulandToxPrivate
   NeulandContactStatus status;
   gboolean running;
   gint64 pending_requests;
+  gboolean is_sending_file_transfers;
+  GHashTable *file_transfers_sending_ht;
+  GHashTable *file_transfers_receiving_ht;
+  GHashTable *file_transfers_all_ht;
   GMutex mutex;
 };
 
@@ -119,13 +125,13 @@ typedef struct {
   gint32 contact_number;
   guint8 *str;
   NeulandTox *tox;
-} DataStructStr;
+} DataStr;
 
 typedef struct {
   gint32 contact_number;
   guint integer;
   NeulandTox *tox;
-} DataStructInt;
+} DataInt;
 
 static void
 add_idle_with_data_string (GSourceFunc idle_func,
@@ -134,7 +140,7 @@ add_idle_with_data_string (GSourceFunc idle_func,
                            guint16 length,
                            NeulandTox *tox)
 {
-  DataStructStr *data = g_new0 (DataStructStr, 1);
+  DataStr *data = g_new0 (DataStr, 1);
 
   data->contact_number = contact_number;
   data->str = g_strndup (str, length);
@@ -143,7 +149,7 @@ add_idle_with_data_string (GSourceFunc idle_func,
   g_idle_add (idle_func, data);
 }
 
-static free_data_str (DataStructStr *data)
+static free_data_str (DataStr *data)
 {
   g_free (data->str);
   g_free (data);
@@ -155,7 +161,7 @@ add_idle_with_data_integer (GSourceFunc idle_func,
                             guint8 integer,
                             NeulandTox *tox)
 {
-  DataStructInt *data = g_new0 (DataStructInt, 1);
+  DataInt *data = g_new0 (DataInt, 1);
 
   data->contact_number = contact_number;
   data->integer = integer;
@@ -164,7 +170,7 @@ add_idle_with_data_integer (GSourceFunc idle_func,
   g_idle_add (idle_func, data);
 }
 
-static free_data_integer (DataStructInt *data)
+static free_data_integer (DataInt *data)
 {
   g_free (data);
 }
@@ -172,7 +178,7 @@ static free_data_integer (DataStructInt *data)
 static gboolean
 on_connection_status_idle (gpointer user_data)
 {
-  DataStructInt *data = user_data;
+  DataInt *data = user_data;
   NeulandTox *tox = data->tox;
   NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
@@ -199,7 +205,7 @@ on_connection_status (Tox *tox_struct,
 static gboolean
 on_user_status_idle (gpointer user_data)
 {
-  DataStructInt *data = user_data;
+  DataInt *data = user_data;
   NeulandContact *contact = neuland_tox_get_contact_by_number (data->tox, data->contact_number);
 
   if (contact != NULL)
@@ -223,7 +229,7 @@ on_user_status (Tox *tox_struct,
 static gboolean
 on_name_change_idle (gpointer user_data)
 {
-  DataStructStr *data = user_data;
+  DataStr *data = user_data;
   NeulandContact *contact = neuland_tox_get_contact_by_number (data->tox, data->contact_number);
   g_debug ("contact %p changed name from %s to %s",
            contact, neuland_contact_get_name (contact), data->str);
@@ -251,7 +257,7 @@ on_name_change (Tox *tox_struct,
 static gboolean
 on_status_message_idle (gpointer user_data)
 {
-  DataStructStr *data = user_data;
+  DataStr *data = user_data;
   NeulandTox *tox = data->tox;
   NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
@@ -277,7 +283,7 @@ on_status_message (Tox *tox_struct,
 static gboolean
 on_contact_message_idle (gpointer user_data)
 {
-  DataStructStr *data = user_data;
+  DataStr *data = user_data;
   NeulandTox *tox = data->tox;
   NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
@@ -301,7 +307,7 @@ on_contact_message (Tox *tox_struct,
 static gboolean
 on_contact_action_idle (gpointer user_data)
 {
-  DataStructStr *data = user_data;
+  DataStr *data = user_data;
   NeulandTox *tox = data->tox;
   NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
@@ -325,7 +331,7 @@ on_contact_action (Tox *tox_struct,
 static gboolean
 on_typing_change_idle (gpointer user_data)
 {
-  DataStructInt *data = user_data;
+  DataInt *data = user_data;
   NeulandTox *tox = data->tox;
   NeulandContact *contact = neuland_tox_get_contact_by_number (tox, data->contact_number);
 
@@ -349,7 +355,7 @@ typedef struct {
   guint8 *public_key;
   guint8 *message;
   NeulandTox *tox;
-} DataStructFriendRequest;
+} DataFriendRequest;
 
 static void
 neuland_tox_send (NeulandTox *tox,
@@ -465,7 +471,7 @@ on_show_typing_cb (GObject *obj,
 static gboolean
 on_friend_request_idle (gpointer user_data)
 {
-  DataStructFriendRequest *data = user_data;
+  DataFriendRequest *data = user_data;
   NeulandTox *tox = data->tox;
   NeulandToxPrivate *priv = tox->priv;
   guint8 *public_key = data->public_key;
@@ -504,13 +510,517 @@ on_friend_request (Tox *tox_struct,
                    guint16 length,
                    gpointer user_data)
 {
-  DataStructFriendRequest *data = g_new0 (DataStructFriendRequest, 1);
+  DataFriendRequest *data = g_new0 (DataFriendRequest, 1);
 
   data->public_key = g_memdup (public_key, TOX_FRIEND_ADDRESS_SIZE);
   data->message = g_strndup (message, length);
   data->tox = NEULAND_TOX (user_data);
 
   g_idle_add (on_friend_request_idle, data);
+}
+
+typedef struct
+{
+  NeulandFileTransfer *file_transfer;
+  NeulandFileTransferState state;
+} DataLeavingSendFileTransferIdle;
+
+static gboolean
+neuland_tox_leaving_send_file_transfer_idle (gpointer user_data)
+{
+  DataLeavingSendFileTransferIdle *data = (DataLeavingSendFileTransferIdle *)user_data;
+
+  NeulandFileTransfer *file_transfer = data->file_transfer;
+  NeulandFileTransferState state = data->state;
+
+  neuland_file_transfer_set_state (file_transfer, state);
+
+  g_free (user_data);
+  return G_SOURCE_REMOVE;
+}
+
+typedef struct
+{
+  NeulandTox *tox;
+  NeulandFileTransfer *file_transfer;
+} DataSendFileTransfer;
+
+gpointer
+neuland_tox_send_file_transfer (gpointer user_data)
+{
+  /* TODO: Thread safety! */
+
+  DataSendFileTransfer *data = (DataSendFileTransfer*)user_data;
+  NeulandTox *tox = NEULAND_TOX (data->tox);
+  NeulandToxPrivate *priv = tox->priv;
+  NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (data->file_transfer);
+
+  gint64 contact_number = neuland_file_transfer_get_contact_number (file_transfer);
+  guint8 file_number = neuland_file_transfer_get_file_number (file_transfer);
+  const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
+
+  g_debug ("Starting thread for file transfer %p \"%s\"", file_transfer, name);
+
+  gsize count;
+
+  do
+    {
+      gsize data_size;
+      gpointer data_buffer;
+
+      g_mutex_lock (&priv->mutex);
+      /* NOTICE: tox_file_data_size currently returns a constant value
+         wich does not depend on contact_number. */
+      data_size = (gsize)tox_file_data_size (priv->tox_struct, contact_number);
+      g_mutex_unlock (&priv->mutex);
+
+      data_buffer = g_malloc0 (data_size);
+      count = neuland_file_transfer_get_next_data (file_transfer, data_buffer, data_size);
+
+      if (count != 0)
+        {
+          while (TRUE)
+            {
+              gint ret;
+
+              /* tox_file_send_data() fails quite often because there
+                 aren't enough free slots. */
+
+              /* TODO: We can't distinguish here between no free slots in
+                 toxcore and other errors, like an invalid contact number,
+                 on which we could abort the file transfer. This is
+                 because toxcore currently doesn't provide different error
+                 return values for this function. All the possible errors
+                 result in a return value of -1. Unless this is fixed we
+                 could use a counter here to limit the tries and then
+                 abort the transfer ...*/
+              g_mutex_lock (&priv->mutex);
+              ret = tox_file_send_data (priv->tox_struct, contact_number,
+                                        file_number, data_buffer, (gint)count);
+              g_mutex_unlock (&priv->mutex);
+
+              if (ret == 0)
+                {
+                  g_debug ("tox_file_send_data succeeded");
+                  break;
+                }
+              else
+                {
+                  g_debug ("tox_file_send_data failed (this is NO crucial error!)");
+                  g_usleep (10000);
+                }
+            }
+        }
+      else
+        {
+          g_debug ("Thread for file transfer %p \"%s\" finished transferring data",
+                   file_transfer, name);
+
+          DataLeavingSendFileTransferIdle *data = g_new0 (DataLeavingSendFileTransferIdle, 1);
+          data->file_transfer = file_transfer;
+          data->state = NEULAND_FILE_TRANSFER_STATE_FINISHED;
+
+          g_idle_add (neuland_tox_leaving_send_file_transfer_idle, data);
+        }
+    }
+  while (count > 0);
+
+  g_free (data);
+  g_debug ("Leaving thread for file transfer %p \"%s\"", file_transfer, name);
+
+  return;
+}
+
+
+static void
+on_file_transfer_state_changed_cb (GObject *gobject,
+                                   GParamSpec *pspec,
+                                   gpointer user_data)
+{
+  g_message ("on_file_transfer_state_changed_cb");
+
+  NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (gobject);
+  NeulandTox *tox = NEULAND_TOX (user_data);
+
+  NeulandToxPrivate *priv = tox->priv;
+  NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
+  NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
+  gint64 contact_number = neuland_file_transfer_get_contact_number (file_transfer);
+  guint8 file_number = neuland_file_transfer_get_file_number (file_transfer);
+  guint64 file_size = neuland_file_transfer_get_file_size (file_transfer);
+  gchar *file_name = g_strdup (neuland_file_transfer_get_file_name (file_transfer));
+
+  gint ret;
+
+  gchar *info = neuland_file_transfer_get_info_string (file_transfer);
+  g_message (info);
+  g_free (info);
+
+  if (direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND)
+    {
+      if (state == NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS)
+        {
+          DataSendFileTransfer *data = g_new (DataSendFileTransfer, 1);
+          data->tox = tox;
+          data->file_transfer = file_transfer;
+
+
+          /* g_idle_add ((GSourceFunc)neuland_tox_send_file_transfer, data); */
+
+          g_thread_new ("file-transfer", neuland_tox_send_file_transfer, data);
+        }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED)
+        {
+          /* Tell the receiver that we have finished sending the file. */
+          ret = tox_file_send_control (priv->tox_struct,
+                                       contact_number,
+                                       0,
+                                       file_number,
+                                       TOX_FILECONTROL_FINISHED,
+                                       NULL, 0);
+          if (ret != 0)
+            g_warning ("Error when calling tox_file_send_control()");
+
+          /* Now we'll wait for a control package with TOX_FILECONTROL_FINISHED
+             from the receiver, which in turn will change the transfer's state to
+             NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED; the final state. */
+        }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
+        /*empty*/;
+      else
+        g_warning ("Handling state %i not yet implemented in on_file_transfer_state_changed_cb!", state);
+    }
+  else if (direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
+    {
+      if (state == NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS)
+        {
+          g_mutex_lock (&priv->mutex);
+
+          ret = tox_file_send_control (priv->tox_struct,
+                                       contact_number,
+                                       1,
+                                       file_number,
+                                       TOX_FILECONTROL_ACCEPT,
+                                       NULL, 0);
+
+          g_mutex_unlock (&priv->mutex);
+
+          if (ret != 0)
+            g_warning ("Error when calling tox_file_send_control()");
+        }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED)
+        {
+          /* Confirm that we successfully received the file */
+
+          /* TODO: We don't really check yet if the transfer succeeded
+             before sending this and changing the state to
+             NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED */
+          g_mutex_lock (&priv->mutex);
+
+          ret = tox_file_send_control (priv->tox_struct,
+                                       contact_number,
+                                       1,
+                                       file_number,
+                                       TOX_FILECONTROL_FINISHED,
+                                       NULL, 0);
+
+          g_mutex_unlock (&priv->mutex);
+
+          if (ret != 0)
+            g_warning ("Error when calling tox_file_send_control()");
+
+          neuland_file_transfer_set_state (file_transfer,
+                                           NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED);
+        }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
+        /*empty*/;
+      else
+        g_warning ("Handling state %i not yet implemented in on_file_transfer_state_changed_cb!");
+    }
+
+  g_free (file_name);
+}
+
+/* Connects the @file_transfer signals to this tox session and adds
+   the transfer to the contact it belongs to. */
+void
+neuland_tox_add_file_transfer (NeulandTox *tox,
+                               NeulandFileTransfer *file_transfer)
+{
+  g_return_if_fail (NEULAND_IS_TOX (tox));
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+  NeulandToxPrivate *priv = tox->priv;
+
+  NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
+  gint64 contact_number = neuland_file_transfer_get_contact_number (file_transfer);
+  guint64 file_size = neuland_file_transfer_get_file_size (file_transfer);
+  gchar *file_name = g_strdup (neuland_file_transfer_get_file_name (file_transfer));
+
+  NeulandContact *contact = neuland_tox_get_contact_by_number (tox, contact_number);
+
+  g_signal_connect (file_transfer, "notify::state",
+                    G_CALLBACK (on_file_transfer_state_changed_cb), tox);
+
+  if (direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND)
+    {
+      g_return_if_fail (neuland_file_transfer_get_file_number (file_transfer) == -1);
+      g_debug ("Adding new file transfer - sending: (%p)", file_transfer);
+
+      /* Before we can add the transfer to the contacts file_transfers_sending_ht hash
+         table we need to know the file number. */
+      g_mutex_lock (&priv->mutex);
+
+      gint file_number = tox_new_file_sender (priv->tox_struct,
+                                              contact_number,
+                                              file_size,
+                                              file_name,
+                                              strlen (file_name));
+
+      g_mutex_unlock (&priv->mutex);
+
+      if (file_number > -1)
+        {
+          neuland_file_transfer_set_file_number (file_transfer, file_number);
+
+          g_hash_table_insert (priv->file_transfers_sending_ht, file_transfer, file_transfer);
+          g_hash_table_insert (priv->file_transfers_all_ht, file_transfer, file_transfer);
+
+          neuland_contact_add_file_transfer (contact, file_transfer);
+          /* Now we have to wait for TOX_FILECONTROL_ACCEPT ... */
+        }
+      else
+        g_warning ("Error when calling_new_file_sender() for transfer %s", file_name);
+    }
+  else if (direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
+    {
+      g_debug ("Adding new file transfer - receiving: (%p)", file_transfer);
+      /* We got the file number with the send request. */
+      g_return_if_fail (neuland_file_transfer_get_file_number (file_transfer) != -1);
+
+      g_hash_table_insert (priv->file_transfers_receiving_ht, file_transfer, file_transfer);
+      g_hash_table_insert (priv->file_transfers_all_ht, file_transfer, file_transfer);
+
+      neuland_contact_add_file_transfer (contact, file_transfer);
+      /* TODO: Don't start automatically ... */
+      neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
+    }
+
+  g_free (file_name);
+}
+
+typedef struct {
+  gint32 contact_number;
+  guint8 file_number;
+  guint64 file_size;
+  gchar *file_name;
+  NeulandTox *tox;
+} DataFileSendRequest;
+
+static gboolean
+on_file_send_request_idle (gpointer user_data)
+{
+  DataFileSendRequest *data = user_data;
+
+  g_message ("Got file send request:\n"
+             "      contact number: %i\n"
+             "      file_number: %i\n"
+             "      file_name: %s\n"
+             "      file size: %i",
+             data->contact_number,
+             data->file_number,
+             data->file_name,
+             data->file_size);
+
+  NeulandContact *contact =
+    neuland_tox_get_contact_by_number (data->tox, data->contact_number);
+
+  if (contact == NULL)
+    return;
+
+  NeulandFileTransfer *file_transfer =
+    neuland_file_transfer_new_receiving (data->contact_number,
+                                         data->file_number,
+                                         data->file_name,
+                                         data->file_size);
+
+  g_warn_if_fail (NEULAND_IS_TOX (data->tox));
+  g_warn_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+
+  neuland_tox_add_file_transfer (data->tox, file_transfer);
+
+  g_free (data->file_name);
+  g_free (data);
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_file_send_request (Tox *tox_struct,
+                      gint32 contact_number,
+                      guint8 file_number,
+                      guint64 file_size,
+                      const guint8 *file_name,
+                      guint16 file_name_length,
+                      gpointer user_data)
+{
+  DataFileSendRequest *data = g_new0 (DataFileSendRequest, 1);
+
+  data->contact_number = contact_number;
+  data->file_number = file_number;
+  data->file_size = file_size;
+  data->file_name = g_strndup (file_name, file_name_length);
+  data->tox = NEULAND_TOX (user_data);
+
+  g_idle_add (on_file_send_request_idle, data);
+}
+
+static NeulandFileTransfer *
+neuland_tox_get_file_transfer (NeulandTox *tox,
+                               gint32 contact_number,
+                               NeulandFileTransferDirection direction,
+                               guint8 file_number)
+{
+  g_return_val_if_fail (NEULAND_IS_TOX (tox), NULL);
+  NeulandContact *nc = neuland_tox_get_contact_by_number (tox, contact_number);
+
+  return neuland_contact_get_file_transfer (nc, direction, file_number);
+}
+
+typedef struct
+{
+  NeulandTox *tox;
+  gint32 contact_number;
+  guint8 file_number;
+  GByteArray *data_array;
+} DataFileData;
+
+static gboolean
+on_file_data_idle (gpointer user_data)
+{
+  g_debug ("on_file_data_idle");
+  DataFileData *data = user_data;
+  NeulandTox *nt = data->tox;
+
+  GByteArray *data_array = data->data_array;
+
+  NeulandFileTransfer *nft =
+    neuland_tox_get_file_transfer (nt, data->contact_number,
+                                   NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE,
+                                   data->file_number);
+  if (nft != NULL)
+    neuland_file_transfer_append_data (nft, data_array);
+  else
+    g_warning ("file transfer == NULL");
+
+  g_byte_array_free (data->data_array, TRUE);
+  g_free (data);
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_file_data (Tox *tox_struct,
+              gint32 contact_number,
+              guint8 file_number,
+              const guint8 *file_data,
+              guint16 file_data_length,
+              gpointer user_data)
+{
+  g_debug ("on_file_data");
+
+  NeulandTox *tox = NEULAND_TOX (user_data);
+
+  DataFileData *data = g_new0 (DataFileData, 1);
+  data->tox = tox;
+  data->contact_number = contact_number;
+  data->file_number = file_number;
+  data->data_array = g_byte_array_new_take (g_memdup (file_data, file_data_length),
+                                            file_data_length);
+
+  g_idle_add (on_file_data_idle, data);
+}
+
+typedef struct
+{
+  NeulandTox *tox;
+  gint32 contact_number;
+  guint8 receive_send;
+  guint8 file_number;
+  guint8 control_type;
+  GByteArray *data_array;
+} DataFileControl;
+
+static gboolean
+on_file_control_idle (gpointer user_data)
+{
+  g_debug ("on_file_control_idle");
+  DataFileControl *data_struct = (DataFileControl *)user_data;
+  NeulandTox *tox = data_struct->tox;
+  NeulandFileTransferDirection direction = data_struct->receive_send == 0 ?
+    NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE :
+    NEULAND_FILE_TRANSFER_DIRECTION_SEND;
+
+  NeulandFileTransfer *file_transfer =
+    neuland_tox_get_file_transfer (tox, data_struct->contact_number,
+                                   direction,
+                                   data_struct->file_number);
+  if (file_transfer != NULL)
+    {
+      if (direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND)
+        {
+          if (data_struct->control_type == TOX_FILECONTROL_ACCEPT)
+            neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
+
+          else if (data_struct->control_type == TOX_FILECONTROL_FINISHED)
+            neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED);
+        }
+      else if (direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
+        {
+          if (data_struct->control_type == TOX_FILECONTROL_FINISHED)
+            neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_FINISHED);
+        }
+      else
+        g_warn_if_reached ();
+    }
+  else
+    g_warning ("Failed to retrieve file transfer for control package");
+
+  g_byte_array_free (data_struct->data_array, TRUE);
+  g_free (data_struct);
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_file_control (Tox *tox_struct,
+                 gint32 contact_number,
+                 guint8 receive_send,
+                 guint8 file_number,
+                 guint8 control_type,
+                 const guint8 *data,
+                 guint16 length,
+                 gpointer user_data)
+{
+  g_debug ("\non_file_control package:\n"
+           "   contact_number: %i\n"
+           "   file_number   : %i\n"
+           "   receive_send  : %i\n"
+           "   control_type  : %i\n",
+           contact_number,
+           file_number,
+           receive_send,
+           control_type);
+
+  DataFileControl *data_struct = g_new0 (DataFileControl, 1);
+  NeulandTox *tox = NEULAND_TOX (user_data);
+  data_struct->tox = tox;
+  data_struct->receive_send = receive_send;
+  data_struct->contact_number = contact_number;
+  data_struct->file_number = file_number;
+  data_struct->control_type = control_type;
+  data_struct->data_array = g_byte_array_new_take (g_memdup (data, length), length);
+
+  g_idle_add (on_file_control_idle, data_struct);
 }
 
 static void
@@ -530,6 +1040,10 @@ neuland_tox_connect_callbacks (NeulandTox *tox)
   tox_callback_typing_change (tox_struct, on_typing_change, tox);
   tox_callback_friend_request (tox_struct, on_friend_request, tox);
 
+  tox_callback_file_send_request (tox_struct, on_file_send_request, tox);
+  tox_callback_file_data (tox_struct, on_file_data, tox);
+  tox_callback_file_control (tox_struct, on_file_control, tox);
+
   g_mutex_unlock (&priv->mutex);
 
   /* TODO: */
@@ -537,9 +1051,6 @@ neuland_tox_connect_callbacks (NeulandTox *tox)
   /* tox_callback_group_message (tox_struct, NULL, tox); */
   /* tox_callback_group_action (tox_struct, NULL, tox); */
   /* tox_callback_group_namelist_change (tox_struct, NULL, tox); */
-  /* tox_callback_file_send_request (tox_struct, NULL, tox); */
-  /* tox_callback_file_control (tox_struct, NULL, tox); */
-  /* tox_callback_file_data (tox_struct, NULL, tox); */
 }
 
 static void
@@ -1204,6 +1715,11 @@ neuland_tox_init (NeulandTox *tox)
                                              NULL, g_object_unref);
   priv->requests_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
                                              NULL, g_object_unref);
+
+  priv->file_transfers_all_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_object_unref);
+  priv->file_transfers_sending_ht = g_hash_table_new (NULL, NULL);
+  priv->file_transfers_receiving_ht = g_hash_table_new (NULL, NULL);
+
   g_mutex_init (&priv->mutex);
 }
 
@@ -1291,5 +1807,6 @@ neuland_tox_new (gchar *data_path)
   neuland_tox_connect_callbacks (nt);
   nt->priv->running = TRUE;
   GThread *thread = g_thread_new(NULL, (GThreadFunc) neuland_tox_start, nt);
+
   return nt;
 }
