@@ -42,3 +42,5 @@
 /src/tox-test.c
 /stamp-h1
 neuland
+/src/neuland-enums.c
+/src/neuland-enums.h

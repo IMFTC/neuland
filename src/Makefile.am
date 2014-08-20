@@ -17,6 +17,13 @@ test_SOURCES = \
 test_CFLAGS = $(NEULAND_CFLAGS)
 test_LDADD = $(NEULAND_LIBS)
 
+BUILT_SOURCES = \
+	neuland-resources.c \
+	neuland-resources.h \
+	neuland-enums.h \
+	neuland-enums.c \
+	$(NULL)
+
 neuland_SOURCES = \
 	neuland-application.c \
 	neuland-utils.c \
@@ -25,8 +32,6 @@ neuland_SOURCES = \
 	neuland-contact-row.h \
 	neuland-contact.c \
 	neuland-contact.h \
-	neuland-enums.c \
-	neuland-enums.h \
 	neuland-tox.h \
 	neuland-tox.c \
 	neuland-window.c \
@@ -40,17 +45,14 @@ neuland_SOURCES = \
 	$(NULL)
 
 nodist_neuland_SOURCES = \
-	neuland-resources.c \
-	neuland-resources.h \
-	$(NULL)
+	$(BUILT_SOURCES)
 
-BUILT_SOURCES = \
-	neuland-resources.c \
-	neuland-resources.h \
-	$(NULL)
+neuland_CFLAGS = $(NEULAND_CFLAGS)
+neuland_LDADD = $(NEULAND_LIBS)
 
 EXTRA_DIST = \
-	m4/.empty \
+	neuland-enums.c.template \
+	neuland-enums.h.template \
 	neuland.gresource.xml \
 	$(resource_files) \
 	$(NULL)
@@ -59,8 +61,19 @@ AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""${datadir}/locale"\" \
 	$(NULL)
 
-neuland_CFLAGS = $(NEULAND_CFLAGS)
-neuland_LDADD = $(NEULAND_LIBS)
+CLEANFILES = \
+	$(BUILT_SOURCES)\
+	$(NULL)
+
+enum_headers = \
+	neuland-contact.h \
+	$(NULL)
+
+neuland-enums.h: neuland-enums.h.template $(enum_headers)
+	$(AM_V_GEN) glib-mkenums --template $< $(enum_headers) > $@
+
+neuland-enums.c: neuland-enums.c.template $(enum_headers)
+	$(AM_V_GEN) glib-mkenums --template $< $(enum_headers) > $@
 
 resource_files=$(shell $(GLIB_COMPILE_RESOURCES) \--sourcedir=$(srcdir) \
 	 --generate-dependencies $(srcdir)/neuland.gresource.xml)
