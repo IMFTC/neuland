@@ -2,6 +2,9 @@ NULL =
 
 bin_PROGRAMS = \
 	neuland \
+	$(NULL)
+
+noinst_PROGRAMS = \
 	test \
 	$(NULL)
 
