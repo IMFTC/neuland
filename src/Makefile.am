@@ -26,6 +26,7 @@ BUILT_SOURCES = \
 
 neuland_SOURCES = \
 	neuland-application.c \
+	neuland-application.h \
 	neuland-utils.c \
 	neuland-utils.h \
 	neuland-contact-row.c \
