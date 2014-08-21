@@ -75,13 +75,13 @@ neuland-enums.h: neuland-enums.h.template $(enum_headers)
 neuland-enums.c: neuland-enums.c.template $(enum_headers)
 	$(AM_V_GEN) glib-mkenums --template $< $(enum_headers) > $@
 
-resource_files = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) \
+resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) \
 	 --generate-dependencies $(srcdir)/neuland.gresource.xml)
 
 neuland-resources.c: neuland.gresource.xml $(resource_files)
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) \
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) \
 	--generate-source --c-name neuland $(srcdir)/neuland.gresource.xml
 
 neuland-resources.h: neuland.gresource.xml $(resource_files)
-	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(srcdir) \
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) \
 	 --generate-header --c-name neuland $(srcdir)/neuland.gresource.xml

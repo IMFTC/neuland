@@ -30,9 +30,6 @@ PKG_CHECK_MODULES(NEULAND,
 
 AC_CHECK_HEADERS([malloc.h stdlib.h string.h])
 
-AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
-AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
-
 AC_CONFIG_FILES([Makefile
                 src/Makefile
                 po/Makefile.in])
