@@ -27,6 +27,7 @@
 
 #define NEULAND_DEFAULT_STATUS_MESSAGE "I'm testing Neuland!"
 #define NEULAND_DEFAULT_NAME "Neuland User"
+#define MAX_SEND_DATA_ATTEMPTS 100
 
 struct _NeulandToxPrivate
 {
@@ -534,6 +535,7 @@ neuland_tox_leaving_send_file_transfer_idle (gpointer user_data)
   NeulandFileTransferState state = data->state;
 
   neuland_file_transfer_set_state (file_transfer, state);
+  g_object_unref (file_transfer);
 
   g_free (user_data);
   return G_SOURCE_REMOVE;
@@ -559,9 +561,11 @@ neuland_tox_send_file_transfer (gpointer user_data)
   guint8 file_number = neuland_file_transfer_get_file_number (file_transfer);
   const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
 
-  g_debug ("Starting thread for file transfer %p \"%s\"", file_transfer, name);
-
+  NeulandFileTransferState new_state = neuland_file_transfer_get_state (file_transfer);
   gsize count;
+  DataLeavingSendFileTransferIdle *idle_data;
+
+  g_debug ("Starting thread for file transfer %p \"%s\"", file_transfer, name);
 
   do
     {
@@ -569,17 +573,18 @@ neuland_tox_send_file_transfer (gpointer user_data)
       gpointer data_buffer;
 
       g_mutex_lock (&priv->mutex);
-      /* NOTICE: tox_file_data_size currently returns a constant value
-         wich does not depend on contact_number. */
       data_size = (gsize)tox_file_data_size (priv->tox_struct, contact_number);
       g_mutex_unlock (&priv->mutex);
+
+      g_assert (data_size > 0);
 
       data_buffer = g_malloc0 (data_size);
       count = neuland_file_transfer_get_next_data (file_transfer, data_buffer, data_size);
 
       if (count != 0)
         {
-          while (TRUE)
+          gint fails;
+          for (fails = 0; fails < MAX_SEND_DATA_ATTEMPTS; fails++)
             {
               gint ret;
 
@@ -606,24 +611,35 @@ neuland_tox_send_file_transfer (gpointer user_data)
                 }
               else
                 {
-                  g_debug ("tox_file_send_data failed (this is NO crucial error!)");
+                  g_debug ("tox_file_send_data failed, trying again later");
+                  fails++;
                   g_usleep (10000);
                 }
+            }
+          if (fails >= 100)
+            {
+              g_warning ("Going to kill transfer %p \"%s\" after "
+                         "%i failed tox_file_send_data() calls.", file_transfer, name, fails);
+              new_state = NEULAND_FILE_TRANSFER_STATE_KILLED;
+              break; /* break out of: do ... while (count > 0) */
             }
         }
       else
         {
           g_debug ("Thread for file transfer %p \"%s\" finished transferring data",
                    file_transfer, name);
-
-          DataLeavingSendFileTransferIdle *data = g_new0 (DataLeavingSendFileTransferIdle, 1);
-          data->file_transfer = file_transfer;
-          data->state = NEULAND_FILE_TRANSFER_STATE_FINISHED;
-
-          g_idle_add (neuland_tox_leaving_send_file_transfer_idle, data);
+          new_state = NEULAND_FILE_TRANSFER_STATE_FINISHED;
         }
     }
   while (count > 0);
+
+  /* Emit and handle the notify::state signal in the main loop.  */
+
+  idle_data = g_new0 (DataLeavingSendFileTransferIdle, 1);
+  idle_data->file_transfer = file_transfer;
+  idle_data->state = new_state;
+
+  g_idle_add (neuland_tox_leaving_send_file_transfer_idle, idle_data);
 
   g_free (data);
   g_debug ("Leaving thread for file transfer %p \"%s\"", file_transfer, name);
@@ -662,10 +678,10 @@ on_file_transfer_state_changed_cb (GObject *gobject,
         {
           DataSendFileTransfer *data = g_new (DataSendFileTransfer, 1);
           data->tox = tox;
-          data->file_transfer = file_transfer;
-
-
-          /* g_idle_add ((GSourceFunc)neuland_tox_send_file_transfer, data); */
+          /* Keep file_transfer alive as long as the thread is
+             running. We g_object_unref file_transfer again once the
+             thread has finished. */
+          data->file_transfer = g_object_ref (file_transfer);
 
           g_thread_new ("file-transfer", neuland_tox_send_file_transfer, data);
         }
@@ -684,6 +700,18 @@ on_file_transfer_state_changed_cb (GObject *gobject,
           /* Now we'll wait for a control package with TOX_FILECONTROL_FINISHED
              from the receiver, which in turn will change the transfer's state to
              NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED; the final state. */
+        }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED)
+        {
+          /* Tell the receiver that we killed the file transfer. */
+          ret = tox_file_send_control (priv->tox_struct,
+                                       contact_number,
+                                       0,
+                                       file_number,
+                                       TOX_FILECONTROL_KILL,
+                                       NULL, 0);
+          if (ret != 0)
+            g_warning ("Error when calling tox_file_send_control()");
         }
       else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
         /*empty*/;
