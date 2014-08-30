@@ -249,8 +249,8 @@ neuland_file_transfer_set_state (NeulandFileTransfer *file_transfer,
 
   GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
   GEnumValue *ev = g_enum_get_value (eclass, state);
-  g_debug ("Setting state of file transfer %p to: %s",
-             file_transfer, ev->value_name);
+  g_debug ("Setting state of file transfer %p to:\n%s",
+           file_transfer, ev->value_name);
 
   if (priv->direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
     {
@@ -521,7 +521,7 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
 
   if (read == 0)
     {
-      g_debug ("Closing stream for transfer %p");
+      g_debug ("Closing input stream for transfer %p");
       g_input_stream_close (G_INPUT_STREAM (priv->input_stream), NULL, NULL);
     }
   return read;
