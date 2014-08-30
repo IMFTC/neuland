@@ -280,21 +280,27 @@ neuland_file_transfer_get_info_string (NeulandFileTransfer *file_transfer)
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
-  GEnumValue *ev = g_enum_get_value (eclass, neuland_file_transfer_get_state (file_transfer));
+  GEnumClass *eclass;
+  eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_DIRECTION);
+  GEnumValue *ev_direction = g_enum_get_value (eclass, neuland_file_transfer_get_direction (file_transfer));
+  eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
+  GEnumValue *ev_state = g_enum_get_value (eclass, neuland_file_transfer_get_state (file_transfer));
 
-  return g_strdup_printf ("NeulandFileTransfer (%p):\n"
-                          "    contact-number: %i\n"
-                          "    file-number: %i\n"
-                          "    file-name: %s\n"
-                          "    file-size: %i\n"
-                          "    state: %s\n",
+  return g_strdup_printf ("\n"
+                          "< NeulandFileTransfer %p >\n"
+                          "  direction      : %s\n"
+                          "  contact-number : %i\n"
+                          "  file-number    : %i\n"
+                          "  file-name      : %s\n"
+                          "  file-size      : %i\n"
+                          "  state          : %s\n",
                           file_transfer,
+                          ev_direction->value_nick,
                           priv->contact_number,
                           priv->file_number,
                           priv->file_name,
                           priv->file_size,
-                          ev->value_name);
+                          ev_state->value_nick);
 }
 
 static void
