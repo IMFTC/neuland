@@ -1102,7 +1102,7 @@ on_file_control (Tox *tox_struct,
                  gpointer user_data)
 {
   g_debug ("\n"
-           "< file control package >\n"
+           "< Incoming file control package >\n"
            "  contact_number: %i\n"
            "  file_number   : %i\n"
            "  receive_send  : %i\n"
