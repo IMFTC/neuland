@@ -135,6 +135,21 @@ neuland_file_transfer_get_file_size (NeulandFileTransfer *file_transfer)
   return priv->file_size;
 }
 
+void
+neuland_file_transfer_set_transferred_size (NeulandFileTransfer *file_transfer,
+                                            guint64 transferred_size)
+{
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+  NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  if (transferred_size == priv->transferred_size)
+    return;
+
+  priv->transferred_size = transferred_size;
+
+  g_object_notify_by_pspec (G_OBJECT (file_transfer), properties[PROP_TRANSFERRED_SIZE]);
+}
+
 guint64
 neuland_file_transfer_get_transferred_size (NeulandFileTransfer *file_transfer)
 {
@@ -305,6 +320,9 @@ neuland_file_transfer_set_property (GObject *object,
     case PROP_FILE_SIZE:
       neuland_file_transfer_set_file_size (file_transfer, g_value_get_uint64 (value));
       break;
+    case PROP_TRANSFERRED_SIZE:
+      neuland_file_transfer_set_transferred_size (file_transfer, g_value_get_uint64 (value));
+      break;
     case PROP_FILE_NUMBER:
       neuland_file_transfer_set_file_number (file_transfer, g_value_get_int (value));
       break;
@@ -423,12 +441,12 @@ neuland_file_transfer_class_init (NeulandFileTransferClass *klass)
                          G_PARAM_READWRITE);
 
   properties[PROP_TRANSFERRED_SIZE] =
-    g_param_spec_uint64 ("transferred-file-size",
-                         "Transferred file size",
-                         "The already transferred file size in bytes",
+    g_param_spec_uint64 ("transferred-size",
+                         "Transferred size",
+                         "The already transferred size in bytes",
                          0, G_MAXUINT64,
                          0,
-                         G_PARAM_READABLE);
+                         G_PARAM_READWRITE);
 
   properties[PROP_STATE] =
     g_param_spec_enum ("state",
@@ -479,6 +497,7 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
                                      gpointer buffer,
                                      gint data_size)
 {
+  g_debug ("neuland_file_transfer_get_next_data");
   NeulandFileTransferPrivate *priv;
   gssize read;
 

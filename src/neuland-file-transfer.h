@@ -42,6 +42,7 @@ typedef enum {
 
 typedef enum
 {
+  NEULAND_FILE_TRANSFER_STATE_NONE = 0,
   NEULAND_FILE_TRANSFER_STATE_PENDING,
   NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS,
   NEULAND_FILE_TRANSFER_STATE_PAUSED,
@@ -83,6 +84,9 @@ neuland_file_transfer_get_file_number (NeulandFileTransfer *file_transfer);
 
 guint64
 neuland_file_transfer_get_file_size (NeulandFileTransfer *file_transfer);
+
+void
+neuland_file_transfer_set_transferred_size (NeulandFileTransfer *file_transfer, guint64 transferred_size);
 
 guint64
 neuland_file_transfer_get_transferred_size (NeulandFileTransfer *file_transfer);

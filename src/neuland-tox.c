@@ -524,19 +524,31 @@ typedef struct
 {
   NeulandFileTransfer *file_transfer;
   NeulandFileTransferState state;
-} DataLeavingSendFileTransferIdle;
+  guint64 transferred_size;
+} DataUpdateFileTransferIdle;
 
+/* This GSourceFunc is used to make the desired property changes for
+   file_transfer inside the main loop. */
 static gboolean
-neuland_tox_leaving_send_file_transfer_idle (gpointer user_data)
+neuland_tox_update_file_transfer_idle (gpointer user_data)
 {
-  DataLeavingSendFileTransferIdle *data = (DataLeavingSendFileTransferIdle *)user_data;
-
-  NeulandFileTransfer *file_transfer = data->file_transfer;
+  DataUpdateFileTransferIdle *data = (DataUpdateFileTransferIdle *)user_data;
+  NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (data->file_transfer);
   NeulandFileTransferState state = data->state;
+  guint64 transferred_size = data->transferred_size;
 
-  neuland_file_transfer_set_state (file_transfer, state);
+  if (transferred_size)
+    {
+      guint total_size = neuland_file_transfer_get_file_size (file_transfer);
+      g_message ("transferred_size for file transfer %p: %20i (%5.1f%%)",
+                 file_transfer, transferred_size, (gdouble)transferred_size / total_size * 100);
+      neuland_file_transfer_set_transferred_size (file_transfer, transferred_size);
+    }
+
+  if (state) /*  The enum has: NEULAND_FILE_TRANSFER_STATE_NONE = 0 */
+    neuland_file_transfer_set_state (file_transfer, state);
+
   g_object_unref (file_transfer);
-
   g_free (user_data);
   return G_SOURCE_REMOVE;
 }
@@ -563,7 +575,13 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
   NeulandFileTransferState new_state = neuland_file_transfer_get_state (file_transfer);
   gsize count;
-  DataLeavingSendFileTransferIdle *idle_data;
+  DataUpdateFileTransferIdle *idle_data;
+
+  /* guint64 transferred_size = neuland_file_transfer_get_transferred_size (file_transfer); */
+  guint64 total_file_size = neuland_file_transfer_get_file_size (file_transfer);
+  gdouble one_per_mille = total_file_size / 1000.0;
+  guint64 transferred_size = 0;
+  guint64 last_notify_size = 0;
 
   g_debug ("Starting thread for file transfer %p \"%s\"", file_transfer, name);
 
@@ -591,14 +609,13 @@ neuland_tox_send_file_transfer (gpointer user_data)
               /* tox_file_send_data() fails quite often because there
                  aren't enough free slots. */
 
-              /* TODO: We can't distinguish here between no free slots in
-                 toxcore and other errors, like an invalid contact number,
-                 on which we could abort the file transfer. This is
-                 because toxcore currently doesn't provide different error
-                 return values for this function. All the possible errors
-                 result in a return value of -1. Unless this is fixed we
-                 could use a counter here to limit the tries and then
-                 abort the transfer ...*/
+              /* We can't distinguish here between no free slots in
+                 toxcore and other errors, like an invalid contact
+                 number, on which we could abort the file
+                 transfer. This is because toxcore currently doesn't
+                 provide different error return values for this
+                 function. Thus we use a counter here to limit the
+                 tries and then abort the transfer. */
               g_mutex_lock (&priv->mutex);
               ret = tox_file_send_data (priv->tox_struct, contact_number,
                                         file_number, data_buffer, (gint)count);
@@ -606,12 +623,21 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
               if (ret == 0)
                 {
-                  g_debug ("tox_file_send_data succeeded");
+                  g_debug ("tox_file_send_data() succeeded");
+                  transferred_size += count;
+                  if ((gdouble)(transferred_size - last_notify_size) >= one_per_mille)
+                    {
+                      DataUpdateFileTransferIdle *data = g_new0 (DataUpdateFileTransferIdle, 1);
+                      data->file_transfer = g_object_ref (file_transfer);
+                      data->transferred_size = transferred_size;
+                      last_notify_size = transferred_size;
+                      g_idle_add (neuland_tox_update_file_transfer_idle, data);
+                    }
                   break;
                 }
               else
                 {
-                  g_debug ("tox_file_send_data failed, trying again later");
+                  g_debug ("tox_file_send_data() failed, trying again later");
                   fails++;
                   g_usleep (10000);
                 }
@@ -635,13 +661,15 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
   /* Emit and handle the notify::state signal in the main loop.  */
 
-  idle_data = g_new0 (DataLeavingSendFileTransferIdle, 1);
-  idle_data->file_transfer = file_transfer;
+  idle_data = g_new0 (DataUpdateFileTransferIdle, 1);
+  idle_data->file_transfer = g_object_ref (file_transfer);
   idle_data->state = new_state;
 
-  g_idle_add (neuland_tox_leaving_send_file_transfer_idle, idle_data);
+  g_idle_add (neuland_tox_update_file_transfer_idle, idle_data);
 
+  g_object_unref (file_transfer);
   g_free (data);
+
   g_debug ("Leaving thread for file transfer %p \"%s\"", file_transfer, name);
 
   return;
@@ -653,7 +681,7 @@ on_file_transfer_state_changed_cb (GObject *gobject,
                                    GParamSpec *pspec,
                                    gpointer user_data)
 {
-  g_message ("on_file_transfer_state_changed_cb");
+  g_debug ("on_file_transfer_state_changed_cb");
 
   NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (gobject);
   NeulandTox *tox = NEULAND_TOX (user_data);
