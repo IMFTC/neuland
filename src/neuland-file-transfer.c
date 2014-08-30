@@ -483,19 +483,41 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
 {
   /* g_debug ("neuland_file_transfer_append_data"); */
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
-  gchar *info = neuland_file_transfer_get_info_string (file_transfer);
-
   NeulandFileTransferPrivate *priv = file_transfer->priv;
+  gchar *path = g_file_get_path (neuland_file_transfer_get_file (file_transfer));
+  GError *error = NULL;
 
-  /* TODO: Error handling */
   /* TODO: Check if file exists, don't just append! */
   if (priv->output_stream == NULL)
-    priv->output_stream = g_file_append_to (priv->file, 0, NULL, NULL);
+    priv->output_stream = g_file_append_to (priv->file, 0, NULL, &error);
 
-  g_output_stream_write (G_OUTPUT_STREAM (priv->output_stream),
-                         data_array->data,
-                         data_array->len,
-                         NULL, NULL);
+  if (error != NULL)
+    {
+      g_warning ("Opening file \"%s\" for appending failed, "
+                 "going to kill transfer. Error was:\n"
+                 "%s (error code: %i)", path, error->message, error->code);
+    }
+  else
+    {
+      gsize ret = g_output_stream_write (G_OUTPUT_STREAM (priv->output_stream),
+                                         data_array->data,
+                                         data_array->len,
+                                         NULL, &error);
+      if (error != NULL)
+        {
+          g_warning ("Writing to file transfer %p \"%s\" failed, "
+                     "going to kill transfer. Error was:\n"
+                     "%s (error code: %i)", error->message, error->code);
+
+          neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED);
+        }
+    }
+
+  if (error != NULL)
+    {
+      neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED);
+      g_error_free (error);
+    }
 }
 
 gssize

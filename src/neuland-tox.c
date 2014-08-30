@@ -800,6 +800,19 @@ on_file_transfer_state_changed_cb (GObject *gobject,
           neuland_file_transfer_set_state (file_transfer,
                                            NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED);
         }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED)
+        {
+          /* Tell the receiver that we killed the file transfer. */
+          ret = tox_file_send_control (priv->tox_struct,
+                                       contact_number,
+                                       1,
+                                       file_number,
+                                       TOX_FILECONTROL_KILL,
+                                       NULL, 0);
+          if (ret != 0)
+            g_warning ("Error on calling tox_file_send_control() with TOX_FILECONTROL_KILL "
+                       "for transfer %p", file_transfer);
+        }
       else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
         /*empty*/;
       else
@@ -965,16 +978,27 @@ on_file_data_idle (gpointer user_data)
 {
   /* g_debug ("on_file_data_idle"); */
   DataFileData *data = user_data;
-  NeulandTox *nt = data->tox;
-
+  NeulandTox *tox = data->tox;
   GByteArray *data_array = data->data_array;
-
-  NeulandFileTransfer *nft =
-    neuland_tox_get_file_transfer (nt, data->contact_number,
+  NeulandFileTransfer *file_transfer =
+    neuland_tox_get_file_transfer (tox, data->contact_number,
                                    NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE,
                                    data->file_number);
-  if (nft != NULL)
-    neuland_file_transfer_append_data (nft, data_array);
+  NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
+
+  if (file_transfer != NULL)
+    {
+      if (state != NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS)
+        {
+          GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
+          GEnumValue *ev = g_enum_get_value (eclass, state);
+
+          g_debug ("Ignoring incoming data package for file transfer %p with state \"%s\"",
+                   file_transfer, ev->value_nick);
+        }
+      else
+        neuland_file_transfer_append_data (file_transfer, data_array);
+    }
   else
     g_warning ("file transfer == NULL");
 
