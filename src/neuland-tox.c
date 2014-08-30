@@ -963,7 +963,7 @@ typedef struct
 static gboolean
 on_file_data_idle (gpointer user_data)
 {
-  g_debug ("on_file_data_idle");
+  /* g_debug ("on_file_data_idle"); */
   DataFileData *data = user_data;
   NeulandTox *nt = data->tox;
 
@@ -992,7 +992,7 @@ on_file_data (Tox *tox_struct,
               guint16 file_data_length,
               gpointer user_data)
 {
-  g_debug ("on_file_data");
+  /* g_debug ("on_file_data"); */
 
   NeulandTox *tox = NEULAND_TOX (user_data);
 

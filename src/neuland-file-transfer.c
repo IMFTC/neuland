@@ -481,7 +481,7 @@ void
 neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
                                    GByteArray *data_array)
 {
-  g_debug ("neuland_file_transfer_append_data");
+  /* g_debug ("neuland_file_transfer_append_data"); */
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   gchar *info = neuland_file_transfer_get_info_string (file_transfer);
 
