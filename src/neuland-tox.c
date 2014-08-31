@@ -552,12 +552,7 @@ neuland_tox_update_file_transfer_idle (gpointer user_data)
   guint64 transferred_size = data->transferred_size;
 
   if (transferred_size)
-    {
-      guint total_size = neuland_file_transfer_get_file_size (file_transfer);
-      g_message ("transferred_size for file transfer %p: %20i (%5.1f%%)",
-                 file_transfer, transferred_size, (gdouble)transferred_size / total_size * 100);
-      neuland_file_transfer_set_transferred_size (file_transfer, transferred_size);
-    }
+    neuland_file_transfer_add_transferred_size (file_transfer, transferred_size);
 
   if (state) /*  The enum has: NEULAND_FILE_TRANSFER_STATE_NONE = 0 */
     {
@@ -596,8 +591,6 @@ neuland_tox_send_file_transfer (gpointer user_data)
   const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
   guint64 total_file_size = neuland_file_transfer_get_file_size (file_transfer);
   gdouble one_per_mille = total_file_size / 1000.0;
-  guint64 transferred_size = 0;
-  guint64 last_notify_size = 0;
   DataUpdateFileTransferIdle *idle_out_data = g_new0 (DataUpdateFileTransferIdle, 1);
   gsize count;
 
@@ -651,17 +644,11 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
               if (ret == 0)
                 {
-                  /* g_debug ("tox_file_send_data() succeeded"); */
-                  transferred_size += count;
-                  if ((gdouble)(transferred_size - last_notify_size) >= one_per_mille)
-                    {
-                      /* Set "transferred-size" property in the main loop. */
-                      DataUpdateFileTransferIdle *data = g_new0 (DataUpdateFileTransferIdle, 1);
-                      data->file_transfer = g_object_ref (file_transfer);
-                      data->transferred_size = transferred_size;
-                      last_notify_size = transferred_size;
-                      g_idle_add (neuland_tox_update_file_transfer_idle, data);
-                    }
+                  /* Set "transferred-size" property in the main loop. */
+                  DataUpdateFileTransferIdle *data = g_new0 (DataUpdateFileTransferIdle, 1);
+                  data->file_transfer = g_object_ref (file_transfer);
+                  data->transferred_size = count;
+                  g_idle_add (neuland_tox_update_file_transfer_idle, data);
                   break; /* for loop */
                 }
               else
@@ -1019,10 +1006,12 @@ on_file_data_idle (gpointer user_data)
               neuland_file_transfer_set_state (file_transfer,
                                                NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
             }
+          else
+            neuland_file_transfer_add_transferred_size (file_transfer, count);
         }
     }
   else
-    g_warning ("file transfer == NULL");
+    g_debug ("Got data package for non-existent file transfer");
 
   g_byte_array_free (data->data_array, TRUE);
   g_free (data);

@@ -31,6 +31,7 @@ struct _NeulandFileTransferPrivate
   NeulandFileTransferState state;
   guint64 file_size;
   guint64 transferred_size;
+  guint64 last_notify_size;
   guint64 contact_number;
   gint file_number;             /* toxcore uses uint8_t, we use int to allow -1 for unset */
   gint buffer_size;
@@ -138,18 +139,25 @@ neuland_file_transfer_get_file_size (NeulandFileTransfer *file_transfer)
 }
 
 void
-neuland_file_transfer_set_transferred_size (NeulandFileTransfer *file_transfer,
+neuland_file_transfer_add_transferred_size (NeulandFileTransfer *file_transfer,
                                             guint64 transferred_size)
 {
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  if (transferred_size == priv->transferred_size)
-    return;
+  priv->transferred_size += transferred_size;
 
-  priv->transferred_size = transferred_size;
-
-  g_object_notify_by_pspec (G_OBJECT (file_transfer), properties[PROP_TRANSFERRED_SIZE]);
+  /* Don't spam the signal handlers; only notify about the transferred
+     size every 1000th part. */
+  if ((priv->transferred_size - priv->last_notify_size) > (priv->file_size / 1000.0) ||
+      priv->transferred_size == priv->file_size)
+    {
+      g_debug ("[transfer %p '%s': %10i (%5.1f%%)]",
+               file_transfer, priv->file_name, priv->transferred_size,
+               (gdouble)priv->transferred_size / priv->file_size * 100);
+      priv->last_notify_size = priv->transferred_size;
+      g_object_notify_by_pspec (G_OBJECT (file_transfer), properties[PROP_TRANSFERRED_SIZE]);
+    }
 }
 
 guint64
@@ -329,9 +337,6 @@ neuland_file_transfer_set_property (GObject *object,
     case PROP_FILE_SIZE:
       neuland_file_transfer_set_file_size (file_transfer, g_value_get_uint64 (value));
       break;
-    case PROP_TRANSFERRED_SIZE:
-      neuland_file_transfer_set_transferred_size (file_transfer, g_value_get_uint64 (value));
-      break;
     case PROP_FILE_NUMBER:
       neuland_file_transfer_set_file_number (file_transfer, g_value_get_int (value));
       break;
@@ -455,7 +460,7 @@ neuland_file_transfer_class_init (NeulandFileTransferClass *klass)
                          "The already transferred size in bytes",
                          0, G_MAXUINT64,
                          0,
-                         G_PARAM_READWRITE);
+                         G_PARAM_READABLE);
 
   properties[PROP_STATE] =
     g_param_spec_enum ("state",
@@ -565,8 +570,6 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
                    file_transfer, name, error->message, error->code);
       else
         {
-          priv->transferred_size += (guint64)count;
-
           if (count == 0)
             {
               g_debug ("End of input stream for transfer %p \"%s\", closing input stream.",
