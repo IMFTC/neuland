@@ -621,13 +621,15 @@ neuland_tox_send_file_transfer (gpointer user_data)
           while (TRUE)
             {
               gint ret;
-              if (neuland_file_transfer_get_state (file_transfer) ==
-                  NEULAND_FILE_TRANSFER_STATE_KILLED)
+              switch (neuland_file_transfer_get_state (file_transfer))
                 {
+                case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US: /* fall through */
+                case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT:
                   g_debug ("File transfer %p \"%s\" has been killed, "
                            "going to leave sending thread");
 
                   goto out;
+                  break;
                 }
 
               g_mutex_lock (&priv->mutex);
@@ -637,7 +639,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
               if (ret == 0)
                 {
-                  g_debug ("tox_file_send_data() succeeded");
+                  /* g_debug ("tox_file_send_data() succeeded"); */
                   transferred_size += count;
                   if ((gdouble)(transferred_size - last_notify_size) >= one_per_mille)
                     {
@@ -656,11 +658,11 @@ neuland_tox_send_file_transfer (gpointer user_data)
                     {
                       g_warning ("Going to kill transfer %p \"%s\" after "
                                  "%i failed tox_file_send_data() calls.", file_transfer, name, fails);
-                      idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_KILLED;
+                      idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US;
                       goto out;
                     }
 
-                  g_debug ("tox_file_send_data() failed, trying again later");
+                  /* g_debug ("tox_file_send_data() failed, trying again later"); */
                   g_usleep (10000);
                 }
             }
@@ -738,7 +740,7 @@ on_file_transfer_state_changed_cb (GObject *gobject,
              from the receiver, which in turn will change the transfer's state to
              NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED; the final state. */
         }
-      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED)
+      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US)
         {
           /* Tell the receiver that we killed the file transfer. */
           ret = tox_file_send_control (priv->tox_struct,
@@ -751,8 +753,10 @@ on_file_transfer_state_changed_cb (GObject *gobject,
             g_warning ("Error on calling tox_file_send_control() with TOX_FILECONTROL_KILL "
                        "for transfer %p", file_transfer);
         }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT)
+        /* empty */;
       else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
-        /*empty*/;
+        /* empty */;
       else
         g_warning ("Handling state %i not yet implemented in on_file_transfer_state_changed_cb!", state);
     }
@@ -776,12 +780,25 @@ on_file_transfer_state_changed_cb (GObject *gobject,
                        "for transfer %p", file_transfer);
         }
       else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED)
+        /* empty */;
+      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US)
+        {
+          /* Tell the receiver that we killed the file transfer. */
+          ret = tox_file_send_control (priv->tox_struct,
+                                       contact_number,
+                                       1,
+                                       file_number,
+                                       TOX_FILECONTROL_KILL,
+                                       NULL, 0);
+          if (ret != 0)
+            g_warning ("Error on calling tox_file_send_control() with TOX_FILECONTROL_KILL "
+                       "for transfer %p", file_transfer);
+        }
+      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT)
+        /* empty */;
+      else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
         {
           /* Confirm that we successfully received the file */
-
-          /* TODO: We don't really check yet if the transfer succeeded
-             before sending this and changing the state to
-             NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED */
           g_mutex_lock (&priv->mutex);
 
           ret = tox_file_send_control (priv->tox_struct,
@@ -796,25 +813,7 @@ on_file_transfer_state_changed_cb (GObject *gobject,
           if (ret != 0)
             g_warning ("Error on calling tox_file_send_control() with TOX_FILECONTROL_FINISHED "
                        "for transfer %p", file_transfer);
-
-          neuland_file_transfer_set_state (file_transfer,
-                                           NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED);
         }
-      else if (state == NEULAND_FILE_TRANSFER_STATE_KILLED)
-        {
-          /* Tell the receiver that we killed the file transfer. */
-          ret = tox_file_send_control (priv->tox_struct,
-                                       contact_number,
-                                       1,
-                                       file_number,
-                                       TOX_FILECONTROL_KILL,
-                                       NULL, 0);
-          if (ret != 0)
-            g_warning ("Error on calling tox_file_send_control() with TOX_FILECONTROL_KILL "
-                       "for transfer %p", file_transfer);
-        }
-      else if (state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
-        /*empty*/;
       else
         g_warning ("Handling state %i not yet implemented in on_file_transfer_state_changed_cb!");
     }
@@ -1062,11 +1061,13 @@ on_file_control_idle (gpointer user_data)
           switch (data_struct->control_type)
             {
             case TOX_FILECONTROL_ACCEPT:
+              /* PENDING -> IN_PROGRESS */
               neuland_file_transfer_set_state (file_transfer,
                                                NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
               break;
 
             case TOX_FILECONTROL_FINISHED:
+              /* FINISHED -> FINISHED_CONFIRMED */
               neuland_file_transfer_set_state (file_transfer,
                                                NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED);
               break;
@@ -1083,13 +1084,17 @@ on_file_control_idle (gpointer user_data)
           switch (data_struct->control_type)
             {
             case TOX_FILECONTROL_FINISHED:
+              /* IN_PROGRESS -> FINISHED */
               neuland_file_transfer_set_state (file_transfer,
                                                NEULAND_FILE_TRANSFER_STATE_FINISHED);
+              /* FINISHED -> FINISHED_CONFIRMED */
+              neuland_file_transfer_set_state (file_transfer,
+                                               NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED);
               break;
 
             case TOX_FILECONTROL_KILL:
               neuland_file_transfer_set_state (file_transfer,
-                                               NEULAND_FILE_TRANSFER_STATE_KILLED);
+                                               NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT);
               break;
 
             default:

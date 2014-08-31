@@ -509,13 +509,13 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
                      "going to kill transfer. Error was:\n"
                      "%s (error code: %i)", error->message, error->code);
 
-          neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED);
+          neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
         }
     }
 
   if (error != NULL)
     {
-      neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED);
+      neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
       g_error_free (error);
     }
 }
