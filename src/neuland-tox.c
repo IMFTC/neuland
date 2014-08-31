@@ -688,7 +688,9 @@ neuland_tox_send_file_transfer (gpointer user_data)
   return;
 }
 
-
+/* This callback is responsible for sending control packages with
+   tox_file_send_control() according to the new state of the file
+   transfer. */
 static void
 on_file_transfer_state_changed_cb (GObject *gobject,
                                    GParamSpec *pspec,
