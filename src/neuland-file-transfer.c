@@ -480,15 +480,20 @@ neuland_file_transfer_init (NeulandFileTransfer *file_transfer)
   priv->creation_time = g_date_time_new_now_local ();
 }
 
-void
+/* Returns the number of appended bytes or -1 on error. This function
+   only runs in the main loop right now. */
+gssize
 neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
                                    GByteArray *data_array)
 {
   /* g_debug ("neuland_file_transfer_append_data"); */
-  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   NeulandFileTransferPrivate *priv = file_transfer->priv;
+  const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
   gchar *path = g_file_get_path (neuland_file_transfer_get_file (file_transfer));
   GError *error = NULL;
+  gssize count;
+
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
 
   /* TODO: Check if file exists, don't just append! */
   if (priv->output_stream == NULL)
@@ -496,56 +501,90 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
 
   if (error != NULL)
     g_warning ("Opening file \"%s\" for appending failed, "
-               "going to kill transfer. Error was:\n"
-               "%s (error code: %i)", path, error->message, error->code);
+               "going to kill file transfer. Error was:\n"
+               "%s (error code: %i)",
+               path, error->message, error->code);
   else
     {
-      gsize ret = g_output_stream_write (G_OUTPUT_STREAM (priv->output_stream),
-                                         data_array->data,
-                                         data_array->len,
-                                         NULL, &error);
+      count = g_output_stream_write (G_OUTPUT_STREAM (priv->output_stream),
+                                     data_array->data,
+                                     data_array->len,
+                                     NULL, &error);
       if (error != NULL)
         g_warning ("Writing to file transfer %p \"%s\" failed, "
                    "going to kill transfer. Error was:\n"
-                   "%s (error code: %i)", error->message, error->code);
-    }
-
-  if (error != NULL)
-    {
-      neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
-      g_error_free (error);
+                   "%s (error code: %i)",
+                   file_transfer, name, error->message, error->code);
     }
 
   g_free (path);
+
+  if (error != NULL)
+    {
+      return -1;
+      g_error_free (error);
+    }
+
+  return count;
 }
 
+/* This function is called from within neuland_tox_send_file_transfer()
+   which runs in a separate thread! */
 gssize
 neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
                                      gpointer buffer,
                                      gint data_size)
 {
-  g_debug ("neuland_file_transfer_get_next_data");
-  NeulandFileTransferPrivate *priv;
-  gssize read;
+  /* g_debug ("neuland_file_transfer_get_next_data"); */
+  NeulandFileTransferPrivate *priv = file_transfer->priv;
+  const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
+  gchar *path = g_file_get_path (neuland_file_transfer_get_file (file_transfer));
+  GError *error = NULL;
+  gssize count;
 
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   g_assert (data_size > 0);
 
-  priv = file_transfer->priv;
-
   if (!priv->input_stream)
-    priv->input_stream = G_INPUT_STREAM (g_file_read (priv->file, NULL, NULL));
+    priv->input_stream = g_file_read (priv->file, NULL, &error);
 
-  read = g_input_stream_read (priv->input_stream, buffer, data_size, NULL, NULL);
-
-  priv->transferred_size += (guint64)read;
-
-  if (read == 0)
+  if (error != NULL)
+    g_warning ("Opening file \"%s\" for appending failed, "
+               "going to kill file transfer. Error was:\n"
+               "%s (error code: %i)",
+               path, error->message, error->code);
+  else
     {
-      g_debug ("Closing input stream for transfer %p");
-      g_input_stream_close (G_INPUT_STREAM (priv->input_stream), NULL, NULL);
+      count = g_input_stream_read (priv->input_stream, buffer,
+                                   data_size, NULL, &error);
+
+      if (error != NULL)
+        g_warning ("Reading from stream for file transfer %p \"%s\" failed, "
+                   "going to kill transfer. Error was:\n"
+                   "%s (error code: %i)",
+                   file_transfer, name, error->message, error->code);
+      else
+        {
+          priv->transferred_size += (guint64)count;
+
+          if (count == 0)
+            {
+              g_debug ("End of input stream for transfer %p \"%s\", closing input stream.",
+                       file_transfer, name);
+              g_input_stream_close (G_INPUT_STREAM (priv->input_stream), NULL, NULL);
+            }
+        }
     }
-  return read;
+
+  g_free (path);
+
+  if (error != NULL)
+    {
+      g_error_free (error);
+      return -1;
+    }
+
+  return count;
 }
 
 

@@ -98,7 +98,7 @@ neuland_file_transfer_get_info_string (NeulandFileTransfer *file_transfer);
 const gchar *
 neuland_file_transfer_get_file_name (NeulandFileTransfer *file_transfer);
 
-void
+gssize
 neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer, GByteArray *data_array);
 
 gssize

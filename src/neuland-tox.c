@@ -561,7 +561,11 @@ neuland_tox_update_file_transfer_idle (gpointer user_data)
 
   if (state) /*  The enum has: NEULAND_FILE_TRANSFER_STATE_NONE = 0 */
     {
-      g_debug ("update idle: state for transfer %p to %i", file_transfer, state);
+      GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
+      GEnumValue *eval = g_enum_get_value (eclass, state);
+
+      g_debug ("neuland_tox_update_file_transfer_idle: changing state "
+               "for transfer %p to %s", file_transfer, eval->value_nick);
       neuland_file_transfer_set_state (file_transfer, state);
     }
 
@@ -615,6 +619,14 @@ neuland_tox_send_file_transfer (gpointer user_data)
       data_buffer = g_malloc0 (data_size);
       count = neuland_file_transfer_get_next_data (file_transfer, data_buffer, data_size);
 
+      if (count == -1)
+        {
+          g_debug ("Failed to get next data for file transfer %p \"%s\", "
+                   "going to kill transfer.", file_transfer, name);
+          idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US;
+          goto out;
+        }
+
       if (count != 0)
         {
           gint fails = 0;
@@ -626,7 +638,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
                 case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US: /* fall through */
                 case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT:
                   g_debug ("File transfer %p \"%s\" has been killed, "
-                           "going to leave sending thread");
+                           "going to leave sending thread", file_transfer, name);
 
                   goto out;
                   break;
@@ -998,7 +1010,16 @@ on_file_data_idle (gpointer user_data)
                    file_transfer, ev->value_nick);
         }
       else
-        neuland_file_transfer_append_data (file_transfer, data_array);
+        {
+          gssize count =  neuland_file_transfer_append_data (file_transfer, data_array);
+          if (count == -1)
+            {
+              g_warning ("Failed to append incoming data to file "
+                         "transfer %p, going to kill transfer");
+              neuland_file_transfer_set_state (file_transfer,
+                                               NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
+            }
+        }
     }
   else
     g_warning ("file transfer == NULL");
