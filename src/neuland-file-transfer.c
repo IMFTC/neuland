@@ -65,6 +65,7 @@ neuland_file_transfer_dispose (GObject *object)
   NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (object);
   NeulandFileTransferPrivate *priv = file_transfer->priv;
 
+  g_clear_object (&priv->file);
   g_clear_object (&priv->output_stream);
   g_clear_object (&priv->input_stream);
 
@@ -78,7 +79,8 @@ neuland_file_transfer_finalize (GObject *object)
   NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (object);
   NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  g_clear_object (&priv->file);
+  g_free (priv->file_name);
+  g_date_time_unref (priv->creation_time);
 
   G_OBJECT_CLASS (neuland_file_transfer_parent_class)->finalize (object);
 }
@@ -221,6 +223,7 @@ neuland_file_transfer_set_file (NeulandFileTransfer *file_transfer, GFile *file)
       goffset size = g_file_info_get_size (info);
       neuland_file_transfer_set_file_size (file_transfer, g_file_info_get_size (info));
       neuland_file_transfer_set_file_name (file_transfer, g_file_info_get_display_name (info));
+      g_clear_object (&info);
     }
 
   g_object_thaw_notify (G_OBJECT (file_transfer));
@@ -518,6 +521,8 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
       neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
       g_error_free (error);
     }
+
+  g_free (path);
 }
 
 gssize
