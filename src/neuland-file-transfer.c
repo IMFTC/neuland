@@ -36,7 +36,7 @@ struct _NeulandFileTransferPrivate
   gint buffer_size;
   gchar *file_name;
   GFile *file;
-  GInputStream *input_stream;
+  GFileInputStream *input_stream;
   GFileOutputStream *output_stream;
   GDateTime *creation_time;
 };
@@ -555,7 +555,7 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
                path, error->message, error->code);
   else
     {
-      count = g_input_stream_read (priv->input_stream, buffer,
+      count = g_input_stream_read (G_INPUT_STREAM (priv->input_stream), buffer,
                                    data_size, NULL, &error);
 
       if (error != NULL)
