@@ -1721,6 +1721,7 @@ neuland_tox_dispose (GObject *object)
 
   g_hash_table_destroy (priv->contacts_ht);
   g_hash_table_destroy (priv->requests_ht);
+  g_hash_table_destroy (priv->file_transfers_all_ht);
 
   G_OBJECT_CLASS (neuland_tox_parent_class)->dispose (object);
 }
