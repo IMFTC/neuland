@@ -22,13 +22,11 @@
 
 #include "neuland-file-transfer.h"
 
-//#include <string.h>
-//#include <glib/gi18n.h>
-
 struct _NeulandFileTransferPrivate
 {
   NeulandFileTransferDirection direction;
   NeulandFileTransferState state;
+  NeulandFileTransferState requested_state;
   guint64 file_size;
   guint64 transferred_size;
   guint64 last_notify_size;
@@ -54,6 +52,7 @@ enum {
   PROP_FILE_SIZE,
   PROP_TRANSFERRED_SIZE,
   PROP_STATE,
+  PROP_REQUESTED_STATE,
   PROP_N
 };
 
@@ -247,6 +246,33 @@ neuland_file_transfer_get_file (NeulandFileTransfer *file_transfer)
 }
 
 void
+neuland_file_transfer_set_requested_state (NeulandFileTransfer *file_transfer,
+                                           NeulandFileTransferState state)
+{
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+  NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  if (state == priv->state)
+    return;
+
+  priv->requested_state = state;
+
+  /* This signal is handled in neuland-tox and from there -- if the
+     state change could successfully communicated to the contact --
+     the real state is set with neuland_file_transfer_set_state(). */
+  g_object_notify_by_pspec (G_OBJECT (file_transfer), properties[PROP_REQUESTED_STATE]);
+}
+
+NeulandFileTransferState
+neuland_file_transfer_get_requested_state (NeulandFileTransfer *file_transfer)
+{
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+  NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  return priv->requested_state;
+}
+
+void
 neuland_file_transfer_set_state (NeulandFileTransfer *file_transfer,
                                  NeulandFileTransferState state)
 {
@@ -296,6 +322,7 @@ neuland_file_transfer_get_info_string (NeulandFileTransfer *file_transfer)
   GEnumValue *ev_direction = g_enum_get_value (eclass, neuland_file_transfer_get_direction (file_transfer));
   eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
   GEnumValue *ev_state = g_enum_get_value (eclass, neuland_file_transfer_get_state (file_transfer));
+  GEnumValue *ev_requested_state = g_enum_get_value (eclass, neuland_file_transfer_get_requested_state (file_transfer));
 
   return g_strdup_printf ("\n"
                           "< NeulandFileTransfer %p >\n"
@@ -304,14 +331,16 @@ neuland_file_transfer_get_info_string (NeulandFileTransfer *file_transfer)
                           "  file-number    : %i\n"
                           "  file-name      : %s\n"
                           "  file-size      : %i\n"
-                          "  state          : %s\n",
+                          "  state          : %s\n"
+                          "  requested-state: %s\n",
                           file_transfer,
                           ev_direction->value_nick,
                           priv->contact_number,
                           priv->file_number,
                           priv->file_name,
                           priv->file_size,
-                          ev_state->value_nick);
+                          ev_state->value_nick,
+                          ev_requested_state->value_nick);
 }
 
 static void
@@ -344,7 +373,10 @@ neuland_file_transfer_set_property (GObject *object,
       priv->contact_number = g_value_get_int64 (value);
       break;
     case PROP_STATE:
-      priv->state = g_value_get_enum (value);
+      neuland_file_transfer_set_state (file_transfer, g_value_get_enum (value));
+      break;
+    case PROP_REQUESTED_STATE:
+      neuland_file_transfer_set_requested_state (file_transfer, g_value_get_enum (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -471,6 +503,16 @@ neuland_file_transfer_class_init (NeulandFileTransferClass *klass)
                        G_PARAM_READWRITE |
                        G_PARAM_CONSTRUCT);
 
+  properties[PROP_REQUESTED_STATE] =
+    g_param_spec_enum ("requested-state",
+                       "Requested state",
+                       "A NeulandFileTransferState state that file transfer "
+                       "is requested to change to",
+                       NEULAND_TYPE_FILE_TRANSFER_STATE,
+                       NEULAND_FILE_TRANSFER_STATE_PENDING,
+                       G_PARAM_READWRITE |
+                       G_PARAM_CONSTRUCT);
+
   g_object_class_install_properties (gobject_class,
                                      PROP_N,
                                      properties);
@@ -533,6 +575,19 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
   return count;
 }
 
+/* Seek back to the point where the last fetched data was beginning,
+   which hasn't been sent yet because of pausing. */
+void
+neuland_file_transfer_prepare_resume_sending (NeulandFileTransfer *file_transfer)
+{
+  NeulandFileTransferPrivate *priv = file_transfer->priv;
+  g_seekable_seek (G_SEEKABLE (priv->input_stream),
+                   (goffset)priv->transferred_size,
+                   G_SEEK_SET,
+                   NULL, NULL);
+}
+
+
 /* This function is called from within neuland_tox_send_file_transfer()
    which runs in a separate thread! */
 gssize
@@ -586,10 +641,9 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
       g_error_free (error);
       return -1;
     }
-
-  return count;
+  else
+    return count;
 }
-
 
 NeulandFileTransfer *
 neuland_file_transfer_new_sending (gint64 contact_number,

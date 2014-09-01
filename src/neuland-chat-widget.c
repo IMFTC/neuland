@@ -19,6 +19,7 @@
  */
 
 #include "neuland-chat-widget.h"
+#include "neuland-file-transfer-row.h"
 #include "neuland-utils.h"
 
 #include <string.h>
@@ -38,9 +39,10 @@ struct _NeulandChatWidgetPrivate {
   NeulandTox *tox;
   NeulandContact *contact;
 
+  GtkListBox *transfers_list_box;
+
   GtkTextView *text_view;
   GtkTextBuffer *text_buffer;
-
   // owned by text_buffer, don't free in finalize!
   GtkTextMark *scroll_mark;
 
@@ -287,6 +289,19 @@ on_incoming_action_cb (NeulandChatWidget *widget,
   insert_action (widget, action, DIRECTION_IN);
 }
 
+static void
+on_new_transfer_cb (NeulandChatWidget *widget,
+                    NeulandFileTransfer *file_transfer,
+                    gpointer user_data)
+{
+  g_message ("on_new_transfer_cb, transfer: %p", file_transfer);
+  g_return_if_fail (NEULAND_IS_CHAT_WIDGET (widget));
+  NeulandChatWidgetPrivate *priv = widget->priv;
+  GtkWidget *row = neuland_file_transfer_row_new (file_transfer);
+
+  gtk_list_box_insert (priv->transfers_list_box, row, -1);
+}
+
 static gboolean
 hide_offline_info (gpointer user_data)
 {
@@ -433,6 +448,7 @@ neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-chat-widget.ui");
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, transfers_list_box);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, text_view);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, entry_text_view);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, text_buffer);
@@ -526,6 +542,7 @@ neuland_chat_widget_new (NeulandTox *tox,
                     "swapped-signal::incoming-action", on_incoming_action_cb, ncw,
                     "swapped-signal::outgoing-message", on_outgoing_message_cb, ncw,
                     "swapped-signal::outgoing-action", on_outgoing_action_cb, ncw,
+                    "swapped-signal::new-transfer", on_new_transfer_cb, ncw,
                     NULL);
 
   gtk_widget_set_size_request (GTK_WIDGET (priv->entry_text_view), -1, text_entry_min_height);

@@ -142,4 +142,7 @@ neuland_contact_get_request_message (NeulandContact *contact);
 NeulandFileTransfer *
 neuland_contact_get_file_transfer (NeulandContact *contact, NeulandFileTransferDirection direction, gint file_number);
 
+GList *
+neuland_contact_get_file_transfers (NeulandContact *contact);
+
 #endif /* __NEULAND_CONTACT_H__ */

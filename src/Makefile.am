@@ -31,6 +31,8 @@ neuland_SOURCES = \
 	neuland-utils.h \
 	neuland-contact-row.c \
 	neuland-contact-row.h \
+	neuland-file-transfer-row.c \
+	neuland-file-transfer-row.h \
 	neuland-contact.c \
 	neuland-contact.h \
 	neuland-tox.h \

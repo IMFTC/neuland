@@ -5,6 +5,7 @@
     <file preprocess="xml-stripblanks">neuland-window-menu.ui</file>
     <file preprocess="xml-stripblanks">neuland-application-menu.ui</file>
     <file preprocess="xml-stripblanks">neuland-contact-row.ui</file>
+    <file preprocess="xml-stripblanks">neuland-file-transfer-row.ui</file>
     <file preprocess="xml-stripblanks">neuland-chat-widget.ui</file>
     <file preprocess="xml-stripblanks">neuland-me-popover.ui</file>
     <file preprocess="xml-stripblanks">neuland-add-dialog.ui</file>

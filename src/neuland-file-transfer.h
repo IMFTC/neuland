@@ -45,24 +45,25 @@ typedef enum
   NEULAND_FILE_TRANSFER_STATE_NONE = 0,
   NEULAND_FILE_TRANSFER_STATE_PENDING,
   NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS,
-  NEULAND_FILE_TRANSFER_STATE_PAUSED,
+  NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US,
+  NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_CONTACT,
   NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US,
   NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT,
   NEULAND_FILE_TRANSFER_STATE_FINISHED,
   NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED,
-  NEULAND_FILE_TRANSFER_STATE_ERROR,
+  NEULAND_FILE_TRANSFER_STATE_BROKEN,
 } NeulandFileTransferState;
 
 struct _NeulandFileTransfer
 {
-  GtkBox parent_instance;
+  GObject parent_instance;
 
   NeulandFileTransferPrivate *priv;
 };
 
 struct _NeulandFileTransferClass
 {
-  GtkBoxClass parent_class;
+  GObjectClass parent_class;
 };
 
 NeulandFileTransfer *
@@ -103,4 +104,22 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer, GByteArra
 
 gssize
 neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer, gpointer buffer, gint data_size);
+
+void
+neuland_file_transfer_prepare_resume_sending (NeulandFileTransfer *file_transfer);
+
+void
+neuland_file_transfer_request_state (NeulandFileTransfer *file_transfer, NeulandFileTransferState state);
+
+NeulandFileTransferState
+neuland_file_transfer_get_requested_state (NeulandFileTransfer *file_transfer);
+
+void
+neuland_file_transfer_set_state (NeulandFileTransfer *file_transfer, NeulandFileTransferState state);
+
+NeulandFileTransferState
+neuland_file_transfer_get_state (NeulandFileTransfer *file_transfer);
+
+
+
 #endif /* __NEULAND_FILE_TRANSFER__ */
