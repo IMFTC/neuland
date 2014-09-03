@@ -87,6 +87,17 @@ Author: Volker Sobek <reklov@live.com>
       </packing>
     </child>
     <child>
+      <object class="GtkSeparator" id="separator2">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
+    <child>
       <object class="GtkScrolledWindow" id="scrolledwindow1">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
@@ -94,10 +105,10 @@ Author: Volker Sobek <reklov@live.com>
           <object class="GtkTextView" id="text_view">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="left_margin">3</property>
-            <property name="right_margin">3</property>
             <property name="editable">False</property>
             <property name="wrap_mode">word-char</property>
+            <property name="left_margin">3</property>
+            <property name="right_margin">3</property>
             <property name="buffer">text_buffer</property>
           </object>
         </child>
@@ -105,7 +116,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
     <child>
@@ -116,7 +127,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">2</property>
+        <property name="position">3</property>
       </packing>
     </child>
     <child>
@@ -171,24 +182,24 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">3</property>
+        <property name="position">4</property>
       </packing>
     </child>
     <child>
       <object class="GtkTextView" id="entry_text_view">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="left_margin">3</property>
-        <property name="right_margin">3</property>
         <property name="vscroll_policy">natural</property>
         <property name="wrap_mode">word-char</property>
+        <property name="left_margin">3</property>
+        <property name="right_margin">3</property>
         <property name="buffer">entry_text_buffer</property>
         <signal name="key-press-event" handler="entry_text_view_key_press_event_cb" swapped="yes"/>
       </object>
       <packing>
         <property name="expand">False</property>
         <property name="fill">False</property>
-        <property name="position">4</property>
+        <property name="position">5</property>
       </packing>
     </child>
   </template>
