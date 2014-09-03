@@ -23,6 +23,8 @@
 
 #include <glib-object.h>
 
+#include "neuland-file-transfer.h"
+
 #define NEULAND_TYPE_CONTACT            (neuland_contact_get_type ())
 #define NEULAND_CONTACT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), NEULAND_TYPE_CONTACT, NeulandContact))
 #define NEULAND_CONTACT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), NEULAND_TYPE_CONTACT, NeulandContactClass))
@@ -136,5 +138,11 @@ neuland_contact_get_preferred_name (NeulandContact *contact);
 
 const gchar *
 neuland_contact_get_request_message (NeulandContact *contact);
+
+NeulandFileTransfer *
+neuland_contact_get_file_transfer (NeulandContact *contact, NeulandFileTransferDirection direction, gint file_number);
+
+GList *
+neuland_contact_get_file_transfers (NeulandContact *contact);
 
 #endif /* __NEULAND_CONTACT_H__ */

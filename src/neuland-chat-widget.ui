@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.1
+<!-- Generated with glade 3.18.1 
 
 Copyright (C) Volker Sobek <reklov@live.com>
 
@@ -74,7 +74,18 @@ Author: Volker Sobek <reklov@live.com>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="orientation">vertical</property>
-    <property name="expand">True</property>
+    <child>
+      <object class="GtkListBox" id="transfers_list_box">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="selection_mode">none</property>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
     <child>
       <object class="GtkScrolledWindow" id="scrolledwindow1">
         <property name="visible">True</property>
@@ -93,7 +104,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">True</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
@@ -104,7 +115,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">1</property>
+        <property name="position">2</property>
       </packing>
     </child>
     <child>
@@ -159,7 +170,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">2</property>
+        <property name="position">3</property>
       </packing>
     </child>
     <child>
@@ -175,7 +186,7 @@ Author: Volker Sobek <reklov@live.com>
       <packing>
         <property name="expand">False</property>
         <property name="fill">False</property>
-        <property name="position">3</property>
+        <property name="position">4</property>
       </packing>
     </child>
   </template>

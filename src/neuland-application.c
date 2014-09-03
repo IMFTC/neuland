@@ -180,7 +180,8 @@ neuland_application_startup (GApplication *application)
   } accels[] = {
     { "app.new-transient-identity", { "<Primary>t", NULL } },
     { "app.quit", { "<Primary>q", NULL } },
-    { "win.add-contact", { "<Primary>n", NULL} }
+    { "win.add-contact", { "<Primary>n", NULL} },
+    { "win.send-file", { "<Primary>s", NULL} }
   };
 
   int i;

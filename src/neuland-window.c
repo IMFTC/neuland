@@ -18,6 +18,7 @@
  * along with Neuland.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <string.h>
+#include <glib/gi18n.h>
 
 #include "neuland-window.h"
 #include "neuland-contact.h"
@@ -25,6 +26,7 @@
 #include "neuland-chat-widget.h"
 #include "neuland-add-dialog.h"
 #include "neuland-me-popover.h"
+#include "neuland-file-transfer.h"
 
 struct _NeulandWindowPrivate
 {
@@ -41,6 +43,7 @@ struct _NeulandWindowPrivate
   GtkStack        *side_pane_stack;
   GtkLabel        *pending_requests_label;
   GtkButton       *gear_button;
+  GtkButton       *send_file_button;
 
   GtkRevealer     *requests_button_revealer;
 
@@ -59,6 +62,7 @@ struct _NeulandWindowPrivate
 
   GBinding        *name_binding;
   GBinding        *status_binding;
+  GBinding        *connected_binding;
 
   /* Remember the selected contact/request when we toggle between
      contacts and requests. */
@@ -150,7 +154,10 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   // Destroy old bindings
   g_clear_object (&priv->name_binding);
   g_clear_object (&priv->status_binding);
+  g_clear_object (&priv->connected_binding);
   // Set up new bindings
+
+  GAction *send_file_action = g_action_map_lookup_action (G_ACTION_MAP (window), "send-file");
 
   if (contact)
     {
@@ -160,8 +167,13 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       priv->status_binding = g_object_bind_property (contact, "status-message",
                                                      priv->right_header_bar, "subtitle",
                                                      G_BINDING_SYNC_CREATE);
+      priv->connected_binding = g_object_bind_property (contact, "connected",
+                                                        send_file_action, "enabled",
+                                                        G_BINDING_SYNC_CREATE);
+
       if (neuland_contact_is_request (contact))
         {
+          gtk_widget_hide (GTK_WIDGET (priv->send_file_button));
           /* All requests share this single requests widget. */
           gtk_label_set_label (priv->request_widget_tox_id_label,
                                neuland_contact_get_tox_id_hex (contact));
@@ -171,13 +183,18 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
         }
       else
         {
+          gtk_widget_show (GTK_WIDGET (priv->send_file_button));
           GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
           gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
           neuland_contact_reset_unread_messages (contact);
         }
     }
   else
-    neuland_window_show_welcome_widget (window);
+    {
+      gtk_widget_hide (GTK_WIDGET (priv->send_file_button));
+      g_simple_action_set_enabled (G_SIMPLE_ACTION (send_file_action), FALSE);
+      neuland_window_show_welcome_widget (window);
+    }
 }
 
 static NeulandContactRow *
@@ -811,8 +828,10 @@ neuland_window_selection_state_changed (GSimpleAction *action,
      the add and request button. */
   gtk_widget_set_visible (GTK_WIDGET (priv->action_bar), selection_enabled);
   gtk_widget_set_visible (GTK_WIDGET (priv->add_button_box), !selection_enabled);
+  gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !selection_enabled);
 
-  GVariant *variant_b = g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests");
+  GVariant *variant_b = g_action_group_get_action_state (G_ACTION_GROUP (window),
+                                                         "show-requests");
 
   if (g_variant_get_boolean (variant_b))
     gtk_container_foreach (GTK_CONTAINER (priv->requests_list_box),
@@ -870,6 +889,40 @@ add_contact_activated (GSimpleAction *action,
   g_signal_connect (add_dialog, "response", G_CALLBACK (on_add_dialog_response), window);
 
   gtk_widget_show_all (add_dialog);
+}
+
+static void
+send_file_activated (GSimpleAction *action,
+                     GVariant *parameter,
+                     gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandWindowPrivate *priv = window->priv;
+  NeulandContact *contact = priv->active_contact;
+  g_return_if_fail (priv->active_contact != NULL);
+
+  GtkWidget *file_chooser_dialog =
+    gtk_file_chooser_dialog_new (_("Select file for sending"),
+                                 GTK_WINDOW (window),
+                                 GTK_FILE_CHOOSER_ACTION_OPEN,
+                                 _("_Send"), GTK_RESPONSE_ACCEPT,
+                                 _("_Cancel"), GTK_RESPONSE_REJECT,
+                                 NULL);
+
+  gint response = gtk_dialog_run (GTK_DIALOG (file_chooser_dialog));
+
+  GFile *file = NULL;
+
+  if (response == GTK_RESPONSE_ACCEPT)
+    {
+      file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (file_chooser_dialog));
+      NeulandFileTransfer *file_transfer =
+        neuland_file_transfer_new_sending (neuland_contact_get_number (contact), file);
+      neuland_tox_add_file_transfer (priv->tox, file_transfer);
+    }
+
+  g_clear_object (&file);
+  gtk_widget_destroy (file_chooser_dialog);
 }
 
 static void
@@ -952,12 +1005,13 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
 }
 
 static GActionEntry win_entries[] = {
-  { "change-status", NULL, "i", "0", neuland_window_status_state_changed },
-  { "selection", NULL, NULL, "false", neuland_window_selection_state_changed },
   { "add-contact", add_contact_activated },
+  { "send-file", send_file_activated },
   { "accept-selected", accept_selected_activated },
   { "delete-selected", delete_selected_activated },
-  { "show-requests", NULL, NULL, "false", neuland_window_show_requests_state_changed }
+  { "change-status", NULL, "i", "0", neuland_window_status_state_changed },
+  { "show-requests", NULL, NULL, "false", neuland_window_show_requests_state_changed },
+  { "selection", NULL, NULL, "false", neuland_window_selection_state_changed }
 };
 
 static void
@@ -1002,6 +1056,7 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, scrolled_window_requests);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, right_header_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, left_header_bar);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, send_file_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, gear_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, select_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button_revealer);
@@ -1082,9 +1137,8 @@ neuland_window_init (NeulandWindow *window)
   gtk_list_box_set_header_func (priv->requests_list_box, list_box_header_func, NULL, NULL);
   gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
-
   /* Disable some actions */
-  gchar *actions_to_disable[] = { "delete-selected", "accept-selected" };
+  gchar *actions_to_disable[] = { "delete-selected", "accept-selected", "send-file" };
   gint i;
   for (i = 0; i < G_N_ELEMENTS (actions_to_disable); i++)
     {
@@ -1107,5 +1161,6 @@ neuland_window_new (NeulandTox *tox)
   window = g_object_new (NEULAND_TYPE_WINDOW,
                          "neuland-tox", tox,
                          NULL);
+
   return GTK_WIDGET (window);
 }
