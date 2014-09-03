@@ -94,7 +94,8 @@ Author: Volker Sobek <reklov@live.com>
           <object class="GtkTextView" id="text_view">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="border_width">3</property>
+            <property name="left_margin">3</property>
+            <property name="right_margin">3</property>
             <property name="editable">False</property>
             <property name="wrap_mode">word-char</property>
             <property name="buffer">text_buffer</property>
@@ -177,7 +178,8 @@ Author: Volker Sobek <reklov@live.com>
       <object class="GtkTextView" id="entry_text_view">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="border_width">3</property>
+        <property name="left_margin">3</property>
+        <property name="right_margin">3</property>
         <property name="vscroll_policy">natural</property>
         <property name="wrap_mode">word-char</property>
         <property name="buffer">entry_text_buffer</property>
