@@ -27,11 +27,13 @@ struct _NeulandFileTransferRowPrivate {
   NeulandFileTransfer *file_transfer;
   GtkLabel *file_name_label;
   GtkLabel *progress_label;
+  GtkLabel *state_label;
   GtkProgressBar *progress_bar;
   GtkWidget *pause_button;
   GtkWidget *close_button;
   GtkImage *pause_button_image;
   GtkImage *direction_image;
+  gchar *total_size_string;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandFileTransferRow, neuland_file_transfer_row, GTK_TYPE_LIST_BOX_ROW)
@@ -55,6 +57,11 @@ static void
 neuland_file_transfer_row_finalize (GObject *object)
 {
   g_debug ("neuland_file_transfer_row_finalize (%p)", object);
+  NeulandFileTransferRow *widget = NEULAND_FILE_TRANSFER_ROW (object);
+  NeulandFileTransferRowPrivate *priv = widget->priv;
+
+  g_free (priv->total_size_string);
+
   G_OBJECT_CLASS (neuland_file_transfer_row_parent_class)->finalize (object);
 }
 
@@ -69,8 +76,17 @@ on_file_transfer_transferred_size_changed_cb (GObject *gobject,
   NeulandFileTransfer *file_transfer = file_transfer_row->priv->file_transfer;
   guint64 transferred_size = neuland_file_transfer_get_transferred_size (file_transfer);
   guint64 total_size = neuland_file_transfer_get_file_size (file_transfer);
+  gchar *transferred_size_string = g_format_size (transferred_size);
+  gchar *text;
 
+  /* TODO: Don't use different units here, this looks odd and is not easy to read. */
+  text = g_strdup_printf ("%s of %s", transferred_size_string, priv->total_size_string);
+
+  gtk_label_set_text (priv->progress_label, text);
   gtk_progress_bar_set_fraction (priv->progress_bar, (gdouble)transferred_size / total_size);
+
+  g_free (transferred_size_string);
+  g_free (text);
 }
 
 static void
@@ -80,36 +96,54 @@ on_file_transfer_state_changed_cb (GObject *gobject,
 {
   NeulandFileTransferRow *file_transfer_row = NEULAND_FILE_TRANSFER_ROW (gobject);
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
-
   NeulandFileTransfer *file_transfer = file_transfer_row->priv->file_transfer;
   NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
 
   switch (state)
     {
     case NEULAND_FILE_TRANSFER_STATE_PENDING: /* fall through */
+      gtk_label_set_text (priv->state_label, "Pending");
+      gtk_widget_set_sensitive (priv->pause_button, FALSE);
+      gtk_widget_set_opacity (priv->pause_button, 0);
+      break;
     case NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS:
       gtk_image_set_from_icon_name (priv->pause_button_image,
                                     "media-playback-pause-symbolic",
                                     GTK_ICON_SIZE_MENU);
+      gtk_widget_set_opacity (priv->pause_button, 1);
       gtk_widget_set_sensitive (priv->pause_button, TRUE);
+      gtk_label_set_text (priv->state_label, "");
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_CONTACT:
+      gtk_widget_set_opacity (priv->pause_button, 1);
       gtk_widget_set_sensitive (priv->pause_button, FALSE);
       /* fall through */
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US:
       gtk_image_set_from_icon_name (priv->pause_button_image,
                                     "media-playback-start-symbolic",
                                     GTK_ICON_SIZE_MENU);
+      gtk_label_set_text (priv->state_label, "Paused");
       break;
 
-    case NEULAND_FILE_TRANSFER_STATE_FINISHED: /* fall through */
     case NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED:
-      gtk_widget_hide (priv->pause_button);
+        gtk_label_set_text (priv->state_label, "Finished");
+        gtk_label_set_text (priv->progress_label, priv->total_size_string);
+        gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
+        /* fall through */
+    case NEULAND_FILE_TRANSFER_STATE_FINISHED:
+      gtk_widget_set_opacity (priv->pause_button, 0);
+      gtk_widget_set_sensitive (priv->pause_button, FALSE);
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US:
       gtk_widget_destroy (GTK_WIDGET (file_transfer_row));
+      break;
+
+    case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT:
+      gtk_widget_set_opacity (priv->pause_button, 0);
+      gtk_widget_set_sensitive (priv->pause_button, FALSE);
+      gtk_label_set_text (priv->state_label, "Cancelled");
       break;
     }
 }
@@ -166,7 +200,7 @@ neuland_file_transfer_row_class_init (NeulandFileTransferRowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, close_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, progress_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, progress_label);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, direction_image);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, state_label);  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, direction_image);
 
   gtk_widget_class_bind_template_callback (widget_class, on_pause_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, on_close_button_clicked);
@@ -200,10 +234,11 @@ neuland_file_transfer_row_new (NeulandFileTransfer *file_transfer)
     (g_object_new (NEULAND_TYPE_FILE_TRANSFER_ROW, NULL));
 
   /* Set up the row for @file_transfer */
-
   priv = file_transfer_row->priv;
   priv->file_transfer = file_transfer;
 
+  /* TODO: file-transfer should rather be a property, then we could do
+     all this in the poperty's setter function */
   g_object_connect (file_transfer,
                     "swapped-signal::notify::state",
                     on_file_transfer_state_changed_cb, file_transfer_row,
@@ -211,13 +246,22 @@ neuland_file_transfer_row_new (NeulandFileTransfer *file_transfer)
                     on_file_transfer_transferred_size_changed_cb, file_transfer_row,
                     NULL);
 
-  g_object_bind_property (file_transfer, "file-name", priv->file_name_label, "label", G_BINDING_SYNC_CREATE);
+  g_object_bind_property (file_transfer, "file-name", priv->file_name_label, "label",
+                          G_BINDING_SYNC_CREATE);
 
   direction = neuland_file_transfer_get_direction (file_transfer);
   gtk_image_set_from_icon_name (priv->direction_image,
                                 direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND ?
                                 "network-transmit-symbolic" : "network-receive-symbolic",
                                 GTK_ICON_SIZE_MENU);
+
+  /* Do a little caching ... */
+  priv->total_size_string = g_format_size (neuland_file_transfer_get_file_size (file_transfer));
+
+  on_file_transfer_state_changed_cb (G_OBJECT (file_transfer_row),
+                                     NULL, file_transfer);
+  on_file_transfer_transferred_size_changed_cb (G_OBJECT (file_transfer_row),
+                                                NULL, file_transfer);
 
   return GTK_WIDGET (file_transfer_row);
 }

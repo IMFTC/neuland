@@ -147,8 +147,8 @@ neuland_file_transfer_add_transferred_size (NeulandFileTransfer *file_transfer,
   priv->transferred_size += transferred_size;
 
   /* Don't spam the signal handlers; only notify about the transferred
-     size every 1000th part. */
-  if ((priv->transferred_size - priv->last_notify_size) > (priv->file_size / 1000.0) ||
+     size every 500th part. */
+  if ((priv->transferred_size - priv->last_notify_size) > (priv->file_size / 500.0) ||
       priv->transferred_size == priv->file_size)
     {
       g_debug ("[transfer %p '%s': %10i (%5.1f%%)]",

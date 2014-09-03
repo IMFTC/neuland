@@ -24,7 +24,7 @@
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">1</property>
-            <property name="width">5</property>
+            <property name="width">6</property>
           </packing>
         </child>
         <child>
@@ -36,9 +36,7 @@
             <property name="xalign">0</property>
             <property name="label" translatable="yes">Some rather long file name here for testing.odt</property>
             <property name="ellipsize">end</property>
-            <property name="width_chars">20</property>
             <property name="single_line_mode">True</property>
-            <property name="max_width_chars">-1</property>
           </object>
           <packing>
             <property name="left_attach">1</property>
@@ -53,6 +51,19 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="progress_label">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <style>
+              <class name="dim-label"/>
+            </style>
+          </object>
+          <packing>
+            <property name="left_attach">3</property>
             <property name="top_attach">0</property>
           </packing>
         </child>
@@ -76,7 +87,7 @@
             </style>
           </object>
           <packing>
-            <property name="left_attach">4</property>
+            <property name="left_attach">5</property>
             <property name="top_attach">0</property>
           </packing>
         </child>
@@ -99,18 +110,15 @@
             </style>
           </object>
           <packing>
-            <property name="left_attach">3</property>
+            <property name="left_attach">4</property>
             <property name="top_attach">0</property>
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="progress_label">
+          <object class="GtkLabel" id="state_label">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes"></property>
-            <style>
-              <class name="dim-label"/>
-            </style>
+            <property name="label" translatable="yes">State</property>
           </object>
           <packing>
             <property name="left_attach">2</property>
