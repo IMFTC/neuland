@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neuland\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-18 15:55+0200\n"
-"PO-Revision-Date: 2014-08-18 15:42+0200\n"
+"POT-Creation-Date: 2014-09-04 00:36+0200\n"
+"PO-Revision-Date: 2014-09-04 00:47+0200\n"
 "Last-Translator: Volker Sobek <reklov@live.com>\n"
 "Language-Team: Deutsch\n"
 "Language: de_DE\n"
@@ -140,41 +140,69 @@ msgstr "Volker Sobek <reklov@live.com>"
 msgid "Neuland Website"
 msgstr "Neuland Webseite"
 
-#: ../src/neuland-chat-widget.c:123
+#: ../src/neuland-chat-widget.c:125
 #, c-format
 msgid "%s is typing..."
 msgstr "%s tippt gerade ..."
 
-#: ../src/neuland-chat-widget.c:209
+#: ../src/neuland-chat-widget.c:211
 #, c-format
 msgid "* %s %s"
 msgstr "* %s %s"
 
-#: ../src/neuland-chat-widget.c:219
+#: ../src/neuland-chat-widget.c:221
 #, c-format
 msgid "%s: "
 msgstr "%s: "
 
+#. TODO: Don't use different units here, this looks odd and is not easy to read.
+#. Translators: This string represents the transfer progress, like: "1.5 MB of 12 MB"
+#: ../src/neuland-file-transfer-row.c:84
+#, c-format
+msgid "%s of %s"
+msgstr "%s von %s"
+
+#. fall through
+#. Translators: State name for a file transfer that has not been started/accepted yet
+#: ../src/neuland-file-transfer-row.c:107
+msgid "Pending"
+msgstr "Ausstehend"
+
+#. Translators: State name for a file transfer that has been paused.
+#: ../src/neuland-file-transfer-row.c:129
+msgid "Paused"
+msgstr "Angehalten"
+
+#. Translators: State name for a file transfer that has been finished successfully.
+#: ../src/neuland-file-transfer-row.c:134
+msgid "Finished"
+msgstr "Fertig"
+
+#. Translators: State name for a file transfer that has been cancelled.
+#: ../src/neuland-file-transfer-row.c:151
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
 #. This shouldn't be displayed
 #. Translators: This is the status message when the contact is currently online.
-#: ../src/neuland-contact.c:191
+#: ../src/neuland-contact.c:194
 msgid "Now Online"
 msgstr "Jetzt online"
 
 #. Translators: This is schown when we haven't seen this contact online yet.
-#: ../src/neuland-contact.c:194
+#: ../src/neuland-contact.c:197
 msgid "Never"
 msgstr "Nie"
 
 #. start_today <= last
 #. Translators: Time in 24h format
-#: ../src/neuland-contact.c:214
+#: ../src/neuland-contact.c:217
 msgid "%H:%M"
 msgstr "%H:%M"
 
 #. start_yesterday <= last
 #. Translators: This is "Yesterday" followed by a time string in 24h format
-#: ../src/neuland-contact.c:220
+#: ../src/neuland-contact.c:223
 msgid "Yesterday, %H:%M"
 msgstr "Gestern, %H:%M"
 
@@ -182,14 +210,14 @@ msgstr "Gestern, %H:%M"
 #. to show Monday 10:12 when today is Monday, too).
 #. Translators: This is a abbreviated week day name
 #. followed by a time string in 24h format
-#: ../src/neuland-contact.c:228
+#: ../src/neuland-contact.c:231
 msgid "%a, %H:%M"
 msgstr "%a, %H:%M"
 
 #. start_year <= last
 #. Translators: This is the abbreviated month name and day
 #. number followed by a time string in 24h format
-#: ../src/neuland-contact.c:235
+#: ../src/neuland-contact.c:238
 msgid "%b %d, %H:%M"
 msgstr "%d. %b, %H:%M"
 
@@ -197,19 +225,19 @@ msgstr "%d. %b, %H:%M"
 #. Translators: This is the abbreviated month name, day
 #. number, year number followed by a time string in 24h
 #. format
-#: ../src/neuland-contact.c:243
+#: ../src/neuland-contact.c:246
 msgid "%b %d %Y, %H:%M"
 msgstr "%d.%m.%Y, %H:%M"
 
 #. start_today <= last
 #. Translators: Time in 12h format
-#: ../src/neuland-contact.c:250
+#: ../src/neuland-contact.c:253
 msgid "%l:%M %p"
 msgstr "%l:%M %p"
 
 #. start_yesterday <= last
 #. Translators: This is "Yesterday" followed by a time string in 12h format
-#: ../src/neuland-contact.c:254
+#: ../src/neuland-contact.c:257
 msgid "Yesterday, %l:%M %p"
 msgstr "Gestern, %l:%M %p"
 
@@ -217,14 +245,14 @@ msgstr "Gestern, %l:%M %p"
 #. to show Monday 10:12 when today is Monday, too).
 #. Translators: This is a abbreviated week day name
 #. followed by a time string in 12h format
-#: ../src/neuland-contact.c:262
+#: ../src/neuland-contact.c:265
 msgid "%a, %l:%M %p"
 msgstr "%a, %l:%M %p"
 
 #. start_year <= last
 #. Translators: This is the abbreviated month name, day
 #. number followed by a time string in 12h format
-#: ../src/neuland-contact.c:268
+#: ../src/neuland-contact.c:271
 msgid "%b %d, %l:%M %p"
 msgstr "%d. %b, %l:%M %p"
 
@@ -232,6 +260,6 @@ msgstr "%d. %b, %l:%M %p"
 #. Translators: This is the abbreviated month name, day
 #. number, year number followed by a time string in 12h
 #. format.
-#: ../src/neuland-contact.c:275
+#: ../src/neuland-contact.c:278
 msgid "%b %d %Y, %l:%M %p"
 msgstr "%d.%m.%Y, %l:%M %p"
