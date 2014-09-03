@@ -80,7 +80,8 @@ on_file_transfer_transferred_size_changed_cb (GObject *gobject,
   gchar *text;
 
   /* TODO: Don't use different units here, this looks odd and is not easy to read. */
-  text = g_strdup_printf ("%s of %s", transferred_size_string, priv->total_size_string);
+  /* Translators: This string represents the transfer progress, like: "1.5 MB of 12 MB" */
+  text = g_strdup_printf (_("%s of %s"), transferred_size_string, priv->total_size_string);
 
   gtk_label_set_text (priv->progress_label, text);
   gtk_progress_bar_set_fraction (priv->progress_bar, (gdouble)transferred_size / total_size);
@@ -91,8 +92,8 @@ on_file_transfer_transferred_size_changed_cb (GObject *gobject,
 
 static void
 on_file_transfer_state_changed_cb (GObject *gobject,
-                                             GParamSpec *pspec,
-                                             gpointer user_data)
+                                   GParamSpec *pspec,
+                                   gpointer user_data)
 {
   NeulandFileTransferRow *file_transfer_row = NEULAND_FILE_TRANSFER_ROW (gobject);
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
@@ -102,7 +103,8 @@ on_file_transfer_state_changed_cb (GObject *gobject,
   switch (state)
     {
     case NEULAND_FILE_TRANSFER_STATE_PENDING: /* fall through */
-      gtk_label_set_text (priv->state_label, "Pending");
+      /* Translators: State name for a file transfer that has not been started/accepted yet */
+      gtk_label_set_text (priv->state_label, _("Pending"));
       gtk_widget_set_sensitive (priv->pause_button, FALSE);
       gtk_widget_set_opacity (priv->pause_button, 0);
       break;
@@ -123,14 +125,16 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       gtk_image_set_from_icon_name (priv->pause_button_image,
                                     "media-playback-start-symbolic",
                                     GTK_ICON_SIZE_MENU);
-      gtk_label_set_text (priv->state_label, "Paused");
+      /* Translators: State name for a file transfer that has been paused. */
+      gtk_label_set_text (priv->state_label, _("Paused"));
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED:
-        gtk_label_set_text (priv->state_label, "Finished");
-        gtk_label_set_text (priv->progress_label, priv->total_size_string);
-        gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
-        /* fall through */
+      /* Translators: State name for a file transfer that has been finished successfully. */
+      gtk_label_set_text (priv->state_label, _("Finished"));
+      gtk_label_set_text (priv->progress_label, priv->total_size_string);
+      gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
+      /* fall through */
     case NEULAND_FILE_TRANSFER_STATE_FINISHED:
       gtk_widget_set_opacity (priv->pause_button, 0);
       gtk_widget_set_sensitive (priv->pause_button, FALSE);
@@ -143,7 +147,8 @@ on_file_transfer_state_changed_cb (GObject *gobject,
     case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT:
       gtk_widget_set_opacity (priv->pause_button, 0);
       gtk_widget_set_sensitive (priv->pause_button, FALSE);
-      gtk_label_set_text (priv->state_label, "Cancelled");
+      /* Translators: State name for a file transfer that has been cancelled. */
+      gtk_label_set_text (priv->state_label, _("Cancelled"));
       break;
     }
 }
@@ -200,7 +205,8 @@ neuland_file_transfer_row_class_init (NeulandFileTransferRowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, close_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, progress_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, progress_label);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, state_label);  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, direction_image);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, state_label);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, direction_image);
 
   gtk_widget_class_bind_template_callback (widget_class, on_pause_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, on_close_button_clicked);
