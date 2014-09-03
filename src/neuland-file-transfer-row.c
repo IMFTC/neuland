@@ -102,12 +102,13 @@ on_file_transfer_state_changed_cb (GObject *gobject,
 
   switch (state)
     {
-    case NEULAND_FILE_TRANSFER_STATE_PENDING: /* fall through */
+    case NEULAND_FILE_TRANSFER_STATE_PENDING:
       /* Translators: State name for a file transfer that has not been started/accepted yet */
       gtk_label_set_text (priv->state_label, _("Pending"));
       gtk_widget_set_sensitive (priv->pause_button, FALSE);
       gtk_widget_set_opacity (priv->pause_button, 0);
       break;
+
     case NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS:
       gtk_image_set_from_icon_name (priv->pause_button_image,
                                     "media-playback-pause-symbolic",
@@ -118,7 +119,6 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_CONTACT:
-      gtk_widget_set_opacity (priv->pause_button, 1);
       gtk_widget_set_sensitive (priv->pause_button, FALSE);
       /* fall through */
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US:
