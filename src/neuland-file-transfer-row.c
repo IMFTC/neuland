@@ -144,7 +144,8 @@ on_close_button_clicked (NeulandFileTransferRow *file_transfer_row,
   gtk_widget_set_sensitive (priv->close_button, FALSE);
   NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
 
-  if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT)
+  if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT ||
+      state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
     gtk_widget_destroy (GTK_WIDGET (file_transfer_row));
   else
     neuland_file_transfer_set_requested_state
