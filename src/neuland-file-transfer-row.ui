@@ -90,17 +90,17 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButton" id="pause_button">
+          <object class="GtkButton" id="start_button">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
             <property name="relief">none</property>
-            <signal name="clicked" handler="on_pause_button_clicked" swapped="yes"/>
+            <signal name="clicked" handler="on_start_button_clicked" swapped="yes"/>
             <child>
-              <object class="GtkImage" id="pause_button_image">
+              <object class="GtkImage" id="start_button_image">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="icon_name">media-playback-pause-symbolic</property>
+                <property name="icon_name">media-playback-start-symbolic</property>
               </object>
             </child>
             <style>

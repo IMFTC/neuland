@@ -29,9 +29,9 @@ struct _NeulandFileTransferRowPrivate {
   GtkLabel *progress_label;
   GtkLabel *state_label;
   GtkProgressBar *progress_bar;
-  GtkWidget *pause_button;
+  GtkWidget *start_button;
   GtkWidget *close_button;
-  GtkImage *pause_button_image;
+  GtkImage *start_button_image;
   GtkImage *direction_image;
   gchar *total_size_string;
 };
@@ -99,30 +99,40 @@ on_file_transfer_state_changed_cb (GObject *gobject,
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
   NeulandFileTransfer *file_transfer = file_transfer_row->priv->file_transfer;
   NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
+  NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
 
   switch (state)
     {
     case NEULAND_FILE_TRANSFER_STATE_PENDING:
-      /* Translators: State name for a file transfer that has not been started/accepted yet */
+      switch (direction)
+        {
+        case NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE:
+          gtk_widget_set_sensitive (priv->start_button, TRUE);
+          break;
+
+        case NEULAND_FILE_TRANSFER_DIRECTION_SEND:
+          gtk_widget_set_sensitive (priv->start_button, FALSE);
+          break;
+        }
+      /* Translators: State name for a file transfer that has not been
+         started/accepted yet */
       gtk_label_set_text (priv->state_label, _("Pending"));
-      gtk_widget_set_sensitive (priv->pause_button, FALSE);
-      gtk_widget_set_opacity (priv->pause_button, 0);
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS:
-      gtk_image_set_from_icon_name (priv->pause_button_image,
+      gtk_image_set_from_icon_name (priv->start_button_image,
                                     "media-playback-pause-symbolic",
                                     GTK_ICON_SIZE_MENU);
-      gtk_widget_set_opacity (priv->pause_button, 1);
-      gtk_widget_set_sensitive (priv->pause_button, TRUE);
+      gtk_widget_set_opacity (priv->start_button, 1);
+      gtk_widget_set_sensitive (priv->start_button, TRUE);
       gtk_label_set_text (priv->state_label, "");
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_CONTACT:
-      gtk_widget_set_sensitive (priv->pause_button, FALSE);
+      gtk_widget_set_sensitive (priv->start_button, FALSE);
       /* fall through */
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US:
-      gtk_image_set_from_icon_name (priv->pause_button_image,
+      gtk_image_set_from_icon_name (priv->start_button_image,
                                     "media-playback-start-symbolic",
                                     GTK_ICON_SIZE_MENU);
       /* Translators: State name for a file transfer that has been paused. */
@@ -136,8 +146,8 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
       /* fall through */
     case NEULAND_FILE_TRANSFER_STATE_FINISHED:
-      gtk_widget_set_opacity (priv->pause_button, 0);
-      gtk_widget_set_sensitive (priv->pause_button, FALSE);
+      gtk_widget_set_opacity (priv->start_button, 0);
+      gtk_widget_set_sensitive (priv->start_button, FALSE);
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US:
@@ -145,26 +155,67 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT:
-      gtk_widget_set_opacity (priv->pause_button, 0);
-      gtk_widget_set_sensitive (priv->pause_button, FALSE);
+      gtk_widget_set_opacity (priv->start_button, 0);
+      gtk_widget_set_sensitive (priv->start_button, FALSE);
       /* Translators: State name for a file transfer that has been cancelled. */
       gtk_label_set_text (priv->state_label, _("Cancelled"));
       break;
     }
 }
 
+gboolean
+set_file_from_dialog (NeulandFileTransferRow *file_transfer_row)
+{
+  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER_ROW (file_transfer_row), FALSE);
+  NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
+  NeulandFileTransfer *file_transfer = priv->file_transfer;
+  GtkWidget *dialog =
+    gtk_file_chooser_dialog_new (_("Save as ..."),
+                                 GTK_WINDOW (gtk_widget_get_toplevel
+                                             (GTK_WIDGET (file_transfer_row))),
+                                 GTK_FILE_CHOOSER_ACTION_SAVE,
+                                 _("_Save"), GTK_RESPONSE_ACCEPT,
+                                 _("_Cancel"), GTK_RESPONSE_REJECT,
+                                 NULL);
+  gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+  gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), neuland_file_transfer_get_file_name (file_transfer));
+  gint response = gtk_dialog_run (GTK_DIALOG (dialog));
+
+  GFile *file = NULL;
+  if (response == GTK_RESPONSE_ACCEPT)
+    file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
+
+  gtk_widget_destroy (dialog);
+
+  if (file)
+    neuland_file_transfer_set_file (priv->file_transfer, file);
+
+  g_clear_object (&file);
+
+  return (response == GTK_RESPONSE_ACCEPT);
+}
+
 static void
-on_pause_button_clicked (NeulandFileTransferRow *file_transfer_row,
+on_start_button_clicked (NeulandFileTransferRow *file_transfer_row,
                          gpointer user_data)
 {
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
   NeulandFileTransfer *file_transfer = priv->file_transfer;
+  NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
 
   switch (neuland_file_transfer_get_state (file_transfer))
     {
+    case NEULAND_FILE_TRANSFER_STATE_PENDING:
+      if (direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
+        {
+          if (set_file_from_dialog (file_transfer_row))
+            neuland_file_transfer_set_requested_state
+              (file_transfer, NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
+        }
+      break;
     case NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS:
       neuland_file_transfer_set_requested_state
-        (file_transfer,NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US);
+        (file_transfer, NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US);
       break;
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US:
       neuland_file_transfer_set_requested_state
@@ -200,15 +251,15 @@ neuland_file_transfer_row_class_init (NeulandFileTransferRowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-file-transfer-row.ui");
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, file_name_label);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, pause_button);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, pause_button_image);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, start_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, start_button_image);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, close_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, progress_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, progress_label);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, state_label);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, direction_image);
 
-  gtk_widget_class_bind_template_callback (widget_class, on_pause_button_clicked);
+  gtk_widget_class_bind_template_callback (widget_class, on_start_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, on_close_button_clicked);
 
   gobject_class->dispose = neuland_file_transfer_row_dispose;

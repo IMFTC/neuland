@@ -673,12 +673,6 @@ neuland_file_transfer_new_receiving (gint64 contact_number,
 {
   g_debug ("neuland_file_transfer_new_receiving");
 
-  /* TODO: This is just hard coded for now ... */
-  gchar *path = g_strdup_printf ("%s/neuland-download-%s", g_get_home_dir (), file_name);
-  GFile *file = g_file_new_for_path (path);
-  g_message ("Saving file to \"%s\"", path);
-  g_return_val_if_fail (G_IS_FILE (file), NULL);
-
   NeulandFileTransfer *file_transfer =
     NEULAND_FILE_TRANSFER (g_object_new (NEULAND_TYPE_FILE_TRANSFER,
                                          "contact_number", contact_number,
@@ -686,10 +680,7 @@ neuland_file_transfer_new_receiving (gint64 contact_number,
                                          "file-number", file_number,
                                          "file-name", file_name,
                                          "file-size", file_size,
-                                         "file", file,
                                          NULL));
-  g_free (path);
-  g_object_unref (file);
 
   NeulandFileTransferPrivate *priv = file_transfer->priv;
   g_message ("new receiving file transfer: \"%s\" (%i bytes)", priv->file_name, priv->file_size);

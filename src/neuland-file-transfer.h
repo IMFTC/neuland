@@ -79,6 +79,12 @@ guint64
 neuland_file_transfer_get_contact_number (NeulandFileTransfer *file_transfer);
 
 void
+neuland_file_transfer_set_file (NeulandFileTransfer *file_transfer, GFile *file);
+
+GFile *
+neuland_file_transfer_get_file (NeulandFileTransfer *file_transfer);
+
+void
 neuland_file_transfer_set_file_number (NeulandFileTransfer *file_transfer, gint file_number);
 
 gint8

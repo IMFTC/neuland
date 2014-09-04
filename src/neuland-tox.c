@@ -929,8 +929,6 @@ neuland_tox_add_file_transfer (NeulandTox *tox,
       g_hash_table_insert (priv->file_transfers_all_ht, file_transfer, file_transfer);
 
       neuland_contact_add_file_transfer (contact, file_transfer);
-      /* TODO: Don't start automatically ... */
-      neuland_file_transfer_set_requested_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
     }
 
   g_free (file_name);
