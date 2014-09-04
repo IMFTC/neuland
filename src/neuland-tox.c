@@ -1643,11 +1643,14 @@ neuland_tox_set_name (NeulandTox *tox,
       g_debug ("Set name for NeulandTox %p to \"%s\"", tox, name);
       g_free (priv->name);
       priv->name = g_strdup (name);
-      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_NAME]);
     }
   else
     g_warning ("Failed to set name for NeulandTox %p to name: \"%s\"",
                tox, name);
+
+  /* We notify even if setting failed, so that widgets used to set the
+     status message don't keep the message that failed to be set. */
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_NAME]);
 }
 
 const gchar *
@@ -1708,7 +1711,6 @@ neuland_tox_set_status_message (NeulandTox *tox,
                tox, status_message);
       g_free (priv->status_message);
       priv->status_message = g_strdup (status_message);
-      g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_STATUS_MESSAGE]);
     }
   else
     {
@@ -1716,6 +1718,10 @@ neuland_tox_set_status_message (NeulandTox *tox,
       g_warning ("Failed to set status message for NeulandTox %p to \"%s\"",
                  tox, status_message);
     }
+
+  /* We notify even if setting failed, so that widgets used to set the
+     status message don't keep the message that failed to be set. */
+  g_object_notify_by_pspec (G_OBJECT (tox), properties[PROP_STATUS_MESSAGE]);
 }
 
 const gchar *
