@@ -165,6 +165,7 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       gtk_widget_set_sensitive (priv->start_button, FALSE);
       /* Translators: State name for a file transfer that has been cancelled. */
       gtk_label_set_text (priv->state_label, _("Cancelled"));
+      gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
       break;
 
     case NEULAND_FILE_TRANSFER_STATE_ERROR:
@@ -172,6 +173,7 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       gtk_widget_set_sensitive (priv->start_button, FALSE);
       /* Translators: State name for a file transfer with an error. */
       gtk_label_set_text (priv->state_label, _("Error"));
+      gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
       break;
     }
 }
