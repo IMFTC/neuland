@@ -160,6 +160,13 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       /* Translators: State name for a file transfer that has been cancelled. */
       gtk_label_set_text (priv->state_label, _("Cancelled"));
       break;
+
+    case NEULAND_FILE_TRANSFER_STATE_ERROR:
+      gtk_widget_set_opacity (priv->start_button, 0);
+      gtk_widget_set_sensitive (priv->start_button, FALSE);
+      /* Translators: State name for a file transfer with an error. */
+      gtk_label_set_text (priv->state_label, _("Error"));
+      break;
     }
 }
 
@@ -235,7 +242,8 @@ on_close_button_clicked (NeulandFileTransferRow *file_transfer_row,
   NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
 
   if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT ||
-      state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED)
+      state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED ||
+      state == NEULAND_FILE_TRANSFER_STATE_ERROR)
     gtk_widget_destroy (GTK_WIDGET (file_transfer_row));
   else
     neuland_file_transfer_set_requested_state

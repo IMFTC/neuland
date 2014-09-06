@@ -847,9 +847,9 @@ on_file_transfer_requested_state_changed_cb (GObject *gobject,
       if (ret != 0)
         {
           g_warning ("Error on calling tox_file_send_control() with %s "
-                     "for transfer %p, not changing state",
+                     "for transfer %p, setting state to NEULAND_FILE_TRANSFER_STATE_ERROR",
                      tox_filecontrol_type_to_string (control_type), file_transfer);
-          //neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_BROKEN);
+          neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_ERROR);
         }
       else
         /* Change the real state property if sending control package succeeded */
