@@ -100,6 +100,9 @@ on_file_transfer_state_changed_cb (GObject *gobject,
   NeulandFileTransfer *file_transfer = file_transfer_row->priv->file_transfer;
   NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
   NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
+  GtkStyleContext *start_button_context = gtk_widget_get_style_context (priv->start_button);
+
+  gtk_style_context_remove_class (start_button_context, "suggested-action");
 
   switch (state)
     {
@@ -107,6 +110,10 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       switch (direction)
         {
         case NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE:
+          gtk_image_set_from_icon_name (priv->start_button_image,
+                                        "document-save-as-symbolic",
+                                        GTK_ICON_SIZE_MENU);
+          gtk_style_context_add_class (start_button_context, "suggested-action");
           gtk_widget_set_sensitive (priv->start_button, TRUE);
           break;
 
@@ -123,7 +130,6 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       gtk_image_set_from_icon_name (priv->start_button_image,
                                     "media-playback-pause-symbolic",
                                     GTK_ICON_SIZE_MENU);
-      gtk_widget_set_opacity (priv->start_button, 1);
       gtk_widget_set_sensitive (priv->start_button, TRUE);
       gtk_label_set_text (priv->state_label, "");
       break;
