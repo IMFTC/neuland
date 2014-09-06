@@ -21,10 +21,10 @@
 #include <glib.h>
 
 void
-neuland_bin_to_hex_string (guint8 *bin, guchar *hex_string, guint bin_size);
+neuland_bin_to_hex_string (guint8 *bin, gchar *hex_string, guint bin_size);
 
 gboolean
-neuland_hex_string_to_bin (guchar *hex_string, guint8 *bin, guint bin_size);
+neuland_hex_string_to_bin (const gchar *hex_string, guint8 *bin, guint bin_size);
 
 gboolean
 neuland_use_24h_time_format (void);

@@ -22,6 +22,7 @@
 
 #include "neuland-enums.h"
 
+#include "neuland-utils.h"
 #include "neuland-tox.h"
 #include "neuland-file-transfer.h"
 #include "neuland-file-transfer-row.h"
@@ -125,7 +126,7 @@ static guint signals[LAST_SIGNAL] = { 0 };
 GList *
 neuland_tox_get_contacts (NeulandTox *tox)
 {
-  g_return_if_fail (NEULAND_IS_TOX (tox));
+  g_return_val_if_fail (NEULAND_IS_TOX (tox), NULL);
   g_debug ("neuland_tox_get_contacts ...");
   return g_hash_table_get_values (tox->priv->contacts_ht);
 }
@@ -139,7 +140,7 @@ neuland_tox_get_contact_by_number (NeulandTox *tox, gint64 number)
 
 typedef struct {
   gint32 contact_number;
-  guint8 *str;
+  gchar *str;
   NeulandTox *tox;
 } DataStr;
 
@@ -159,13 +160,14 @@ add_idle_with_data_string (GSourceFunc idle_func,
   DataStr *data = g_new0 (DataStr, 1);
 
   data->contact_number = contact_number;
-  data->str = g_strndup (str, length);
+  data->str = g_strndup ((gchar*)str, length);
   data->tox = tox;
 
   g_idle_add (idle_func, data);
 }
 
-static free_data_str (DataStr *data)
+static void
+free_data_str (DataStr *data)
 {
   g_free (data->str);
   g_free (data);
@@ -186,7 +188,8 @@ add_idle_with_data_integer (GSourceFunc idle_func,
   g_idle_add (idle_func, data);
 }
 
-static free_data_integer (DataInt *data)
+static void
+free_data_integer (DataInt *data)
 {
   g_free (data);
 }
@@ -369,7 +372,7 @@ on_typing_change (Tox *tox_struct,
 
 typedef struct {
   guint8 *public_key;
-  guint8 *message;
+  gchar *message;
   NeulandTox *tox;
 } DataFriendRequest;
 
@@ -434,10 +437,10 @@ neuland_tox_send (NeulandTox *tox,
 
       if (type == SEND_TYPE_MESSAGE)
         tox_send_message (tox->priv->tox_struct, contact_number,
-                          first_char, bytes);
+                          (guint8*)first_char, bytes);
       else if (type == SEND_TYPE_ACTION)
         tox_send_action (tox->priv->tox_struct, contact_number,
-                         first_char, bytes);
+                         (guint8*)first_char, bytes);
 
       g_mutex_unlock (&priv->mutex);
 
@@ -529,7 +532,7 @@ on_friend_request (Tox *tox_struct,
   DataFriendRequest *data = g_new0 (DataFriendRequest, 1);
 
   data->public_key = g_memdup (public_key, TOX_FRIEND_ADDRESS_SIZE);
-  data->message = g_strndup (message, length);
+  data->message = g_strndup ((gchar*)message, length);
   data->tox = NEULAND_TOX (user_data);
 
   g_idle_add (on_friend_request_idle, data);

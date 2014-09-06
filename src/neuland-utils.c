@@ -21,15 +21,16 @@
 #include "neuland-utils.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include <gio/gio.h>
 
 /* Returns: TRUE if the hex string is valid, FALSE otherwise */
 gboolean
-neuland_hex_string_to_bin (guchar *hex_string, guint8 *bin, guint bin_size)
+neuland_hex_string_to_bin (const gchar *hex_string, guint8 *bin, guint bin_size)
 {
   /* 2 hex chars correspond to 8 bit */
 
-  guchar *pos = hex_string;
+  const gchar *pos = hex_string;
   int i;
   for (i = 0; i < bin_size; i++, pos += 2)
     {
@@ -37,15 +38,15 @@ neuland_hex_string_to_bin (guchar *hex_string, guint8 *bin, guint bin_size)
         {
           return FALSE;
         }
-      sscanf (pos, "%2X", &bin[i]);
+      sscanf (pos, "%2hhX", &bin[i]);
     }
   return TRUE;
 }
 
 void
-neuland_bin_to_hex_string (guint8 *bin, guchar *hex_string, guint bin_size)
+neuland_bin_to_hex_string (guint8 *bin, gchar *hex_string, guint bin_size)
 {
-  guchar *pos = hex_string;
+  gchar *pos = hex_string;
   int i;
   for (i = 0; i < bin_size; i++, pos += 2)
     snprintf (pos, 3, "%02hhX", bin[i]);
