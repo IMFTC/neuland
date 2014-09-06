@@ -21,6 +21,7 @@
 #include <tox/tox.h>
 #include <string.h>
 
+#include "neuland-utils.h"
 #include "neuland-add-dialog.h"
 
 struct _NeulandAddDialogPrivate
