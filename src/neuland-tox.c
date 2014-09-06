@@ -504,7 +504,6 @@ on_friend_request_idle (gpointer user_data)
   NeulandContact *contact = neuland_contact_new (public_key, -1, 0);
   neuland_contact_set_request_message (contact, data->message);
 
-
   g_object_connect (contact,
                     "signal::outgoing-message", on_outgoing_message_cb, tox,
                     "signal::outgoing-action", on_outgoing_action_cb, tox,
@@ -657,6 +656,9 @@ neuland_tox_send_file_transfer (gpointer user_data)
                            "going to leave sending thread", file_transfer, name);
                   goto out;
                   break;
+
+                default:
+                  break;
                 }
 
               g_mutex_lock (&priv->mutex);
@@ -707,7 +709,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
   g_debug ("Leaving thread for file transfer %p \"%s\"", file_transfer, name);
 
-  return;
+  return NULL;
 }
 
 /* This callback is responsible for sanity checking the state
@@ -820,6 +822,9 @@ on_file_transfer_requested_state_changed_cb (GObject *gobject,
                      ev->value_nick);
         }
       break;
+
+    default:
+      break;
     }
 
   /* Send a control package if necessary */
@@ -904,7 +909,7 @@ neuland_tox_add_file_transfer (NeulandTox *tox,
       gint file_number = tox_new_file_sender (priv->tox_struct,
                                               contact_number,
                                               file_size,
-                                              file_name,
+                                              (guint8*)file_name,
                                               strlen (file_name));
 
       g_mutex_unlock (&priv->mutex);
@@ -964,7 +969,7 @@ on_file_send_request_idle (gpointer user_data)
     neuland_tox_get_contact_by_number (data->tox, data->contact_number);
 
   if (contact == NULL)
-    return;
+    return G_SOURCE_REMOVE;
 
   NeulandFileTransfer *file_transfer =
     neuland_file_transfer_new_receiving (data->contact_number,
@@ -997,7 +1002,7 @@ on_file_send_request (Tox *tox_struct,
   data->contact_number = contact_number;
   data->file_number = file_number;
   data->file_size = file_size;
-  data->file_name = g_strndup (file_name, file_name_length);
+  data->file_name = g_strndup ((gchar*)file_name, file_name_length);
   data->tox = NEULAND_TOX (user_data);
 
   g_idle_add (on_file_send_request_idle, data);
@@ -1287,7 +1292,7 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
       if (g_file_get_contents (data_path, &data, &length, &error))
         {
           g_mutex_lock (&priv->mutex);
-          gint ret = tox_load (priv->tox_struct, data, length);
+          gint ret = tox_load (priv->tox_struct, (guint8*)data, length);
           g_mutex_unlock (&priv->mutex);
 
           if (ret == 0)
@@ -1323,7 +1328,7 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
   guint8 address[TOX_FRIEND_ADDRESS_SIZE] = {0,};
   guint8 name[TOX_MAX_NAME_LENGTH] = {0, };
   guint8 status_message[TOX_MAX_STATUSMESSAGE_LENGTH] = {0,};
-  guchar hex_string[TOX_FRIEND_ADDRESS_SIZE * 2 + 1] = {0,};
+  gchar hex_string[TOX_FRIEND_ADDRESS_SIZE * 2 + 1] = {0,};
 
   g_mutex_lock (&priv->mutex);
 
@@ -1349,10 +1354,10 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
       g_mutex_lock (&priv->mutex);
 
       l = tox_get_self_name (tox_struct, name);
-      priv->name = g_strndup (name, l);
+      priv->name = g_strndup ((gchar*)name, l);
 
       l = tox_get_self_status_message (tox_struct, status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
-      priv->status_message = g_strndup (status_message, l);
+      priv->status_message = g_strndup ((gchar*)status_message, l);
 
       g_mutex_unlock (&priv->mutex);
 
@@ -1372,7 +1377,7 @@ neuland_tox_load_contacts (NeulandTox *tox)
   g_mutex_lock (&priv->mutex);
 
   guint32 n_contacts = tox_count_friendlist (tox_struct);
-  guint32 contact_list[n_contacts];
+  gint32 contact_list[n_contacts];
   tox_get_friendlist (tox_struct, contact_list, n_contacts);
 
   g_debug ("Loading contacts ...");
@@ -1397,15 +1402,15 @@ neuland_tox_load_contacts (NeulandTox *tox)
 
       NeulandContact *contact =  neuland_contact_new (client_id, contact_number,
                                                       tox_get_last_online (tox_struct, contact_number));
-      gchar tox_name[TOX_MAX_NAME_LENGTH];
-      gchar status_message[TOX_MAX_STATUSMESSAGE_LENGTH];
+      guint8 tox_name[TOX_MAX_NAME_LENGTH];
+      guint8 status_message[TOX_MAX_STATUSMESSAGE_LENGTH];
 
       gint l;
       l = tox_get_name (tox_struct, contact_number, tox_name);
-      gchar *new_tox_name = g_strndup (tox_name, l);
+      gchar *new_tox_name = g_strndup ((gchar*)tox_name, l);
       l = tox_get_status_message (tox_struct, contact_number,
                                   status_message, TOX_MAX_STATUSMESSAGE_LENGTH);
-      gchar *new_status_message = g_strndup (status_message, l);
+      gchar *new_status_message = g_strndup ((gchar*)status_message, l);
 
       g_object_set (contact,
                     "name", new_tox_name,
@@ -1443,7 +1448,7 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
   g_mutex_lock (&priv->mutex);
 
   gint32 friend_number = tox_add_friend (priv->tox_struct, bin_address,
-                                         tmp_message, strlen (tmp_message));
+                                         (guint8*)tmp_message, strlen (tmp_message));
 
   g_mutex_unlock (&priv->mutex);
 
@@ -1598,7 +1603,7 @@ neuland_tox_save_and_kill (NeulandTox *tox)
       g_mutex_lock (&priv->mutex);
 
       gsize size = tox_size (priv->tox_struct);
-      gchar *contents = g_malloc0 (size);
+      guint8 *contents = g_malloc0 (size);
 
       tox_save (priv->tox_struct, contents);
 
@@ -1606,7 +1611,7 @@ neuland_tox_save_and_kill (NeulandTox *tox)
 
       g_message ("Saving tox data (size: %i bytes) to '%s' ...", size, priv->data_path);
       GError *e = NULL;
-      if (!g_file_set_contents (priv->data_path, contents, size, &e))
+      if (!g_file_set_contents (priv->data_path, (gchar*)contents, size, &e))
         g_warning ("Could not save tox data file, error was: %s", e->message);
       g_free (contents);
     }
@@ -1634,7 +1639,7 @@ neuland_tox_set_name (NeulandTox *tox,
 
   g_mutex_lock (&priv->mutex);
 
-  gint ret = tox_set_name (priv->tox_struct, name,
+  gint ret = tox_set_name (priv->tox_struct, (guint8*)name,
                            MIN (strlen (name), TOX_MAX_NAME_LENGTH));
 
   g_mutex_unlock (&priv->mutex);
@@ -1700,7 +1705,7 @@ neuland_tox_set_status_message (NeulandTox *tox,
 
   g_mutex_lock (&priv->mutex);
 
-  gint ret = tox_set_status_message (tox_struct, status_message,
+  gint ret = tox_set_status_message (tox_struct, (guint8*)status_message,
                                      MIN (strlen (status_message),
                                           TOX_MAX_STATUSMESSAGE_LENGTH));
 

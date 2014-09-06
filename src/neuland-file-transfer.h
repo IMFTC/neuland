@@ -118,7 +118,7 @@ void
 neuland_file_transfer_prepare_resume_sending (NeulandFileTransfer *file_transfer);
 
 void
-neuland_file_transfer_request_state (NeulandFileTransfer *file_transfer, NeulandFileTransferState state);
+neuland_file_transfer_set_requested_state (NeulandFileTransfer *file_transfer, NeulandFileTransferState state);
 
 NeulandFileTransferState
 neuland_file_transfer_get_requested_state (NeulandFileTransfer *file_transfer);
@@ -129,6 +129,7 @@ neuland_file_transfer_set_state (NeulandFileTransfer *file_transfer, NeulandFile
 NeulandFileTransferState
 neuland_file_transfer_get_state (NeulandFileTransfer *file_transfer);
 
-
+void
+neuland_file_transfer_add_transferred_size (NeulandFileTransfer *file_transfer, guint64 transferred_size);
 
 #endif /* __NEULAND_FILE_TRANSFER__ */

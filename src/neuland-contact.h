@@ -138,8 +138,14 @@ neuland_contact_get_number (NeulandContact *contact);
 const gchar *
 neuland_contact_get_preferred_name (NeulandContact *contact);
 
+void
+neuland_contact_set_request_message (NeulandContact *contact, const gchar *request_message);
+
 const gchar *
 neuland_contact_get_request_message (NeulandContact *contact);
+
+void
+neuland_contact_add_file_transfer (NeulandContact *contact, NeulandFileTransfer *file_transfer);
 
 NeulandFileTransfer *
 neuland_contact_get_file_transfer (NeulandContact *contact, NeulandFileTransferDirection direction, gint file_number);
