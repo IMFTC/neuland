@@ -284,6 +284,7 @@ neuland_contact_row_status_changed_cb (GObject *obj,
   neuland_contact_row_set_status (contact_row, status);
 }
 
+static void
 neuland_contact_row_set_connected (NeulandContactRow *contact_row,
                                    gboolean connected)
 {

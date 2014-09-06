@@ -105,6 +105,9 @@ neuland_contact_set_connected (NeulandContact *contact, gboolean connected);
 gboolean
 neuland_contact_get_connected (NeulandContact *contact);
 
+guint64
+neuland_contact_get_last_connected_change (NeulandContact *contact);
+
 void
 neuland_contact_set_is_typing (NeulandContact *contact, gboolean is_typing);
 
