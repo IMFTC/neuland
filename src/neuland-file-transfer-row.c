@@ -120,6 +120,9 @@ on_file_transfer_state_changed_cb (GObject *gobject,
         case NEULAND_FILE_TRANSFER_DIRECTION_SEND:
           gtk_widget_set_sensitive (priv->start_button, FALSE);
           break;
+
+        default:
+          break;
         }
       /* Translators: State name for a file transfer that has not been
          started/accepted yet */
@@ -175,6 +178,9 @@ on_file_transfer_state_changed_cb (GObject *gobject,
       gtk_label_set_text (priv->state_label, _("Error"));
       gtk_widget_hide (GTK_WIDGET (priv->progress_bar));
       break;
+
+    default:
+      break;
     }
 }
 
@@ -228,13 +234,18 @@ on_start_button_clicked (NeulandFileTransferRow *file_transfer_row,
               (file_transfer, NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
         }
       break;
+
     case NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS:
       neuland_file_transfer_set_requested_state
         (file_transfer, NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US);
       break;
+
     case NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US:
       neuland_file_transfer_set_requested_state
         (file_transfer, NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS);
+      break;
+
+    default:
       break;
     }
 }
