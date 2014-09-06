@@ -54,6 +54,8 @@ struct _NeulandToxClass
   void (* remove_contacts) (NeulandTox *tox, GList *contacts, gpointer user_data);
 };
 
+GType neuland_tox_get_type (void) G_GNUC_CONST;
+
 NeulandTox *
 neuland_tox_new (gchar *data_file);
 

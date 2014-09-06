@@ -47,5 +47,5 @@ struct _NeulandApplicationClass
   GtkApplicationClass parent_class;
 };
 
-
+GType neuland_application_get_type (void) G_GNUC_CONST;
 #endif /* __NEULAND_APPLICATION_H__ */

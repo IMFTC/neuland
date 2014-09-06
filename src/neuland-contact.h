@@ -58,6 +58,8 @@ struct _NeulandContactClass
                                        gpointer user_data);
 };
 
+GType neuland_contact_get_type (void) G_GNUC_CONST;
+
 NeulandContact *
 neuland_contact_new (const guint8 *tox_id, gint64 contact_number, guint64 last_connected_change);
 

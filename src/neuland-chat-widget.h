@@ -50,6 +50,8 @@ struct _NeulandChatWidgetClass
   GtkBoxClass parent_class;
 };
 
+GType neuland_chat_widget_get_type (void) G_GNUC_CONST;
+
 GtkWidget *
 neuland_chat_widget_new (NeulandTox *tox, NeulandContact *contact, gint text_entry_min_height);
 

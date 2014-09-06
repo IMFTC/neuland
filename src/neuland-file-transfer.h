@@ -66,6 +66,8 @@ struct _NeulandFileTransferClass
   GObjectClass parent_class;
 };
 
+GType neuland_file_transfer_get_type (void) G_GNUC_CONST;
+
 NeulandFileTransfer *
 neuland_file_transfer_new_sending (gint64 contact_number, GFile *file);
 
