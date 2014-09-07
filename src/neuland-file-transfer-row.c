@@ -40,9 +40,11 @@ G_DEFINE_TYPE_WITH_PRIVATE (NeulandFileTransferRow, neuland_file_transfer_row, G
 
 enum {
   PROP_0,
-  PROP_STATE,
+  PROP_FILE_TRANSFER,
   PROP_N
 };
+
+static GParamSpec *properties[PROP_N] = {NULL, };
 
 static void
 neuland_file_transfer_row_dispose (GObject *object)
@@ -252,7 +254,7 @@ on_start_button_clicked (NeulandFileTransferRow *file_transfer_row,
 
 static void
 on_close_button_clicked (NeulandFileTransferRow *file_transfer_row,
-                        gpointer user_data)
+                         gpointer user_data)
 {
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
   NeulandFileTransfer *file_transfer = priv->file_transfer;
@@ -267,6 +269,90 @@ on_close_button_clicked (NeulandFileTransferRow *file_transfer_row,
   else
     neuland_file_transfer_set_requested_state
       (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
+}
+
+static void
+neuland_file_transfer_row_set_file_transfer (NeulandFileTransferRow *row,
+                                             NeulandFileTransfer *transfer)
+{
+  NeulandFileTransferRowPrivate *priv;
+  NeulandFileTransferDirection direction;
+
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER_ROW (row));
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (transfer));
+
+  priv = row->priv;
+  priv->file_transfer = transfer;
+  direction = neuland_file_transfer_get_direction (transfer);
+
+  /* Set icon depending on direction */
+  gtk_image_set_from_icon_name (priv->direction_image,
+                                direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND ?
+                                "network-transmit-symbolic" : "network-receive-symbolic",
+                                GTK_ICON_SIZE_MENU);
+
+  /* Connect singals and bing properties */
+  g_object_connect (transfer,
+                    "swapped-signal::notify::state",
+                    on_file_transfer_state_changed_cb, row,
+                    "swapped-signal::notify::transferred-size",
+                    on_file_transfer_transferred_size_changed_cb, row,
+                    NULL);
+  g_object_bind_property (transfer, "file-name", priv->file_name_label, "label",
+                          G_BINDING_SYNC_CREATE);
+
+  /* Do a little caching ... */
+  priv->total_size_string = g_format_size (neuland_file_transfer_get_file_size (transfer));
+
+  /* Set up widgets according to the properties of @transfer */
+  on_file_transfer_state_changed_cb (G_OBJECT (row), NULL, transfer);
+  on_file_transfer_transferred_size_changed_cb (G_OBJECT (row), NULL, transfer);
+}
+
+NeulandFileTransfer *
+neuland_file_transfer_row_get_file_transfer (NeulandFileTransferRow *row)
+{
+  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER_ROW (row), NULL);
+
+  return row->priv->file_transfer;
+}
+
+static void
+neuland_file_transfer_row_set_property (GObject *object,
+                                        guint property_id,
+                                        const GValue *value,
+                                        GParamSpec *pspec)
+{
+  NeulandFileTransferRow *row = NEULAND_FILE_TRANSFER_ROW (object);
+
+  switch (property_id)
+    {
+    case PROP_FILE_TRANSFER:
+      neuland_file_transfer_row_set_file_transfer (row, g_value_get_object (value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+neuland_file_transfer_row_get_property (GObject *object,
+                                        guint property_id,
+                                        GValue *value,
+                                        GParamSpec *pspec)
+{
+  NeulandFileTransferRow *row = NEULAND_FILE_TRANSFER_ROW (object);
+
+  switch (property_id)
+    {
+    case PROP_FILE_TRANSFER:
+      g_value_set_object (value, neuland_file_transfer_row_get_file_transfer (row));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
 }
 
 static void
@@ -289,8 +375,23 @@ neuland_file_transfer_row_class_init (NeulandFileTransferRowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_start_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, on_close_button_clicked);
 
+  gobject_class->set_property = neuland_file_transfer_row_set_property;
+  gobject_class->get_property = neuland_file_transfer_row_get_property;
+
   gobject_class->dispose = neuland_file_transfer_row_dispose;
   gobject_class->finalize = neuland_file_transfer_row_finalize;
+
+  properties[PROP_FILE_TRANSFER] =
+    g_param_spec_object ("file-transfer",
+                         "File transfer",
+                         "The NeulandFileTransfer represented by this widget",
+                         NEULAND_TYPE_FILE_TRANSFER,
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT_ONLY);
+
+  g_object_class_install_properties (gobject_class,
+                                     PROP_N,
+                                     properties);
 }
 
 static void
@@ -307,45 +408,14 @@ GtkWidget *
 neuland_file_transfer_row_new (NeulandFileTransfer *file_transfer)
 {
   NeulandFileTransferRow *file_transfer_row;
-  NeulandFileTransferRowPrivate *priv;
-  NeulandFileTransferDirection direction;
 
   g_debug ("neuland_file_transfer_row_new");
 
   g_assert (NEULAND_IS_FILE_TRANSFER (file_transfer));
 
-  file_transfer_row = NEULAND_FILE_TRANSFER_ROW
-    (g_object_new (NEULAND_TYPE_FILE_TRANSFER_ROW, NULL));
-
-  /* Set up the row for @file_transfer */
-  priv = file_transfer_row->priv;
-  priv->file_transfer = file_transfer;
-
-  /* TODO: file-transfer should rather be a property, then we could do
-     all this in the poperty's setter function */
-  g_object_connect (file_transfer,
-                    "swapped-signal::notify::state",
-                    on_file_transfer_state_changed_cb, file_transfer_row,
-                    "swapped-signal::notify::transferred-size",
-                    on_file_transfer_transferred_size_changed_cb, file_transfer_row,
-                    NULL);
-
-  g_object_bind_property (file_transfer, "file-name", priv->file_name_label, "label",
-                          G_BINDING_SYNC_CREATE);
-
-  direction = neuland_file_transfer_get_direction (file_transfer);
-  gtk_image_set_from_icon_name (priv->direction_image,
-                                direction == NEULAND_FILE_TRANSFER_DIRECTION_SEND ?
-                                "network-transmit-symbolic" : "network-receive-symbolic",
-                                GTK_ICON_SIZE_MENU);
-
-  /* Do a little caching ... */
-  priv->total_size_string = g_format_size (neuland_file_transfer_get_file_size (file_transfer));
-
-  on_file_transfer_state_changed_cb (G_OBJECT (file_transfer_row),
-                                     NULL, file_transfer);
-  on_file_transfer_transferred_size_changed_cb (G_OBJECT (file_transfer_row),
-                                                NULL, file_transfer);
+  file_transfer_row = g_object_new (NEULAND_TYPE_FILE_TRANSFER_ROW,
+                                    "file-transfer", file_transfer,
+                                    NULL);
 
   return GTK_WIDGET (file_transfer_row);
 }
