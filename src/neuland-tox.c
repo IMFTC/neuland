@@ -29,7 +29,7 @@
 
 #define NEULAND_DEFAULT_STATUS_MESSAGE "I'm testing Neuland!"
 #define NEULAND_DEFAULT_NAME "Neuland User"
-#define MAX_SEND_DATA_ATTEMPTS 100
+#define MAX_SEND_DATA_ATTEMPTS 500
 
 struct _NeulandToxPrivate
 {
@@ -677,7 +677,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
                 }
               else
                 {
-                  if (++fails >= 500)
+                  if (++fails >= MAX_SEND_DATA_ATTEMPTS)
                     {
                       g_warning ("Going to stop sending transfer %p \"%s\" after "
                                  "%i failed tox_file_send_data() calls.",
