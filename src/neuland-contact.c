@@ -109,10 +109,14 @@ neuland_contact_set_name (NeulandContact *contact,
                           const gchar *name)
 {
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  NeulandContactPrivate *priv = contact->priv;
 
-  g_free (contact->priv->name);
+  if (g_strcmp0 (priv->name, name) == 0)
+    return;
 
-  contact->priv->name = g_strdup (name ? name : "");
+  g_free (priv->name);
+
+  priv->name = g_strdup (name ? name : "");
 
   neuland_contact_update_preferred_name (contact);
 

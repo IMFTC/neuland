@@ -39,6 +39,7 @@ typedef enum {
 struct _NeulandChatWidgetPrivate {
   NeulandTox *tox;
   NeulandContact *contact;
+  gchar *last_used_name;
 
   GtkListBox *transfers_list_box;
 
@@ -51,8 +52,8 @@ struct _NeulandChatWidgetPrivate {
   GtkTextTag *my_name_tag;
   GtkTextTag *is_typing_tag;
   GtkTextTag *action_tag;
-  GtkTextTag *timestamp_tag;
   GtkTextTag *info_tag;
+  GtkTextTag *time_tag;
 
   GtkTextView *entry_text_view;
   GtkTextBuffer *entry_text_buffer;
@@ -81,9 +82,12 @@ neuland_chat_widget_finalize (GObject *object)
 {
   g_debug ("neuland_chat_widget_finalize (%p)", object);
   NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (object);
+  NeulandChatWidgetPrivate *priv = widget->priv;
 
-  if (widget->priv->last_insert_time != NULL)
+  if (priv->last_insert_time != NULL)
     g_date_time_unref (widget->priv->last_insert_time);
+
+  g_free (priv->last_used_name);
 
   G_OBJECT_CLASS (neuland_chat_widget_parent_class)->finalize (object);
 }
@@ -168,9 +172,7 @@ insert_text (NeulandChatWidget *widget,
       break;
     }
 
-  if (type == TEXT_TYPE_INFO)
-    insert_time_stamp = FALSE;
-  else if (priv->last_insert_time == NULL)
+  if (priv->last_insert_time == NULL)
     {
       insert_time_stamp = TRUE;
       insert_nick = TRUE;
@@ -201,7 +203,7 @@ insert_text (NeulandChatWidget *widget,
         time_string = g_date_time_format (time_now, "%l:%M %p\n");
 
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, time_string, -1,
-                                        priv->timestamp_tag, NULL);
+                                        priv->time_tag, NULL);
 
       if (priv->last_insert_time)
         g_date_time_unref (priv->last_insert_time);
@@ -234,16 +236,12 @@ insert_text (NeulandChatWidget *widget,
 
     {
       /* @text must contain %s! */
-      time_string = g_date_time_format (time_now, "%X");
       gchar *text_with_name = g_strdup_printf (text, name);
-      gchar *info_text = g_strdup_printf ("%s: %s", time_string, text_with_name);
-
-      gtk_text_buffer_insert_with_tags (text_buffer, &iter, info_text, -1,
+      gtk_text_buffer_insert_with_tags (text_buffer, &iter,
+                                        text_with_name, -1,
                                         priv->info_tag, NULL);
 
-      g_free (time_string);
       g_free (text_with_name);
-      g_free (info_text);
     }
 
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
@@ -484,8 +482,8 @@ neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, action_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, contact_name_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, my_name_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, timestamp_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, time_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
   gtk_widget_class_bind_template_callback (widget_class, entry_text_view_key_press_event_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_text_buffer_changed_cb);
@@ -518,6 +516,28 @@ neuland_chat_widget_is_typing_cb (GObject *obj,
 
   g_object_get (contact, "is-typing", &is_typing, NULL);
   neuland_chat_widget_set_show_contact_is_typing (chat_widget, is_typing);
+}
+
+static void
+on_name_changed (GObject *obj,
+                 GParamSpec *pspec,
+                 gpointer user_data)
+{
+  NeulandContact *contact = NEULAND_CONTACT (obj);
+  NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (user_data);
+  NeulandChatWidgetPrivate *priv = widget->priv;
+  const gchar *new_name = neuland_contact_get_preferred_name (contact);
+
+  gchar *text = g_strdup_printf ("%s is now known as %%s",
+                                 priv->last_used_name,
+                                 new_name);
+  insert_info (widget, text, DIRECTION_IN);
+
+  g_free (priv->last_used_name);
+
+  priv->last_used_name = g_strdup (new_name);
+
+  g_free (text);
 }
 
 static void
@@ -562,10 +582,12 @@ neuland_chat_widget_new (NeulandTox *tox,
 
   priv->tox = tox;
   priv->contact = contact;
+  priv->last_used_name = g_strdup (neuland_contact_get_preferred_name (contact));
 
   g_object_connect (contact,
                     "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, ncw,
                     "signal::notify::connected", on_connected_changed, ncw,
+                    "signal::notify::preferred-name", on_name_changed, ncw,
                     "swapped-signal::incoming-message", on_incoming_message_cb, ncw,
                     "swapped-signal::incoming-action", on_incoming_action_cb, ncw,
                     "swapped-signal::outgoing-message", on_outgoing_message_cb, ncw,

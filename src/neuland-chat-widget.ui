@@ -60,7 +60,7 @@ Author: Volker Sobek <reklov@live.com>
       </object>
     </child>
     <child type="tag">
-      <object class="GtkTextTag" id="timestamp_tag">
+      <object class="GtkTextTag" id="time_tag">
         <property name="foreground_rgba">rgb(186,189,182)</property>
         <property name="font">Normal</property>
         <property name="justification">right</property>
@@ -68,9 +68,8 @@ Author: Volker Sobek <reklov@live.com>
     </child>
     <child type="tag">
       <object class="GtkTextTag" id="info_tag">
-        <property name="foreground_rgba">rgb(200,200,200)</property>
+        <property name="foreground_rgba">rgb(186,189,182)</property>
         <property name="font">Normal</property>
-        <property name="style">italic</property>
       </object>
     </child>
   </object>
