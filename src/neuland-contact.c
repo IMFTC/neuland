@@ -99,7 +99,8 @@ neuland_contact_update_preferred_name (NeulandContact *contact)
   if (name_length > 0)
     priv->preferred_name = g_utf8_substring (name, 0, name_length);
   else
-    priv->preferred_name = g_strndup (neuland_contact_get_tox_id_hex (contact), 12);
+    priv->preferred_name = g_strndup (neuland_contact_get_tox_id_hex (contact),
+                                      MAX_PREFERRED_NAME_LENGTH);
 
   g_debug ("Preferred name for contact %p changed to: \"%s\"", contact, priv->preferred_name);
 }
