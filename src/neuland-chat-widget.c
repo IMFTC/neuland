@@ -363,14 +363,13 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
   gtk_text_buffer_get_bounds (priv->entry_text_buffer, &start_iter, &end_iter);
   string = gtk_text_buffer_get_text (priv->entry_text_buffer, &start_iter, &end_iter, FALSE);
 
-  /* String is empty */
-  if (strlen (string) == 0) {
+  if (strlen (string) == 0)
     g_debug ("Ignoring empty message.");
-  }
-  /* String contains Commands */
   else if (g_ascii_strncasecmp (string, "/", 1) == 0 &&
            g_ascii_strncasecmp (string, "//", 2) != 0)
     {
+      /* string starts with a command */
+
       if (g_ascii_strncasecmp (string, "/me ", 4) == 0)
         {
           g_debug ("/me command recognized");
@@ -402,14 +401,19 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
       else
         g_message ("Unknown command: %s", string);
     }
-  /* String contains normal message */
   else if (connected)
-    if (g_ascii_strncasecmp (string, "//", 2) == 0)
-      neuland_contact_send_message (priv->contact, string+1);
-    else
-      neuland_contact_send_message (priv->contact, string);
+    {
+      /* string is not a command and contact is connected  */
+
+      if (g_ascii_strncasecmp (string, "//", 2) == 0)
+        neuland_contact_send_message (priv->contact, string+1);
+      else
+        neuland_contact_send_message (priv->contact, string);
+    }
   else
     {
+      /* string is not a command and contact is not connected */
+
       neuland_chat_widget_show_offline_info (widget, TRUE);
       clear_entry = FALSE;
     }
