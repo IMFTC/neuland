@@ -235,7 +235,6 @@ insert_text (NeulandChatWidget *widget,
   else if (type == TEXT_TYPE_INFO)
 
     {
-      /* @text must contain %s! */
       gchar *text_with_name = g_strdup_printf (text, name);
       gtk_text_buffer_insert_with_tags (text_buffer, &iter,
                                         text_with_name, -1,
@@ -396,7 +395,7 @@ neuland_chat_widget_process_input (NeulandChatWidget *widget)
           /* TODO: We don't have any text type beside messages and
              actions yet, so using an action here is a workaround. */
           g_debug ("/myid command recognized");
-          insert_action (widget, neuland_tox_get_tox_id_hex (priv->tox), DIRECTION_IN);
+          insert_info (widget, neuland_tox_get_tox_id_hex (priv->tox), DIRECTION_OUT);
         }
       else
         g_message ("Unknown command: %s", string);
