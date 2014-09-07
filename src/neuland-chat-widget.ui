@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.1 
+<!-- Generated with glade 3.18.1
 
 Copyright (C) Volker Sobek <reklov@live.com>
 
@@ -64,6 +64,13 @@ Author: Volker Sobek <reklov@live.com>
         <property name="foreground_rgba">rgb(186,189,182)</property>
         <property name="font">Normal</property>
         <property name="justification">right</property>
+      </object>
+    </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="info_tag">
+        <property name="foreground_rgba">rgb(200,200,200)</property>
+        <property name="font">Normal</property>
+        <property name="style">italic</property>
       </object>
     </child>
   </object>

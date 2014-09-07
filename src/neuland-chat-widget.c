@@ -31,9 +31,10 @@ typedef enum {
 } MessageDirection;
 
 typedef enum {
-  TYPE_TEXT,
-  TYPE_ACTION,
-} MessageType;
+  TEXT_TYPE_TEXT,
+  TEXT_TYPE_ACTION,
+  TEXT_TYPE_INFO,
+} TextType;
 
 struct _NeulandChatWidgetPrivate {
   NeulandTox *tox;
@@ -51,6 +52,7 @@ struct _NeulandChatWidgetPrivate {
   GtkTextTag *is_typing_tag;
   GtkTextTag *action_tag;
   GtkTextTag *timestamp_tag;
+  GtkTextTag *info_tag;
 
   GtkTextView *entry_text_view;
   GtkTextBuffer *entry_text_buffer;
@@ -59,7 +61,7 @@ struct _NeulandChatWidgetPrivate {
 
   GDateTime *last_insert_time;
   MessageDirection last_direction;
-  MessageType last_type;
+  TextType last_type;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandChatWidget, neuland_chat_widget, GTK_TYPE_BOX)
@@ -138,7 +140,7 @@ static void
 insert_text (NeulandChatWidget *widget,
              const gchar* text,
              MessageDirection direction,
-             MessageType type)
+             TextType type)
 {
   NeulandChatWidgetPrivate *priv = widget->priv;
   GtkTextBuffer *text_buffer = priv->text_buffer;
@@ -166,7 +168,9 @@ insert_text (NeulandChatWidget *widget,
       break;
     }
 
-  if (priv->last_insert_time == NULL)
+  if (type == TEXT_TYPE_INFO)
+    insert_time_stamp = FALSE;
+  else if (priv->last_insert_time == NULL)
     {
       insert_time_stamp = TRUE;
       insert_nick = TRUE;
@@ -178,7 +182,7 @@ insert_text (NeulandChatWidget *widget,
       insert_time_stamp = (time_span > G_TIME_SPAN_MINUTE)
         || g_date_time_get_minute (time_now) != g_date_time_get_minute (priv->last_insert_time);
       insert_nick = (direction != priv->last_direction)
-        || (priv->last_type == TYPE_ACTION);
+        || (priv->last_type == TEXT_TYPE_ACTION);
     }
 
   neuland_chat_widget_set_show_contact_is_typing (widget, FALSE);
@@ -206,7 +210,7 @@ insert_text (NeulandChatWidget *widget,
       g_free (time_string);
     }
 
-  if (type == TYPE_ACTION)
+  if (type == TEXT_TYPE_ACTION)
     {
       prefix = g_strdup_printf (_("* %s %s"), name, text);
       gtk_text_buffer_insert_with_tags (text_buffer, &iter, prefix, -1,
@@ -214,7 +218,7 @@ insert_text (NeulandChatWidget *widget,
                                         NULL);
       g_free (prefix);
     }
-  else
+  else if (type == TEXT_TYPE_TEXT)
     {
       if (insert_nick)
         {
@@ -225,6 +229,21 @@ insert_text (NeulandChatWidget *widget,
         }
 
       gtk_text_buffer_insert (text_buffer, &iter, text, -1);
+    }
+  else if (type == TEXT_TYPE_INFO)
+
+    {
+      /* @text must contain %s! */
+      time_string = g_date_time_format (time_now, "%X");
+      gchar *text_with_name = g_strdup_printf (text, name);
+      gchar *info_text = g_strdup_printf ("%s: %s", time_string, text_with_name);
+
+      gtk_text_buffer_insert_with_tags (text_buffer, &iter, info_text, -1,
+                                        priv->info_tag, NULL);
+
+      g_free (time_string);
+      g_free (text_with_name);
+      g_free (info_text);
     }
 
   gtk_text_buffer_insert (text_buffer, &iter, "\n", -1);
@@ -242,7 +261,7 @@ insert_message (NeulandChatWidget *widget,
                 const gchar* message,
                 MessageDirection direction)
 {
-  insert_text (widget, message, direction, TYPE_TEXT);
+  insert_text (widget, message, direction, TEXT_TYPE_TEXT);
 }
 
 static void
@@ -250,7 +269,15 @@ insert_action (NeulandChatWidget *widget,
                const gchar* message,
                MessageDirection direction)
 {
-  insert_text (widget, message, direction, TYPE_ACTION);
+  insert_text (widget, message, direction, TEXT_TYPE_ACTION);
+}
+
+static void
+insert_info (NeulandChatWidget *widget,
+             const gchar* message,
+             MessageDirection direction)
+{
+  insert_text (widget, message, direction, TEXT_TYPE_INFO);
 }
 
 static void
@@ -457,8 +484,9 @@ neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, action_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, contact_name_tag);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, my_name_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, timestamp_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
   gtk_widget_class_bind_template_callback (widget_class, entry_text_view_key_press_event_cb);
   gtk_widget_class_bind_template_callback (widget_class, entry_text_buffer_changed_cb);
 
@@ -508,10 +536,10 @@ on_connected_changed (GObject *obj,
   if (connected)
     {
       neuland_chat_widget_show_offline_info (widget, FALSE);
-      insert_action (widget, "is now online", DIRECTION_IN);
+      insert_info (widget, "%s is now online", DIRECTION_IN);
     }
   else
-    insert_action (widget, "is now offline", DIRECTION_IN);
+    insert_info (widget, "%s is now offline", DIRECTION_IN);
 }
 
 NeulandContact *
