@@ -114,7 +114,9 @@ neuland_window_get_chat_widget_for_contact (NeulandWindow *window,
     return chat_widget;
 
   g_debug ("Creating new chat widget for contact %p", contact);
-  chat_widget = neuland_chat_widget_new (priv->tox, contact, priv->me_button_height);
+  chat_widget = neuland_chat_widget_new (priv->tox, contact);
+  neuland_chat_widget_set_text_entry_min_height (NEULAND_CHAT_WIDGET (chat_widget),
+                                                 priv->me_button_height);
   g_hash_table_insert (priv->chat_widgets, contact, chat_widget);
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), chat_widget);
 

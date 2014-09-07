@@ -67,6 +67,15 @@ struct _NeulandChatWidgetPrivate {
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandChatWidget, neuland_chat_widget, GTK_TYPE_BOX)
 
+enum {
+  PROP_0,
+  PROP_TOX,
+  PROP_CONTACT,
+  PROP_N
+};
+
+static GParamSpec *properties[PROP_N] = {NULL, };
+
 static void
 neuland_chat_widget_dispose (GObject *object)
 {
@@ -470,45 +479,6 @@ entry_text_buffer_changed_cb (NeulandChatWidget *widget,
 }
 
 static void
-neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
-{
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-
-  gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-chat-widget.ui");
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, transfers_list_box);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, text_view);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, entry_text_view);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, text_buffer);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, entry_text_buffer);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, is_typing_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, action_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, contact_name_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, my_name_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, time_tag);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
-  gtk_widget_class_bind_template_callback (widget_class, entry_text_view_key_press_event_cb);
-  gtk_widget_class_bind_template_callback (widget_class, entry_text_buffer_changed_cb);
-
-  gobject_class->dispose = neuland_chat_widget_dispose;
-  gobject_class->finalize = neuland_chat_widget_finalize;
-}
-
-static void
-neuland_chat_widget_init (NeulandChatWidget *chat_widget)
-{
-  gtk_widget_init_template (GTK_WIDGET (chat_widget));
-  chat_widget->priv = neuland_chat_widget_get_instance_private (chat_widget);
-  NeulandChatWidgetPrivate *priv = chat_widget->priv;
-
-  GtkTextIter iter;
-  gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);
-  priv->scroll_mark = gtk_text_buffer_create_mark (priv->text_buffer, "scroll", &iter, TRUE);
-  priv->last_insert_time = NULL;
-}
-
-static void
 neuland_chat_widget_is_typing_cb (GObject *obj,
                                   GParamSpec *pspec,
                                   gpointer user_data)
@@ -565,41 +535,184 @@ on_connected_changed (GObject *obj,
     insert_info (widget, "%s is now offline", DIRECTION_IN);
 }
 
+static void
+neuland_chat_widget_set_contact (NeulandChatWidget *widget,
+                                 NeulandContact *contact)
+{
+  NeulandChatWidgetPrivate *priv = widget->priv;
+
+  priv->contact = contact;
+  priv->last_used_name = g_strdup (neuland_contact_get_preferred_name (contact));
+
+  /* Connect to @contact */
+  g_object_connect (contact,
+                    "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, widget,
+                    "signal::notify::connected", on_connected_changed, widget,
+                    "signal::notify::preferred-name", on_name_changed, widget,
+                    "swapped-signal::incoming-message", on_incoming_message_cb, widget,
+                    "swapped-signal::incoming-action", on_incoming_action_cb, widget,
+                    "swapped-signal::outgoing-message", on_outgoing_message_cb, widget,
+                    "swapped-signal::outgoing-action", on_outgoing_action_cb, widget,
+                    "swapped-signal::new-transfer", on_new_transfer_cb, widget,
+                    NULL);
+  neuland_contact_set_has_chat_widget (contact, TRUE);
+}
+
 NeulandContact *
 neuland_chat_widget_get_contact (NeulandChatWidget *widget)
 {
   return widget->priv->contact;
 }
 
+static void
+neuland_chat_widget_set_tox (NeulandChatWidget *widget,
+                             NeulandTox *tox)
+{
+  NeulandChatWidgetPrivate *priv = widget->priv;
+  priv->tox = tox;
+}
+
+NeulandTox *
+neuland_chat_widget_get_tox (NeulandChatWidget *widget)
+{
+  return widget->priv->tox;
+}
+
+void
+neuland_chat_widget_set_text_entry_min_height (NeulandChatWidget *widget,
+                                               gint text_entry_min_height)
+{
+  NeulandChatWidgetPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_CHAT_WIDGET (widget));
+
+  priv = widget->priv;
+
+  gtk_widget_set_size_request (GTK_WIDGET (priv->entry_text_view),
+                               -1, text_entry_min_height);
+}
+
+static void
+neuland_chat_widget_set_property (GObject *object,
+                                  guint property_id,
+                                  const GValue *value,
+                                  GParamSpec *pspec)
+{
+  NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (object);
+
+  switch (property_id)
+    {
+    case PROP_TOX:
+      neuland_chat_widget_set_tox (widget, g_value_get_object (value));
+      break;
+    case PROP_CONTACT:
+      neuland_chat_widget_set_contact (widget, g_value_get_object (value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+neuland_chat_widget_get_property (GObject *object,
+                                  guint property_id,
+                                  GValue *value,
+                                  GParamSpec *pspec)
+{
+  NeulandChatWidget *widget = NEULAND_CHAT_WIDGET (object);
+
+  switch (property_id)
+    {
+    case PROP_TOX:
+      g_value_set_object (value, neuland_chat_widget_get_tox (widget));
+      break;
+    case PROP_CONTACT:
+      g_value_set_object (value, neuland_chat_widget_get_contact (widget));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+neuland_chat_widget_class_init (NeulandChatWidgetClass *klass)
+{
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-chat-widget.ui");
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, transfers_list_box);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, text_view);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, entry_text_view);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, text_buffer);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, entry_text_buffer);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, is_typing_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, action_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, contact_name_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, my_name_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, time_tag);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandChatWidget, info_bar);
+  gtk_widget_class_bind_template_callback (widget_class, entry_text_view_key_press_event_cb);
+  gtk_widget_class_bind_template_callback (widget_class, entry_text_buffer_changed_cb);
+
+  gobject_class->set_property = neuland_chat_widget_set_property;
+  gobject_class->get_property = neuland_chat_widget_get_property;
+
+  gobject_class->dispose = neuland_chat_widget_dispose;
+  gobject_class->finalize = neuland_chat_widget_finalize;
+
+  properties[PROP_TOX] =
+    g_param_spec_object ("tox",
+                         "Tox",
+                         "The NeulandTox instance this chat widget is associated with",
+                         NEULAND_TYPE_TOX,
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT_ONLY);
+
+  properties[PROP_CONTACT] =
+    g_param_spec_object ("contact",
+                         "Contact",
+                         "The NeulandContact for which this widget is used for",
+                         NEULAND_TYPE_CONTACT,
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT_ONLY);
+
+  g_object_class_install_properties (gobject_class,
+                                     PROP_N,
+                                     properties);
+}
+
+static void
+neuland_chat_widget_init (NeulandChatWidget *chat_widget)
+{
+  gtk_widget_init_template (GTK_WIDGET (chat_widget));
+  chat_widget->priv = neuland_chat_widget_get_instance_private (chat_widget);
+  NeulandChatWidgetPrivate *priv = chat_widget->priv;
+
+  GtkTextIter iter;
+  gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);
+  priv->scroll_mark = gtk_text_buffer_create_mark (priv->text_buffer, "scroll", &iter, TRUE);
+  priv->last_insert_time = NULL;
+}
+
 GtkWidget *
 neuland_chat_widget_new (NeulandTox *tox,
-                         NeulandContact *contact,
-                         gint text_entry_min_height)
+                         NeulandContact *contact)
 {
-  g_debug ("neuland_chat_widget_new");
+  NeulandChatWidget *widget;
+
+  g_debug ("neuland_chat_widget_new for contact %p", contact);
+
   g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
   g_return_val_if_fail (NEULAND_IS_TOX (tox), NULL);
 
-  NeulandChatWidget *ncw = NEULAND_CHAT_WIDGET (g_object_new (NEULAND_TYPE_CHAT_WIDGET, NULL));
-  NeulandChatWidgetPrivate *priv = ncw->priv;
+  widget = g_object_new (NEULAND_TYPE_CHAT_WIDGET,
+                         "tox", tox,
+                         "contact", contact,
+                         NULL);
 
-  priv->tox = tox;
-  priv->contact = contact;
-  priv->last_used_name = g_strdup (neuland_contact_get_preferred_name (contact));
-
-  g_object_connect (contact,
-                    "signal::notify::is-typing", neuland_chat_widget_is_typing_cb, ncw,
-                    "signal::notify::connected", on_connected_changed, ncw,
-                    "signal::notify::preferred-name", on_name_changed, ncw,
-                    "swapped-signal::incoming-message", on_incoming_message_cb, ncw,
-                    "swapped-signal::incoming-action", on_incoming_action_cb, ncw,
-                    "swapped-signal::outgoing-message", on_outgoing_message_cb, ncw,
-                    "swapped-signal::outgoing-action", on_outgoing_action_cb, ncw,
-                    "swapped-signal::new-transfer", on_new_transfer_cb, ncw,
-                    NULL);
-
-  gtk_widget_set_size_request (GTK_WIDGET (priv->entry_text_view), -1, text_entry_min_height);
-  neuland_contact_set_has_chat_widget (contact, TRUE);
-
-  return GTK_WIDGET (ncw);
+  return GTK_WIDGET (widget);
 }
