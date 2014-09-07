@@ -621,7 +621,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
         {
           g_debug ("Failed to get next data for file transfer %p \"%s\", "
                    "going to kill transfer.", file_transfer, name);
-          idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US;
+          idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_ERROR;
           goto out;
         }
 
@@ -679,10 +679,10 @@ neuland_tox_send_file_transfer (gpointer user_data)
                 {
                   if (++fails >= 500)
                     {
-                      g_warning ("Going to kill transfer %p \"%s\" after "
+                      g_warning ("Going to stop sending transfer %p \"%s\" after "
                                  "%i failed tox_file_send_data() calls.",
                                  file_transfer, name, fails);
-                      idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US;
+                      idle_out_data->state = NEULAND_FILE_TRANSFER_STATE_ERROR;
                       goto out;
                     }
 
