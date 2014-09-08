@@ -763,7 +763,8 @@ on_file_transfer_requested_state_changed_cb (GObject *gobject,
           control_type = TOX_FILECONTROL_PAUSE;
           break;
 
-        case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US:
+        case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US: /* fall through */
+        case NEULAND_FILE_TRANSFER_STATE_ERROR:
           control_type = TOX_FILECONTROL_KILL;
           break;
 
@@ -801,7 +802,8 @@ on_file_transfer_requested_state_changed_cb (GObject *gobject,
           control_type = TOX_FILECONTROL_PAUSE;
           break;
 
-        case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US:
+        case NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US: /* fall through */
+        case NEULAND_FILE_TRANSFER_STATE_ERROR:
           control_type = TOX_FILECONTROL_KILL;
           break;
 
@@ -857,6 +859,7 @@ on_file_transfer_requested_state_changed_cb (GObject *gobject,
           g_warning ("Error on calling tox_file_send_control() with %s "
                      "for transfer %p, setting state to NEULAND_FILE_TRANSFER_STATE_ERROR",
                      tox_filecontrol_type_to_string (control_type), file_transfer);
+
           neuland_file_transfer_set_state (file_transfer, NEULAND_FILE_TRANSFER_STATE_ERROR);
         }
       else
@@ -1809,11 +1812,40 @@ neuland_tox_get_property (GObject *object,
 }
 
 static void
+neuland_tox_kill_all_transfers (NeulandTox *tox)
+{
+  NeulandToxPrivate *priv;
+  GList *transfers;
+  GList *l;
+
+  g_debug ("neuland_tox_kill_all_transfers");
+  g_return_if_fail (NEULAND_IS_TOX (tox));
+
+  priv = tox->priv;
+  transfers = g_hash_table_get_values (priv->file_transfers_all_ht);
+
+  for (l = transfers; l != NULL; l = l->next)
+    {
+      NeulandFileTransfer *transfer = l->data;
+      NeulandFileTransferState state = neuland_file_transfer_get_state (transfer);
+      if (state == NEULAND_FILE_TRANSFER_STATE_IN_PROGRESS
+          || state == NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_CONTACT
+          || state == NEULAND_FILE_TRANSFER_STATE_PAUSED_BY_US)
+        neuland_file_transfer_set_requested_state (transfer,
+                                                   NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
+    }
+
+  g_list_free (transfers);
+}
+
+static void
 neuland_tox_dispose (GObject *object)
 {
   g_debug ("neuland_tox_dispose %p", object);
   NeulandTox *nt = NEULAND_TOX (object);
   NeulandToxPrivate *priv = nt->priv;
+
+  neuland_tox_kill_all_transfers (nt);
 
   g_hash_table_destroy (priv->contacts_ht);
   g_hash_table_destroy (priv->requests_ht);
@@ -1945,7 +1977,8 @@ neuland_tox_init (NeulandTox *tox)
   priv->requests_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
                                              NULL, g_object_unref);
 
-  priv->file_transfers_all_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_object_unref);
+  priv->file_transfers_all_ht = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+                                                       NULL, g_object_unref);
   priv->file_transfers_sending_ht = g_hash_table_new (NULL, NULL);
   priv->file_transfers_receiving_ht = g_hash_table_new (NULL, NULL);
 
