@@ -320,10 +320,10 @@ neuland_file_transfer_get_info_string (NeulandFileTransfer *file_transfer)
 
   GEnumClass *eclass;
   eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_DIRECTION);
-  GEnumValue *ev_direction = g_enum_get_value (eclass, neuland_file_transfer_get_direction (file_transfer));
+  GEnumValue *ev_direction = g_enum_get_value (eclass, priv->direction);
   eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
   GEnumValue *ev_state = g_enum_get_value (eclass, neuland_file_transfer_get_state (file_transfer));
-  GEnumValue *ev_requested_state = g_enum_get_value (eclass, neuland_file_transfer_get_requested_state (file_transfer));
+  GEnumValue *ev_requested_state = g_enum_get_value (eclass, priv->requested_state);
 
   return g_strdup_printf ("\n"
                           "< NeulandFileTransfer %p >\n"
@@ -538,8 +538,8 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), 0);
 
   NeulandFileTransferPrivate *priv = file_transfer->priv;
-  const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
-  gchar *path = g_file_get_path (neuland_file_transfer_get_file (file_transfer));
+  const gchar *name = priv->file_name;
+  gchar *path = g_file_get_path (priv->file);
   GError *error = NULL;
   gssize count;
 
@@ -598,8 +598,8 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
 {
   /* g_debug ("neuland_file_transfer_get_next_data"); */
   NeulandFileTransferPrivate *priv = file_transfer->priv;
-  const gchar *name = neuland_file_transfer_get_file_name (file_transfer);
-  gchar *path = g_file_get_path (neuland_file_transfer_get_file (file_transfer));
+  const gchar *name = priv->file_name;
+  gchar *path = g_file_get_path (priv->file);
   GError *error = NULL;
   gssize count;
 
