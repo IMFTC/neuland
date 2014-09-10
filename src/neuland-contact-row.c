@@ -466,5 +466,6 @@ neuland_contact_row_new (NeulandContact *contact)
     neuland_contact_row_status_changed_cb (G_OBJECT (contact), NULL, contact_row);
     neuland_contact_row_connected_changed_cb (G_OBJECT (contact), NULL, contact_row);
   }
+
   return GTK_WIDGET (contact_row);
 }

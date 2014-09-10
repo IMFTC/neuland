@@ -28,10 +28,13 @@ struct _NeulandFileTransferRowPrivate {
   GtkLabel *file_name_label;
   GtkLabel *progress_label;
   GtkLabel *state_label;
+
   GtkProgressBar *progress_bar;
+
   GtkWidget *start_button;
-  GtkWidget *close_button;
   GtkImage *start_button_image;
+
+  GtkWidget *close_button;
   GtkImage *direction_image;
   gchar *total_size_string;
 };
@@ -49,8 +52,9 @@ static GParamSpec *properties[PROP_N] = {NULL, };
 static void
 neuland_file_transfer_row_dispose (GObject *object)
 {
-  g_debug ("neuland_file_transfer_row_dispose (%p)", object);
   NeulandFileTransferRow *widget = NEULAND_FILE_TRANSFER_ROW (object);
+
+  g_debug ("neuland_file_transfer_row_dispose (%p)", object);
 
   G_OBJECT_CLASS (neuland_file_transfer_row_parent_class)->dispose (object);
 }
@@ -58,9 +62,10 @@ neuland_file_transfer_row_dispose (GObject *object)
 static void
 neuland_file_transfer_row_finalize (GObject *object)
 {
-  g_debug ("neuland_file_transfer_row_finalize (%p)", object);
   NeulandFileTransferRow *widget = NEULAND_FILE_TRANSFER_ROW (object);
   NeulandFileTransferRowPrivate *priv = widget->priv;
+
+  g_debug ("neuland_file_transfer_row_finalize (%p)", object);
 
   g_free (priv->total_size_string);
 
@@ -74,7 +79,6 @@ on_file_transfer_transferred_size_changed_cb (GObject *gobject,
 {
   NeulandFileTransferRow *file_transfer_row = NEULAND_FILE_TRANSFER_ROW (gobject);
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
-
   NeulandFileTransfer *file_transfer = file_transfer_row->priv->file_transfer;
   guint64 transferred_size = neuland_file_transfer_get_transferred_size (file_transfer);
   guint64 total_size = neuland_file_transfer_get_file_size (file_transfer);
@@ -189,10 +193,17 @@ on_file_transfer_state_changed_cb (GObject *gobject,
 gboolean
 set_file_from_dialog (NeulandFileTransferRow *file_transfer_row)
 {
+  NeulandFileTransferRowPrivate *priv;
+  NeulandFileTransfer *file_transfer;
+  GtkWidget *dialog;
+  GFile *file = NULL;
+  gint response;
+
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER_ROW (file_transfer_row), FALSE);
-  NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
-  NeulandFileTransfer *file_transfer = priv->file_transfer;
-  GtkWidget *dialog =
+  priv = file_transfer_row->priv;
+  file_transfer = priv->file_transfer;
+
+  dialog =
     gtk_file_chooser_dialog_new (_("Save as ..."),
                                  GTK_WINDOW (gtk_widget_get_toplevel
                                              (GTK_WIDGET (file_transfer_row))),
@@ -202,9 +213,8 @@ set_file_from_dialog (NeulandFileTransferRow *file_transfer_row)
                                  NULL);
   gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
   gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), neuland_file_transfer_get_file_name (file_transfer));
-  gint response = gtk_dialog_run (GTK_DIALOG (dialog));
+  response = gtk_dialog_run (GTK_DIALOG (dialog));
 
-  GFile *file = NULL;
   if (response == GTK_RESPONSE_ACCEPT)
     file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
 
@@ -258,9 +268,9 @@ on_close_button_clicked (NeulandFileTransferRow *file_transfer_row,
 {
   NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
   NeulandFileTransfer *file_transfer = priv->file_transfer;
+  NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
 
   gtk_widget_set_sensitive (priv->close_button, FALSE);
-  NeulandFileTransferState state = neuland_file_transfer_get_state (file_transfer);
 
   if (state == NEULAND_FILE_TRANSFER_STATE_KILLED_BY_CONTACT ||
       state == NEULAND_FILE_TRANSFER_STATE_FINISHED_CONFIRMED ||
@@ -358,9 +368,10 @@ neuland_file_transfer_row_get_property (GObject *object,
 static void
 neuland_file_transfer_row_class_init (NeulandFileTransferRowClass *klass)
 {
-  g_debug ("neuland_file_transfer_row_class_init");
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+
+  g_debug ("neuland_file_transfer_row_class_init");
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-file-transfer-row.ui");
   gtk_widget_class_bind_template_child_private (widget_class, NeulandFileTransferRow, file_name_label);
@@ -398,10 +409,10 @@ static void
 neuland_file_transfer_row_init (NeulandFileTransferRow *file_transfer_row)
 {
   g_debug ("neuland_file_transfer_row_init");
-  gtk_widget_init_template (GTK_WIDGET (file_transfer_row));
 
   file_transfer_row->priv = neuland_file_transfer_row_get_instance_private (file_transfer_row);
-  NeulandFileTransferRowPrivate *priv = file_transfer_row->priv;
+
+  gtk_widget_init_template (GTK_WIDGET (file_transfer_row));
 }
 
 GtkWidget *
@@ -411,7 +422,7 @@ neuland_file_transfer_row_new (NeulandFileTransfer *file_transfer)
 
   g_debug ("neuland_file_transfer_row_new");
 
-  g_assert (NEULAND_IS_FILE_TRANSFER (file_transfer));
+  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), NULL);
 
   file_transfer_row = g_object_new (NEULAND_TYPE_FILE_TRANSFER_ROW,
                                     "file-transfer", file_transfer,
