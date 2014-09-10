@@ -1306,6 +1306,7 @@ neuland_tox_set_data_path (NeulandTox *tox, const gchar *data_path)
                          data_path, ret);
               priv->data_path = NULL;
             }
+          g_free (data);
         }
       else
         {
