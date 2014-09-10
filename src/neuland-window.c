@@ -733,8 +733,8 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
 
   neuland_contact_row_set_name (NEULAND_CONTACT_ROW (priv->me_widget),
                                 neuland_tox_get_name (tox));
-  neuland_contact_row_set_message (NEULAND_CONTACT_ROW (priv->me_widget),
-                                   neuland_tox_get_status_message (tox));
+  neuland_contact_row_set_status_message (NEULAND_CONTACT_ROW (priv->me_widget),
+                                          neuland_tox_get_status_message (tox));
 
   gtk_menu_button_set_popover (GTK_MENU_BUTTON (priv->me_button), neuland_me_popover_new (priv->tox));
 }

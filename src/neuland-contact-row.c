@@ -100,15 +100,6 @@ neuland_contact_row_set_status (NeulandContactRow *contact_row,
 }
 
 void
-neuland_contact_row_set_message (NeulandContactRow *contact_row,
-                                 const gchar *new_message)
-{
-  g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
-
-  gtk_label_set_text (GTK_LABEL (contact_row->priv->status_label), new_message);
-}
-
-void
 neuland_contact_row_set_status_message (NeulandContactRow *contact_row,
                                         const gchar *status_message)
 {
@@ -135,49 +126,6 @@ neuland_contact_row_set_name (NeulandContactRow *contact_row, const char *name)
   g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
 
   gtk_label_set_text (contact_row->priv->name_label, name);
-}
-
-/* Sets name to the name of contact, or to the tox id, if name is not
-   set */
-void
-neuland_contact_row_update_name (NeulandContactRow *contact_row)
-{
-  NeulandContactRowPrivate *priv;
-  NeulandContact *contact;
-  GtkStyleContext *context;
-  const gchar *name;
-
-  g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
-
-  priv = contact_row->priv;
-  contact = priv->contact;
-  context = gtk_widget_get_style_context (GTK_WIDGET (priv->name_label));
-  name = neuland_contact_get_name (contact);
-
-  if (name && strlen (name) > 0)
-    {
-      gtk_style_context_remove_class (context, "dim-label");
-      neuland_contact_row_set_name (contact_row, name);
-    }
-  else
-    {
-      /* Looks like there is currently some gtk+ bug here; adding
-         dim-label doesn't cause the label to redraw at once. */
-      gtk_style_context_add_class (context, "dim-label");
-      neuland_contact_row_set_name (contact_row, neuland_contact_get_tox_id_hex (contact));
-    }
-}
-
-static void
-neuland_contact_row_name_changed_cb (GObject *obj,
-                                     GParamSpec *pspec,
-                                     gpointer user_data)
-{
-  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (user_data);
-
-  g_debug ("neuland_contact_row_name_changed_cb");
-
-  neuland_contact_row_update_name (contact_row);
 }
 
 static void
@@ -216,11 +164,7 @@ neuland_contact_row_set_connected (NeulandContactRow *contact_row,
   if (contact)
     {
       if (connected)
-        {
-          neuland_contact_row_set_status_message
-            (contact_row, neuland_contact_get_status_message (contact));
-          gtk_label_set_text (priv->time_label, "");
-        }
+        gtk_label_set_text (priv->time_label, "");
       else
         {
           guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
@@ -303,18 +247,24 @@ static void
 neuland_contact_row_set_contact (NeulandContactRow *contact_row,
                                  NeulandContact *contact)
 {
-  contact_row->priv->contact = contact;
+  NeulandContactRowPrivate *priv = contact_row->priv;
+
+  priv->contact = contact;
   if (contact != NULL) {
     g_object_connect (contact,
-                      "signal::notify::name", neuland_contact_row_name_changed_cb, contact_row,
-                      "signal::notify::connected", neuland_contact_row_connected_changed_cb, contact_row,
-                      "signal::notify::status", neuland_contact_row_status_changed_cb, contact_row,
-                      "signal::notify::status-message", neuland_contact_row_status_message_changed_cb, contact_row,
-                      "signal::notify::unread-messages", neuland_contact_row_unread_messages_cb, contact_row,
+                      "signal::notify::connected",
+                      neuland_contact_row_connected_changed_cb, contact_row,
+                      "signal::notify::status",
+                      neuland_contact_row_status_changed_cb, contact_row,
+                      "signal::notify::unread-messages",
+                      neuland_contact_row_unread_messages_cb, contact_row,
                       NULL);
 
-    neuland_contact_row_update_name (contact_row);
-    neuland_contact_row_status_message_changed_cb (G_OBJECT (contact), NULL, contact_row);
+    g_object_bind_property (contact, "preferred-name", priv->name_label, "label",
+                            G_BINDING_SYNC_CREATE);
+    g_object_bind_property (contact, "status-message", priv->status_label, "label",
+                            G_BINDING_SYNC_CREATE);
+
     neuland_contact_row_status_changed_cb (G_OBJECT (contact), NULL, contact_row);
     neuland_contact_row_connected_changed_cb (G_OBJECT (contact), NULL, contact_row);
   }
