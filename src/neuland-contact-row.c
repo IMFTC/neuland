@@ -46,6 +46,7 @@ enum {
 
 enum {
   PROP_0,
+  PROP_CONTACT,
   PROP_SELECTED,
   PROP_N
 };
@@ -129,122 +130,6 @@ neuland_contact_row_toggle_selected (NeulandContactRow *contact_row)
 }
 
 void
-neuland_contact_row_set_selected (NeulandContactRow *contact_row,
-                                  gboolean selected)
-{
-  NeulandContactRowPrivate *priv;
-
-  g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
-
-  priv = contact_row->priv;
-
-  if (priv->selected == selected)
-    return;
-
-  priv->selected = selected;
-  g_object_notify_by_pspec (G_OBJECT (contact_row), properties[PROP_SELECTED]);
-}
-
-gboolean
-neuland_contact_row_get_selected (NeulandContactRow *contact_row)
-{
-  g_return_val_if_fail (NEULAND_IS_CONTACT_ROW (contact_row), NULL);
-
-  return contact_row->priv->selected;
-}
-
-static void
-neuland_contact_row_set_property (GObject      *object,
-                                  guint         property_id,
-                                  const GValue *value,
-                                  GParamSpec   *pspec)
-{
-  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (object);
-
-  switch (property_id)
-    {
-    case PROP_SELECTED:
-      neuland_contact_row_set_selected (contact_row, g_value_get_boolean (value));
-      break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
-}
-
-static void
-neuland_contact_row_get_property (GObject      *object,
-                                  guint         property_id,
-                                  GValue       *value,
-                                  GParamSpec   *pspec)
-{
-  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (object);
-
-  switch (property_id)
-    {
-    case PROP_SELECTED:
-      g_value_set_boolean (value, neuland_contact_row_get_selected (contact_row));
-      break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
-}
-
-static void
-neuland_contact_row_class_init (NeulandContactRowClass *klass)
-{
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-
-  g_debug ("neuland_contact_row_class_init");
-
-  gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-contact-row.ui");
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, name_label);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_label);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, time_label);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, unread_messages);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_image);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, indicator_notebook);
-  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, selected_check_button);
-
-  gobject_class->dispose = neuland_contact_row_dispose;
-  gobject_class->finalize = neuland_contact_row_finalize;
-
-  gobject_class->set_property = neuland_contact_row_set_property;
-  gobject_class->get_property = neuland_contact_row_get_property;
-
-  properties[PROP_SELECTED] =
-    g_param_spec_boolean ("selected",
-                          "Selected",
-                          "TRUE if the row is selected (check box is activated), FALSE if not",
-                          FALSE,
-                          G_PARAM_READWRITE |
-                          G_PARAM_CONSTRUCT);
-
-  g_object_class_install_properties (gobject_class,
-                                     PROP_N,
-                                     properties);
-}
-
-static void
-neuland_contact_row_init (NeulandContactRow *contact_row)
-{
-  NeulandContactRowPrivate *priv;
-
-  g_debug ("neuland_contact_row_init");
-
-  gtk_widget_init_template (GTK_WIDGET (contact_row));
-
-  contact_row->priv = neuland_contact_row_get_instance_private (contact_row);
-
-  priv = contact_row->priv;
-  gtk_notebook_set_current_page (priv->indicator_notebook, 0);
-  g_object_bind_property (priv->selected_check_button, "active", contact_row, "selected",
-                          G_BINDING_BIDIRECTIONAL);
-}
-
-void
 neuland_contact_row_set_name (NeulandContactRow *contact_row, const char *name)
 {
   g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
@@ -282,15 +167,6 @@ neuland_contact_row_update_name (NeulandContactRow *contact_row)
       neuland_contact_row_set_name (contact_row, neuland_contact_get_tox_id_hex (contact));
     }
 }
-
-NeulandContact*
-neuland_contact_row_get_contact (NeulandContactRow *contact_row)
-{
-  g_return_val_if_fail (NEULAND_IS_CONTACT_ROW (contact_row), NULL);
-
-  return contact_row->priv->contact;
-}
-
 
 static void
 neuland_contact_row_name_changed_cb (GObject *obj,
@@ -423,6 +299,166 @@ neuland_contact_row_status_message_changed_cb (GObject *obj,
   neuland_contact_row_set_status_message (contact_row, status_message);
 }
 
+static void
+neuland_contact_row_set_contact (NeulandContactRow *contact_row,
+                                 NeulandContact *contact)
+{
+  contact_row->priv->contact = contact;
+  if (contact != NULL) {
+    g_object_connect (contact,
+                      "signal::notify::name", neuland_contact_row_name_changed_cb, contact_row,
+                      "signal::notify::connected", neuland_contact_row_connected_changed_cb, contact_row,
+                      "signal::notify::status", neuland_contact_row_status_changed_cb, contact_row,
+                      "signal::notify::status-message", neuland_contact_row_status_message_changed_cb, contact_row,
+                      "signal::notify::unread-messages", neuland_contact_row_unread_messages_cb, contact_row,
+                      NULL);
+
+    neuland_contact_row_update_name (contact_row);
+    neuland_contact_row_status_message_changed_cb (G_OBJECT (contact), NULL, contact_row);
+    neuland_contact_row_status_changed_cb (G_OBJECT (contact), NULL, contact_row);
+    neuland_contact_row_connected_changed_cb (G_OBJECT (contact), NULL, contact_row);
+  }
+}
+
+NeulandContact*
+neuland_contact_row_get_contact (NeulandContactRow *contact_row)
+{
+  g_return_val_if_fail (NEULAND_IS_CONTACT_ROW (contact_row), NULL);
+
+  return contact_row->priv->contact;
+}
+
+void
+neuland_contact_row_set_selected (NeulandContactRow *contact_row,
+                                  gboolean selected)
+{
+  NeulandContactRowPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_CONTACT_ROW (contact_row));
+
+  priv = contact_row->priv;
+
+  if (priv->selected == selected)
+    return;
+
+  priv->selected = selected;
+  g_object_notify_by_pspec (G_OBJECT (contact_row), properties[PROP_SELECTED]);
+}
+
+gboolean
+neuland_contact_row_get_selected (NeulandContactRow *contact_row)
+{
+  g_return_val_if_fail (NEULAND_IS_CONTACT_ROW (contact_row), NULL);
+
+  return contact_row->priv->selected;
+}
+
+static void
+neuland_contact_row_set_property (GObject      *object,
+                                  guint         property_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
+{
+  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (object);
+
+  switch (property_id)
+    {
+    case PROP_SELECTED:
+      neuland_contact_row_set_selected (contact_row, g_value_get_boolean (value));
+      break;
+    case PROP_CONTACT:
+      neuland_contact_row_set_contact (contact_row, g_value_get_object (value));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+neuland_contact_row_get_property (GObject      *object,
+                                  guint         property_id,
+                                  GValue       *value,
+                                  GParamSpec   *pspec)
+{
+  NeulandContactRow *contact_row = NEULAND_CONTACT_ROW (object);
+
+  switch (property_id)
+    {
+    case PROP_SELECTED:
+      g_value_set_boolean (value, neuland_contact_row_get_selected (contact_row));
+      break;
+    case PROP_CONTACT:
+      g_value_set_object (value, neuland_contact_row_get_contact (contact_row));
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+neuland_contact_row_class_init (NeulandContactRowClass *klass)
+{
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+
+  g_debug ("neuland_contact_row_class_init");
+
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-contact-row.ui");
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, name_label);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_label);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, time_label);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, unread_messages);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, status_image);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, indicator_notebook);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandContactRow, selected_check_button);
+
+  gobject_class->dispose = neuland_contact_row_dispose;
+  gobject_class->finalize = neuland_contact_row_finalize;
+
+  gobject_class->set_property = neuland_contact_row_set_property;
+  gobject_class->get_property = neuland_contact_row_get_property;
+
+
+  properties[PROP_CONTACT] =
+    g_param_spec_object ("contact",
+                         "Contact",
+                         "The NeulandContact represented by this widget",
+                         NEULAND_TYPE_CONTACT,
+                         G_PARAM_READWRITE |
+                         G_PARAM_CONSTRUCT_ONLY);
+
+  properties[PROP_SELECTED] =
+    g_param_spec_boolean ("selected",
+                          "Selected",
+                          "TRUE if the row is selected (check box is activated), FALSE if not",
+                          FALSE,
+                          G_PARAM_READWRITE |
+                          G_PARAM_CONSTRUCT);
+
+  g_object_class_install_properties (gobject_class,
+                                     PROP_N,
+                                     properties);
+}
+
+static void
+neuland_contact_row_init (NeulandContactRow *contact_row)
+{
+  NeulandContactRowPrivate *priv;
+
+  g_debug ("neuland_contact_row_init");
+
+  gtk_widget_init_template (GTK_WIDGET (contact_row));
+
+  contact_row->priv = neuland_contact_row_get_instance_private (contact_row);
+
+  priv = contact_row->priv;
+  gtk_notebook_set_current_page (priv->indicator_notebook, 0);
+  g_object_bind_property (priv->selected_check_button, "active", contact_row, "selected",
+                          G_BINDING_BIDIRECTIONAL);
+}
+
 void
 neuland_contact_row_show_selection (NeulandContactRow *contact_row,
                                     gboolean *show_selection)
@@ -448,24 +484,8 @@ neuland_contact_row_new (NeulandContact *contact)
 
   g_debug ("neuland_contact_row_new (%p)", contact);
 
-  contact_row = NEULAND_CONTACT_ROW (g_object_new (NEULAND_TYPE_CONTACT_ROW, NULL));
-  contact_row->priv->contact = contact;
-  if (contact != NULL) {
-    // Destroy ourself when the contact is finalized
-    //g_object_weak_ref (G_OBJECT (contact), (GWeakNotify)gtk_widget_destroy, GTK_WIDGET (contact_row));
-    g_object_connect (contact,
-                      "signal::notify::name", neuland_contact_row_name_changed_cb, contact_row,
-                      "signal::notify::connected", neuland_contact_row_connected_changed_cb, contact_row,
-                      "signal::notify::status", neuland_contact_row_status_changed_cb, contact_row,
-                      "signal::notify::status-message", neuland_contact_row_status_message_changed_cb, contact_row,
-                      "signal::notify::unread-messages", neuland_contact_row_unread_messages_cb, contact_row,
-                      NULL);
-
-    neuland_contact_row_update_name (contact_row);
-    neuland_contact_row_status_message_changed_cb (G_OBJECT (contact), NULL, contact_row);
-    neuland_contact_row_status_changed_cb (G_OBJECT (contact), NULL, contact_row);
-    neuland_contact_row_connected_changed_cb (G_OBJECT (contact), NULL, contact_row);
-  }
-
+  contact_row = NEULAND_CONTACT_ROW (g_object_new (NEULAND_TYPE_CONTACT_ROW,
+                                                   "contact", contact,
+                                                   NULL));
   return GTK_WIDGET (contact_row);
 }
