@@ -27,16 +27,18 @@ struct _NeulandFileTransferPrivate
   NeulandFileTransferDirection direction;
   NeulandFileTransferState state;
   NeulandFileTransferState requested_state;
+  guint64 contact_number;
+  gint file_number; /* toxcore uses uint8_t, we use int to allow -1 for unset */
+
+  GFile *file;
+  gchar *file_name;
   guint64 file_size;
   guint64 transferred_size;
   guint64 last_notify_size;
-  guint64 contact_number;
-  gint file_number;             /* toxcore uses uint8_t, we use int to allow -1 for unset */
-  gint buffer_size;
-  gchar *file_name;
-  GFile *file;
+
   GFileInputStream *input_stream;
   GFileOutputStream *output_stream;
+
   GDateTime *creation_time;
 };
 
@@ -61,9 +63,10 @@ static GParamSpec *properties[PROP_N] = {NULL, };
 static void
 neuland_file_transfer_dispose (GObject *object)
 {
-  g_debug ("neuland_file_transfer_dispose (%p)", object);
   NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (object);
   NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  g_debug ("neuland_file_transfer_dispose (%p)", object);
 
   g_clear_object (&priv->file);
   g_clear_object (&priv->output_stream);
@@ -75,9 +78,10 @@ neuland_file_transfer_dispose (GObject *object)
 static void
 neuland_file_transfer_finalize (GObject *object)
 {
-  g_debug ("neuland_file_transfer_finalize (%p)", object);
   NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (object);
   NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  g_debug ("neuland_file_transfer_finalize (%p)", object);
 
   g_free (priv->file_name);
   g_date_time_unref (priv->creation_time);
@@ -90,9 +94,8 @@ neuland_file_transfer_set_file_number (NeulandFileTransfer *file_transfer,
                                        gint file_number)
 {
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  priv->file_number = file_number;
+  file_transfer->priv->file_number = file_number;
 
   g_object_notify_by_pspec (G_OBJECT (file_transfer), properties[PROP_FILE_NUMBER]);
 }
@@ -101,29 +104,24 @@ gint8
 neuland_file_transfer_get_file_number (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), -1);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->file_number;
+  return file_transfer->priv->file_number;
 }
 
 guint64
 neuland_file_transfer_get_contact_number (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), -1);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->contact_number;
+  return file_transfer->priv->contact_number;
 }
 
 static void
 neuland_file_transfer_set_file_size (NeulandFileTransfer *file_transfer, guint64 file_size)
 {
-  g_debug ("neuland_file_transfer_set_file_size");
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
 
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
-
-  priv->file_size = file_size;
+  file_transfer->priv->file_size = file_size;
 
   g_object_notify_by_pspec (G_OBJECT (file_transfer), properties[PROP_FILE_SIZE]);
 }
@@ -132,18 +130,19 @@ guint64
 neuland_file_transfer_get_file_size (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), -1);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->file_size;
+  return file_transfer->priv->file_size;
 }
 
 void
 neuland_file_transfer_add_transferred_size (NeulandFileTransfer *file_transfer,
                                             guint64 transferred_size)
 {
-  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
+  NeulandFileTransferPrivate *priv;
 
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+
+  priv = file_transfer->priv;
   priv->transferred_size += transferred_size;
 
   /* Don't spam the signal handlers; only notify about the transferred
@@ -163,20 +162,23 @@ guint64
 neuland_file_transfer_get_transferred_size (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), 0);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->transferred_size;
+
+  return file_transfer->priv->transferred_size;
 }
 
 static void
 neuland_file_transfer_set_file_name (NeulandFileTransfer *file_transfer,
                                      const gchar *name)
 {
-  g_debug ("neuland_file_transfer_set_file_name");
-  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
+  NeulandFileTransferPrivate *priv;
 
+  g_debug ("neuland_file_transfer_set_file_name");
+
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   g_return_if_fail (name != NULL);
+
+  priv = file_transfer->priv;
 
   g_free (priv->file_name);
   priv->file_name = g_strdup (name);
@@ -188,9 +190,8 @@ const gchar *
 neuland_file_transfer_get_file_name (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), NULL);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->file_name;
+  return file_transfer->priv->file_name;
 }
 
 NeulandFileTransferDirection
@@ -198,19 +199,21 @@ neuland_file_transfer_get_direction (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer),
                         NEULAND_FILE_TRANSFER_DIRECTION_NONE);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->direction;
+  return file_transfer->priv->direction;
 }
 
 void
 neuland_file_transfer_set_file (NeulandFileTransfer *file_transfer, GFile *file)
 {
+  NeulandFileTransferPrivate *priv;
+
   g_debug ("neuland_file_transfer_set_file");
+
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   g_return_if_fail (G_IS_FILE (file));
 
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
+  priv = file_transfer->priv;
 
   g_clear_object (&priv->file);
   priv->file = g_object_ref (file);
@@ -227,8 +230,8 @@ neuland_file_transfer_set_file (NeulandFileTransfer *file_transfer, GFile *file)
                                            G_FILE_QUERY_INFO_NONE,
                                            NULL,
                                            NULL);
-
       goffset size = g_file_info_get_size (info);
+
       neuland_file_transfer_set_file_size (file_transfer, g_file_info_get_size (info));
       neuland_file_transfer_set_file_name (file_transfer, g_file_info_get_display_name (info));
       g_clear_object (&info);
@@ -241,17 +244,19 @@ GFile *
 neuland_file_transfer_get_file (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), NULL);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->file;
+  return file_transfer->priv->file;
 }
 
 void
 neuland_file_transfer_set_requested_state (NeulandFileTransfer *file_transfer,
                                            NeulandFileTransferState state)
 {
+  NeulandFileTransferPrivate *priv;
+
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  priv = file_transfer->priv;
 
   if (state == priv->state)
     return;
@@ -268,25 +273,28 @@ NeulandFileTransferState
 neuland_file_transfer_get_requested_state (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), 0);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->requested_state;
+  return file_transfer->priv->requested_state;
 }
 
 void
 neuland_file_transfer_set_state (NeulandFileTransfer *file_transfer,
                                  NeulandFileTransferState state)
 {
+  NeulandFileTransferPrivate *priv;
+  GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
+  GEnumValue *ev;
+
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
+
+  priv = file_transfer->priv;
 
   if (state == priv->state)
     return;
 
   priv->state = state;
 
-  GEnumClass *eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
-  GEnumValue *ev = g_enum_get_value (eclass, state);
+  ev = g_enum_get_value (eclass, state);
   g_debug ("Setting state of file transfer %p to:\n%s",
            file_transfer, ev->value_name);
 
@@ -307,23 +315,29 @@ NeulandFileTransferState
 neuland_file_transfer_get_state (NeulandFileTransfer *file_transfer)
 {
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), 0);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  return priv->state;
+  return file_transfer->priv->state;
 }
 
 gchar *
 neuland_file_transfer_get_info_string (NeulandFileTransfer *file_transfer)
 {
-  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), NULL);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
-
+  NeulandFileTransferPrivate *priv;
+  GEnumValue *ev_requested_state;
   GEnumClass *eclass;
+  GEnumValue *ev_direction;
+  GEnumValue *ev_state;
+
+  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), NULL);
+
+  priv = file_transfer->priv;
+
   eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_DIRECTION);
-  GEnumValue *ev_direction = g_enum_get_value (eclass, priv->direction);
+  ev_direction = g_enum_get_value (eclass, priv->direction);
+
   eclass = g_type_class_peek (NEULAND_TYPE_FILE_TRANSFER_STATE);
-  GEnumValue *ev_state = g_enum_get_value (eclass, neuland_file_transfer_get_state (file_transfer));
-  GEnumValue *ev_requested_state = g_enum_get_value (eclass, priv->requested_state);
+  ev_state = g_enum_get_value (eclass, neuland_file_transfer_get_state (file_transfer));
+  ev_requested_state = g_enum_get_value (eclass, priv->requested_state);
 
   return g_strdup_printf ("\n"
                           "< NeulandFileTransfer %p >\n"
@@ -392,7 +406,6 @@ neuland_file_transfer_get_property (GObject *object,
                                     GParamSpec *pspec)
 {
   NeulandFileTransfer *file_transfer = NEULAND_FILE_TRANSFER (object);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
   switch (property_id)
     {
@@ -431,11 +444,11 @@ neuland_file_transfer_class_init (NeulandFileTransferClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->dispose = neuland_file_transfer_dispose;
-  gobject_class->finalize = neuland_file_transfer_finalize;
-
   gobject_class->set_property = neuland_file_transfer_set_property;
   gobject_class->get_property = neuland_file_transfer_get_property;
+
+  gobject_class->dispose = neuland_file_transfer_dispose;
+  gobject_class->finalize = neuland_file_transfer_finalize;
 
   properties[PROP_DIRECTION] =
     g_param_spec_enum ("direction",
@@ -523,9 +536,8 @@ static void
 neuland_file_transfer_init (NeulandFileTransfer *file_transfer)
 {
   file_transfer->priv = neuland_file_transfer_get_instance_private (file_transfer);
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
 
-  priv->creation_time = g_date_time_new_now_local ();
+  file_transfer->priv->creation_time = g_date_time_new_now_local ();
 }
 
 /* Returns the number of appended bytes or -1 on error. This function
@@ -535,13 +547,17 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
                                    GByteArray *data_array)
 {
   /* g_debug ("neuland_file_transfer_append_data"); */
-  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), 0);
-
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
-  const gchar *name = priv->file_name;
-  gchar *path = g_file_get_path (priv->file);
+  NeulandFileTransferPrivate *priv;
+  const gchar *name;
+  gchar *path;
   GError *error = NULL;
   gssize count;
+
+  g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), -1);
+
+  priv = file_transfer->priv;
+  name = priv->file_name;
+  path = g_file_get_path (priv->file);
 
   /* TODO: Check if file exists, don't just append! */
   if (priv->output_stream == NULL)
@@ -581,7 +597,11 @@ neuland_file_transfer_append_data (NeulandFileTransfer *file_transfer,
 void
 neuland_file_transfer_prepare_resume_sending (NeulandFileTransfer *file_transfer)
 {
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
+  NeulandFileTransferPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
+
+  priv = file_transfer->priv;
   g_seekable_seek (G_SEEKABLE (priv->input_stream),
                    (goffset)priv->transferred_size,
                    G_SEEK_SET,
@@ -596,15 +616,18 @@ neuland_file_transfer_get_next_data (NeulandFileTransfer *file_transfer,
                                      gpointer buffer,
                                      gint data_size)
 {
-  /* g_debug ("neuland_file_transfer_get_next_data"); */
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
-  const gchar *name = priv->file_name;
-  gchar *path = g_file_get_path (priv->file);
+  NeulandFileTransferPrivate *priv;
+  const gchar *name;
+  gchar *path;
   GError *error = NULL;
   gssize count;
 
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), 0);
   g_assert (data_size > 0);
+
+  priv = file_transfer->priv;
+  name = priv->file_name;
+  path = g_file_get_path (priv->file);
 
   if (!priv->input_stream)
     priv->input_stream = g_file_read (priv->file, NULL, &error);
@@ -650,18 +673,21 @@ NeulandFileTransfer *
 neuland_file_transfer_new_sending (gint64 contact_number,
                                    GFile *file)
 {
-  g_debug ("neuland_file_transfer_new_sending");
+  NeulandFileTransfer *file_transfer;
+  gchar *info;
+
   g_return_val_if_fail (G_IS_FILE (file), NULL);
+  g_return_val_if_fail (contact_number >= 0, NULL);
 
-  NeulandFileTransfer *file_transfer =
-    NEULAND_FILE_TRANSFER (g_object_new (NEULAND_TYPE_FILE_TRANSFER,
-                                         "contact_number", contact_number,
-                                         "direction", NEULAND_FILE_TRANSFER_DIRECTION_SEND,
-                                         "file", file,
-                                         NULL));
+  file_transfer =  g_object_new (NEULAND_TYPE_FILE_TRANSFER,
+                                 "contact_number", contact_number,
+                                 "direction", NEULAND_FILE_TRANSFER_DIRECTION_SEND,
+                                 "file", file,
+                                 NULL);
 
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
-  g_message ("new sending file transfer: \"%s\"", priv->file_name);
+  info = neuland_file_transfer_get_info_string (file_transfer);
+  g_message ("New outgoing file transfer:\n%s", info);
+  g_free (info);
 
   return file_transfer;
 }
@@ -672,19 +698,20 @@ neuland_file_transfer_new_receiving (gint64 contact_number,
                                      const gchar *file_name,
                                      guint64 file_size)
 {
-  g_debug ("neuland_file_transfer_new_receiving");
+  NeulandFileTransfer *file_transfer;
+  gchar *info;
 
-  NeulandFileTransfer *file_transfer =
-    NEULAND_FILE_TRANSFER (g_object_new (NEULAND_TYPE_FILE_TRANSFER,
-                                         "contact_number", contact_number,
-                                         "direction", NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE,
-                                         "file-number", file_number,
-                                         "file-name", file_name,
-                                         "file-size", file_size,
-                                         NULL));
+  file_transfer =  g_object_new (NEULAND_TYPE_FILE_TRANSFER,
+                                 "contact_number", contact_number,
+                                 "direction", NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE,
+                                 "file-number", file_number,
+                                 "file-name", file_name,
+                                 "file-size", file_size,
+                                 NULL);
 
-  NeulandFileTransferPrivate *priv = file_transfer->priv;
-  g_message ("new receiving file transfer: \"%s\" (%i bytes)", priv->file_name, priv->file_size);
+  info = neuland_file_transfer_get_info_string (file_transfer);
+  g_message ("New incoming file transfer:\n%s", info);
+  g_free (info);
 
   return file_transfer;
 }
