@@ -947,7 +947,6 @@ neuland_contact_new (const guint8 *tox_id, gint64 contact_number,
                      guint64 last_connected_change)
 {
   NeulandContact *neuland_contact;
-  NeulandContactPrivate *priv = neuland_contact->priv;
 
   neuland_contact = NEULAND_CONTACT (g_object_new (NEULAND_TYPE_CONTACT,
                                                    "tox-id", tox_id,
