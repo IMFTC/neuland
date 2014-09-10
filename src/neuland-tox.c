@@ -1279,7 +1279,7 @@ neuland_tox_connect_callbacks (NeulandTox *tox)
 }
 
 static void
-neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
+neuland_tox_set_data_path (NeulandTox *tox, const gchar *data_path)
 {
   NeulandToxPrivate *priv = tox->priv;
   Tox *tox_struct = priv->tox_struct;
@@ -1299,7 +1299,7 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
           g_mutex_unlock (&priv->mutex);
 
           if (ret == 0)
-            priv->data_path = data_path;
+            priv->data_path = g_strdup (data_path);
           else
             {
               g_warning ("tox_load () for data path \"%s\" failed with return value %i. Setting data path to NULL.",
@@ -1315,7 +1315,7 @@ neuland_tox_set_data_path (NeulandTox *tox, gchar *data_path)
                  when closing we will try to save the tox data to this
                  location. */
               g_message ("File \"%s\" not found. Will try to save new data to it on exit.", data_path);
-              priv->data_path = data_path;
+              priv->data_path = g_strdup (data_path);
               data_path_exists = FALSE;
             }
           else
@@ -1763,7 +1763,7 @@ neuland_tox_set_property (GObject *object,
   switch (property_id)
     {
     case PROP_DATA_PATH:
-      neuland_tox_set_data_path (nt, g_value_dup_string (value));
+      neuland_tox_set_data_path (nt, g_value_get_string (value));
       break;
     case PROP_NAME:
       neuland_tox_set_name (nt, g_value_get_string (value));
