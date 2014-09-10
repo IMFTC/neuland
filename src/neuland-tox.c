@@ -687,7 +687,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
                     }
 
                   /* g_debug ("tox_file_send_data() failed, trying again later"); */
-                  g_usleep (10000);
+                  g_usleep (1000);
                 }
             }
         }
