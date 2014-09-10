@@ -99,8 +99,7 @@ neuland_contact_update_preferred_name (NeulandContact *contact)
   if (name_length > 0)
     priv->preferred_name = g_utf8_substring (name, 0, name_length);
   else
-    priv->preferred_name = g_strndup (neuland_contact_get_tox_id_hex (contact),
-                                      MAX_PREFERRED_NAME_LENGTH);
+    priv->preferred_name = g_strndup (priv->tox_id_hex, MAX_PREFERRED_NAME_LENGTH);
 
   g_debug ("Preferred name for contact %p changed to: \"%s\"", contact, priv->preferred_name);
 }
@@ -189,7 +188,7 @@ static void
 neuland_contact_update_last_seen (NeulandContact *contact)
 {
   NeulandContactPrivate *priv = contact->priv;
-  guint64 last_connected_change = neuland_contact_get_last_connected_change (contact);
+  guint64 last_connected_change = priv->last_connected_change;
 
   g_free (priv->last_seen);
 
@@ -665,13 +664,18 @@ void
 neuland_contact_signal_incoming_message (NeulandContact *contact,
                                          const gchar *incoming_message)
 {
+  NeulandContactPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  priv = contact->priv;
+
   /* See note [*0] */
   if (!contact->priv->has_chat_widget)
     g_signal_emit (contact, signals[ENSURE_CHAT_WIDGET], 0);
   if (!contact->priv->has_chat_widget)
     g_warning ("Apparently there is no chat widget for contact %s, even though "
                "its creation has been requested. The following message might go lost:\n%s",
-               neuland_contact_get_name (contact), incoming_message);
+               priv->preferred_name, incoming_message);
 
   g_signal_emit (contact,
                  signals[INCOMING_MESSAGE],
@@ -683,13 +687,18 @@ void
 neuland_contact_signal_incoming_action (NeulandContact *contact,
                                         const gchar *incoming_action)
 {
+  NeulandContactPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+  priv = contact->priv;
+
   /* See note [*0] */
   if (!contact->priv->has_chat_widget)
     g_signal_emit (contact, signals[ENSURE_CHAT_WIDGET], 0);
   if (!contact->priv->has_chat_widget)
     g_warning ("Apparently there is no chat widget for contact %s, even though "
                "its creation has been requested. The following action might go lost:\n%s",
-               neuland_contact_get_name (contact), incoming_action);
+               priv->preferred_name, incoming_action);
 
   g_signal_emit (contact,
                  signals[INCOMING_ACTION],
