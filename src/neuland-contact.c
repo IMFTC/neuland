@@ -26,27 +26,26 @@
 #include "neuland-enums.h"
 
 #define NEULAND_CONTACT_SHOW_TYPING_TIMEOUT 3 /* Seconds */
-#define MAX_PREFERRED_NAME_LENGTH 12 /* characters, not bytes */
+#define MAX_PREFERRED_NAME_LENGTH 12          /* UTF-8 chars, not bytes */
 
 struct _NeulandContactPrivate
 {
-  gint64 number;
-  gpointer tox_id;
   gchar *tox_id_hex;
   gchar *name;
   gchar *preferred_name;
   gchar *status_message;
   gchar *request_message;
-
-  NeulandContactStatus status;
-  gboolean connected;
-  gboolean is_typing;
-  guint unread_messages;
-  guint64 last_connected_change;
   gchar *last_seen;
 
-  gboolean has_chat_widget;
+  gpointer tox_id;
+  guint unread_messages;
   guint show_typing_timeout_id;
+  gint64 number;
+  guint64 last_connected_change;
+  gboolean connected;
+  gboolean is_typing;
+  gboolean has_chat_widget;
+  NeulandContactStatus status;
 
   GHashTable *file_transfers_send;
   GHashTable *file_transfers_receive;
@@ -108,8 +107,11 @@ void
 neuland_contact_set_name (NeulandContact *contact,
                           const gchar *name)
 {
+  NeulandContactPrivate *priv;
+
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
-  NeulandContactPrivate *priv = contact->priv;
+
+  priv = contact->priv;
 
   if (g_strcmp0 (priv->name, name) == 0)
     return;
@@ -129,6 +131,7 @@ const gchar *
 neuland_contact_get_name (NeulandContact *contact)
 {
   g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
   return contact->priv->name;
 }
 
@@ -136,8 +139,13 @@ void
 neuland_contact_set_request_message (NeulandContact *contact,
                                      const gchar *request_message)
 {
+  NeulandContactPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  priv = contact->priv;
   g_free (contact->priv->request_message);
-  contact->priv->request_message = g_strdup (request_message);
+  priv->request_message = g_strdup (request_message);
 
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_REQUEST_MESSAGE]);
 }
@@ -145,6 +153,8 @@ neuland_contact_set_request_message (NeulandContact *contact,
 const gchar *
 neuland_contact_get_request_message (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
   return contact->priv->request_message;
 }
 
@@ -163,32 +173,45 @@ void
 neuland_contact_set_has_chat_widget (NeulandContact *contact,
                                      gboolean has_chat_widget)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   contact->priv->has_chat_widget = has_chat_widget;
 }
 
 gboolean
 neuland_contact_get_has_chat_widget (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
   return contact->priv->has_chat_widget;
 }
 
 gboolean
 neuland_contact_get_connected (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), FALSE);
+
   return contact->priv->connected;
 }
 
 guint64
 neuland_contact_get_last_connected_change (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), 0);
+
   return contact->priv->last_connected_change;
 }
 
 static void
 neuland_contact_update_last_seen (NeulandContact *contact)
 {
-  NeulandContactPrivate *priv = contact->priv;
-  guint64 last_connected_change = priv->last_connected_change;
+  NeulandContactPrivate *priv;
+  guint64 last_connected_change;
+
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  priv = contact->priv;
+  last_connected_change = priv->last_connected_change;
 
   g_free (priv->last_seen);
 
@@ -196,101 +219,108 @@ neuland_contact_update_last_seen (NeulandContact *contact)
     /* This shouldn't be displayed */
     /* Translators: This is the status message when the contact is currently online. */
     priv->last_seen = g_strdup (_("Now Online"));
-  else if (last_connected_change == 0)
-    /* Translators: This is schown when we haven't seen this contact online yet. */
-    priv->last_seen = g_strdup (_("Never"));
   else
     {
-      gchar *format;
-      GDateTime *now = g_date_time_new_now_local ();
-      GDateTime *last = g_date_time_new_from_unix_local (last_connected_change);
-      gint y_now, m_now, d_now;  /* year, month, day */
-      g_date_time_get_ymd (now, &y_now, &m_now, &d_now);
-
-      GDateTime *start_today = g_date_time_new_local (y_now, m_now, d_now, 0, 0, 0);
-      GDateTime *start_yesterday = g_date_time_add_days (start_today, -1);
-      GDateTime *start_6_days_ago = g_date_time_add_days (start_today, -6);
-      GDateTime *start_year = g_date_time_new_local (y_now, 1, 1, 0, 0, 0);
-
-      if (neuland_use_24h_time_format ())
-        {
-          if (g_date_time_compare (start_today, last) != 1)
-            /* start_today <= last */
-
-            /* Translators: Time in 24h format */
-            format = _("%H:%M");
-
-          else if (g_date_time_compare (start_yesterday, last) != 1)
-            /* start_yesterday <= last */
-
-            /* Translators: This is "Yesterday" followed by a time string in 24h format */
-            format = _("Yesterday, %H:%M");
-
-          else if (g_date_time_compare (start_6_days_ago, last) != 1)
-            /* 6 or less days ago (not 7 days ago, because we don't want
-               to show Monday 10:12 when today is Monday, too). */
-
-            /* Translators: This is a abbreviated week day name
-               followed by a time string in 24h format */
-            format = _("%a, %H:%M");
-
-          else if (g_date_time_compare (start_year, last) != 1)
-            /* start_year <= last */
-
-            /* Translators: This is the abbreviated month name and day
-               number followed by a time string in 24h format */
-            format = _("%b %d, %H:%M");
-
-          else
-            /* last < start_year */
-
-            /* Translators: This is the abbreviated month name, day
-               number, year number followed by a time string in 24h
-               format */
-            format = _("%b %d %Y, %H:%M");
-        }
+      if (last_connected_change == 0)
+        /* Translators: This is schown when we haven't seen this contact online yet. */
+        priv->last_seen = g_strdup (_("Never"));
       else
         {
-          if (g_date_time_compare (start_today, last) != 1)
-            /* start_today <= last */
-            /* Translators: Time in 12h format */
-            format = _("%l:%M %p");
-          else if (g_date_time_compare (start_yesterday, last) != 1)
-            /* start_yesterday <= last */
-            /* Translators: This is "Yesterday" followed by a time string in 12h format */
-            format = _("Yesterday, %l:%M %p");
+          gchar *format;
+          gint y_now, m_now, d_now;  /* year, month, day */
+          GDateTime *now = g_date_time_new_now_local ();
+          GDateTime *last = g_date_time_new_from_unix_local (last_connected_change);
+          GDateTime *start_today;
+          GDateTime *start_yesterday;
+          GDateTime *start_6_days_ago;
+          GDateTime *start_year;
 
-          else if (g_date_time_compare (start_6_days_ago, last) != 1)
-            /* 6 or less days ago (not 7 days ago, because we don't want
-               to show Monday 10:12 when today is Monday, too). */
+          g_date_time_get_ymd (now, &y_now, &m_now, &d_now);
 
-            /* Translators: This is a abbreviated week day name
-               followed by a time string in 12h format */
-            format = _("%a, %l:%M %p");
+          start_today = g_date_time_new_local (y_now, m_now, d_now, 0, 0, 0);
+          start_yesterday = g_date_time_add_days (start_today, -1);
+          start_6_days_ago = g_date_time_add_days (start_today, -6);
+          start_year = g_date_time_new_local (y_now, 1, 1, 0, 0, 0);
 
-          else if (g_date_time_compare (start_year, last) != 1)
-            /* start_year <= last */
-            /* Translators: This is the abbreviated month name, day
-               number followed by a time string in 12h format */
-            format = _("%b %d, %l:%M %p");
+          if (neuland_use_24h_time_format ())
+            {
+              if (g_date_time_compare (start_today, last) != 1)
+                /* start_today <= last */
 
+                /* Translators: Time in 24h format */
+                format = _("%H:%M");
+
+              else if (g_date_time_compare (start_yesterday, last) != 1)
+                /* start_yesterday <= last */
+
+                /* Translators: This is "Yesterday" followed by a time string in 24h format */
+                format = _("Yesterday, %H:%M");
+
+              else if (g_date_time_compare (start_6_days_ago, last) != 1)
+                /* 6 or less days ago (not 7 days ago, because we don't want
+                   to show Monday 10:12 when today is Monday, too). */
+
+                /* Translators: This is a abbreviated week day name
+                   followed by a time string in 24h format */
+                format = _("%a, %H:%M");
+
+              else if (g_date_time_compare (start_year, last) != 1)
+                /* start_year <= last */
+
+                /* Translators: This is the abbreviated month name and day
+                   number followed by a time string in 24h format */
+                format = _("%b %d, %H:%M");
+
+              else
+                /* last < start_year */
+
+                /* Translators: This is the abbreviated month name, day
+                   number, year number followed by a time string in 24h
+                   format */
+                format = _("%b %d %Y, %H:%M");
+            }
           else
-            /* last < start_year */
-            /* Translators: This is the abbreviated month name, day
-               number, year number followed by a time string in 12h
-               format. */
-            format = _("%b %d %Y, %l:%M %p");
+            {
+              if (g_date_time_compare (start_today, last) != 1)
+                /* start_today <= last */
+                /* Translators: Time in 12h format */
+                format = _("%l:%M %p");
+              else if (g_date_time_compare (start_yesterday, last) != 1)
+                /* start_yesterday <= last */
+                /* Translators: This is "Yesterday" followed by a time string in 12h format */
+                format = _("Yesterday, %l:%M %p");
+
+              else if (g_date_time_compare (start_6_days_ago, last) != 1)
+                /* 6 or less days ago (not 7 days ago, because we don't want
+                   to show Monday 10:12 when today is Monday, too). */
+
+                /* Translators: This is a abbreviated week day name
+                   followed by a time string in 12h format */
+                format = _("%a, %l:%M %p");
+
+              else if (g_date_time_compare (start_year, last) != 1)
+                /* start_year <= last */
+                /* Translators: This is the abbreviated month name, day
+                   number followed by a time string in 12h format */
+                format = _("%b %d, %l:%M %p");
+
+              else
+                /* last < start_year */
+                /* Translators: This is the abbreviated month name, day
+                   number, year number followed by a time string in 12h
+                   format. */
+                format = _("%b %d %Y, %l:%M %p");
+            }
+
+          priv->last_seen = g_date_time_format (last, format);
+
+          g_date_time_unref (now);
+          g_date_time_unref (last);
+          g_date_time_unref (start_today);
+          g_date_time_unref (start_yesterday);
+          g_date_time_unref (start_6_days_ago);
+          g_date_time_unref (start_year);
         }
-
-
-      priv->last_seen = g_date_time_format (last, format);
-
-      g_date_time_unref (now);
-      g_date_time_unref (last);
-      g_date_time_unref (start_today);
-      g_date_time_unref (start_yesterday);
-      g_date_time_unref (start_6_days_ago);
-      g_date_time_unref (start_year);
     }
 
   g_object_notify_by_pspec (G_OBJECT (contact),
@@ -301,9 +331,9 @@ static void
 neuland_contact_set_last_connected_change (NeulandContact *contact,
                                            guint64 last_connected_change)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   contact->priv->last_connected_change = last_connected_change;
-  g_debug ("setting last_connected_change to %llus since epoche",
-           last_connected_change);
 
   g_object_freeze_notify (G_OBJECT (contact));
 
@@ -318,14 +348,18 @@ void
 neuland_contact_set_connected (NeulandContact *contact,
                                gboolean connected)
 {
-  NeulandContactPrivate *priv = contact->priv;
+  NeulandContactPrivate *priv;
+
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  priv = contact->priv;
+
   if (priv->connected == connected)
     return;
 
   g_object_freeze_notify (G_OBJECT (contact));
 
-  neuland_contact_set_last_connected_change (contact,
-                                             (guint64)(g_get_real_time () / 1000000LL));
+  neuland_contact_set_last_connected_change (contact, (guint64)(g_get_real_time () / 1000000LL));
   priv->connected = connected;
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_CONNECTED]);
 
@@ -335,16 +369,10 @@ neuland_contact_set_connected (NeulandContact *contact,
 }
 
 gboolean
-neuland_contact_is_connected (NeulandContact *contact)
-{
-  NeulandContactPrivate *priv = contact->priv;
-
-  return priv->connected;
-}
-
-gboolean
 neuland_contact_get_is_typing (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), FALSE);
+
   return contact->priv->is_typing;
 }
 
@@ -363,8 +391,13 @@ show_typing_timeout_func (gpointer user_data)
 void
 neuland_contact_set_show_typing (NeulandContact *contact, gboolean show_typing)
 {
-  NeulandContactPrivate *priv = contact->priv;
-  gboolean old_show_typing = (priv->show_typing_timeout_id != 0);
+  NeulandContactPrivate *priv;
+  gboolean old_show_typing;
+
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  priv = contact->priv;
+  old_show_typing = (priv->show_typing_timeout_id != 0);
 
   if (old_show_typing)
     g_source_remove (priv->show_typing_timeout_id);
@@ -383,18 +416,24 @@ neuland_contact_set_show_typing (NeulandContact *contact, gboolean show_typing)
 const gchar *
 neuland_contact_get_status_message (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
   return contact->priv->status_message;
 }
 
 gboolean
 neuland_contact_get_show_typing (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), FALSE);
+
   return (contact->priv->show_typing_timeout_id != 0);
 }
 
 void
 neuland_contact_set_is_typing (NeulandContact *contact, gboolean is_typing)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   contact->priv->is_typing = is_typing;
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_IS_TYPING]);
 }
@@ -402,6 +441,8 @@ neuland_contact_set_is_typing (NeulandContact *contact, gboolean is_typing)
 gboolean
 neuland_contact_is_request (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), FALSE);
+
   return contact->priv->number < 0;
 }
 
@@ -409,9 +450,11 @@ neuland_contact_is_request (NeulandContact *contact)
 static void
 neuland_contact_set_tox_id (NeulandContact *contact, gpointer tox_id)
 {
-  NeulandContactPrivate *priv = contact->priv;
-  g_return_if_fail (priv->tox_id == NULL);
+  NeulandContactPrivate *priv;
 
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
+  priv = contact->priv;
   priv->tox_id = g_memdup (tox_id, TOX_CLIENT_ID_SIZE);
   priv->tox_id_hex = g_malloc0 (TOX_CLIENT_ID_SIZE * 2 + 1);
 
@@ -421,18 +464,24 @@ neuland_contact_set_tox_id (NeulandContact *contact, gpointer tox_id)
 const gpointer
 neuland_contact_get_tox_id (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
   return contact->priv->tox_id;
 }
 
 const gchar *
 neuland_contact_get_tox_id_hex (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
   return contact->priv->tox_id_hex;
 }
 
 void
 neuland_contact_set_number (NeulandContact *contact, gint64 number)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   contact->priv->number = number;
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_NUMBER]);
 }
@@ -440,6 +489,8 @@ neuland_contact_set_number (NeulandContact *contact, gint64 number)
 gint64
 neuland_contact_get_number (NeulandContact *contact)
 {
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), -1);
+
   return contact->priv->number;
 }
 
@@ -449,12 +500,15 @@ void
 neuland_contact_add_file_transfer (NeulandContact *contact,
                                    NeulandFileTransfer *file_transfer)
 {
+  NeulandContactPrivate *priv;
+  NeulandFileTransferDirection direction;
+
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
   g_return_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer));
   g_return_if_fail (neuland_file_transfer_get_file_number (file_transfer) != -1);
 
-  NeulandContactPrivate *priv = contact->priv;
-  NeulandFileTransferDirection direction = neuland_file_transfer_get_direction (file_transfer);
+  priv = contact->priv;
+  direction = neuland_file_transfer_get_direction (file_transfer);
 
   if (direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE)
     {
@@ -485,11 +539,14 @@ neuland_contact_get_file_transfer (NeulandContact *contact,
                                    NeulandFileTransferDirection direction,
                                    gint file_number)
 {
-  g_return_if_fail (NEULAND_IS_CONTACT (contact));
-  NeulandContactPrivate *priv = contact->priv;
+  NeulandContactPrivate *priv;
+  GHashTable *table;
 
-  GHashTable *table =
-    direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE ?
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
+  priv = contact->priv;
+
+  table = direction == NEULAND_FILE_TRANSFER_DIRECTION_RECEIVE ?
     priv->file_transfers_receive :
     priv->file_transfers_send;
 
@@ -500,10 +557,28 @@ neuland_contact_get_file_transfer (NeulandContact *contact,
 GList *
 neuland_contact_get_file_transfers (NeulandContact *contact)
 {
-  g_return_if_fail (NEULAND_IS_CONTACT (contact));
-  NeulandContactPrivate *priv = contact->priv;
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
 
-  g_hash_table_get_values (priv->file_transfers_all);
+  g_hash_table_get_values (contact->priv->file_transfers_all);
+}
+
+
+/* Returns the preferred name (truncated to 12 chars) for
+   contact. String is owned by @contact, don't free it. */
+const gchar *
+neuland_contact_get_preferred_name (NeulandContact *contact)
+{
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
+  return contact->priv->preferred_name;
+}
+
+const gchar *
+neuland_contact_get_last_seen (NeulandContact *contact)
+{
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+
+  return contact->priv->last_seen;
 }
 
 static void
@@ -513,6 +588,7 @@ neuland_contact_set_property (GObject *object,
                               GParamSpec *pspec)
 {
   NeulandContact *contact = NEULAND_CONTACT (object);
+
   switch (property_id)
     {
     case PROP_NUMBER:
@@ -552,22 +628,6 @@ neuland_contact_set_property (GObject *object,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
     }
-}
-
-/* Returns the preferred name (truncated to 12 chars) for
-   contact. String is owned by @contact, don't free it. */
-const gchar *
-neuland_contact_get_preferred_name (NeulandContact *contact)
-{
-  return contact->priv->preferred_name;
-}
-
-const gchar *
-neuland_contact_get_last_seen (NeulandContact *contact)
-{
-  NeulandContactPrivate *priv = contact->priv;
-
-  return priv->last_seen;
 }
 
 static void
@@ -631,6 +691,8 @@ neuland_contact_get_property (GObject *object,
 void
 neuland_contact_increase_unread_messages (NeulandContact *contact)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   contact->priv->unread_messages++;
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_UNREAD_MESSAGES]);
 }
@@ -638,6 +700,8 @@ neuland_contact_increase_unread_messages (NeulandContact *contact)
 void
 neuland_contact_reset_unread_messages (NeulandContact *contact)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   contact->priv->unread_messages = 0;
   g_object_notify_by_pspec (G_OBJECT (contact), properties[PROP_UNREAD_MESSAGES]);
 }
@@ -645,6 +709,8 @@ neuland_contact_reset_unread_messages (NeulandContact *contact)
 void
 neuland_contact_send_message (NeulandContact *contact, const gchar *outgoing_message)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   g_signal_emit (contact,
                  signals[OUTGOING_MESSAGE],
                  0,
@@ -654,6 +720,8 @@ neuland_contact_send_message (NeulandContact *contact, const gchar *outgoing_mes
 void
 neuland_contact_send_action (NeulandContact *contact, gchar *outgoing_action)
 {
+  g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   g_signal_emit (contact,
                  signals[OUTGOING_ACTION],
                  0,
@@ -667,12 +735,13 @@ neuland_contact_signal_incoming_message (NeulandContact *contact,
   NeulandContactPrivate *priv;
 
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   priv = contact->priv;
 
   /* See note [*0] */
-  if (!contact->priv->has_chat_widget)
+  if (!priv->has_chat_widget)
     g_signal_emit (contact, signals[ENSURE_CHAT_WIDGET], 0);
-  if (!contact->priv->has_chat_widget)
+  if (!priv->has_chat_widget)
     g_warning ("Apparently there is no chat widget for contact %s, even though "
                "its creation has been requested. The following message might go lost:\n%s",
                priv->preferred_name, incoming_message);
@@ -690,12 +759,13 @@ neuland_contact_signal_incoming_action (NeulandContact *contact,
   NeulandContactPrivate *priv;
 
   g_return_if_fail (NEULAND_IS_CONTACT (contact));
+
   priv = contact->priv;
 
   /* See note [*0] */
-  if (!contact->priv->has_chat_widget)
+  if (!priv->has_chat_widget)
     g_signal_emit (contact, signals[ENSURE_CHAT_WIDGET], 0);
-  if (!contact->priv->has_chat_widget)
+  if (!priv->has_chat_widget)
     g_warning ("Apparently there is no chat widget for contact %s, even though "
                "its creation has been requested. The following action might go lost:\n%s",
                priv->preferred_name, incoming_action);
@@ -706,26 +776,28 @@ neuland_contact_signal_incoming_action (NeulandContact *contact,
                  incoming_action);
 }
 
+/* This isn't useful for anything right now, maybe later? */
 static void
 incoming_action_or_message (NeulandContact *contact,
                             const gchar *message,
                             gpointer user_data)
 {
-  g_debug ("incoming_action_or_message");
+  /* empty */
 }
 
 static void
 neuland_contact_finalize (GObject *object)
 {
-  g_debug ("neuland_contact_finalize (%p)", object);
-
   NeulandContact *contact = NEULAND_CONTACT (object);
   NeulandContactPrivate *priv = contact->priv;
+
+  g_debug ("neuland_contact_finalize (%p)", object);
 
   g_free (priv->name);
   g_free (priv->status_message);
   g_free (priv->tox_id);
   g_free (priv->tox_id_hex);
+  g_free (priv->last_seen);
 
   G_OBJECT_CLASS (neuland_contact_parent_class)->finalize (object);
 }
@@ -737,6 +809,7 @@ neuland_contact_class_init (NeulandContactClass *klass)
 
   gobject_class->set_property = neuland_contact_set_property;
   gobject_class->get_property = neuland_contact_get_property;
+
   gobject_class->finalize = neuland_contact_finalize;
 
   klass->incoming_action_or_message = incoming_action_or_message;
@@ -934,21 +1007,16 @@ neuland_contact_class_init (NeulandContactClass *klass)
 static void
 neuland_contact_init (NeulandContact *contact)
 {
+  NeulandContactPrivate *priv;
+
   g_debug ("neuland_contact_init");
-  NEULAND_IS_CONTACT (contact);
 
   contact->priv = neuland_contact_get_instance_private (contact);
+  priv = contact->priv;
 
-  NeulandContactPrivate *priv = contact->priv;
-
-  priv->file_transfers_receive =
-    g_hash_table_new (NULL, NULL);
-
-  priv->file_transfers_send =
-    g_hash_table_new (NULL, NULL);
-
-  priv->file_transfers_all =
-    g_hash_table_new (NULL, NULL);
+  priv->file_transfers_receive = g_hash_table_new (NULL, NULL);
+  priv->file_transfers_send = g_hash_table_new (NULL, NULL);
+  priv->file_transfers_all = g_hash_table_new (NULL, NULL);
 }
 
 NeulandContact *
@@ -957,11 +1025,9 @@ neuland_contact_new (const guint8 *tox_id, gint64 contact_number,
 {
   NeulandContact *neuland_contact;
 
-  neuland_contact = NEULAND_CONTACT (g_object_new (NEULAND_TYPE_CONTACT,
-                                                   "tox-id", tox_id,
-                                                   "number", contact_number,
-                                                   "last-connected-change", last_connected_change,
-                                                   NULL));
-
-  return neuland_contact;
+  return g_object_new (NEULAND_TYPE_CONTACT,
+                       "tox-id", tox_id,
+                       "number", contact_number,
+                       "last-connected-change", last_connected_change,
+                       NULL);
 }
