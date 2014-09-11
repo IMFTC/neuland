@@ -137,6 +137,9 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
   NeulandWindowPrivate *priv = window->priv;
   GAction *send_file_action;
 
+  /* g_message ("bindings: %p %p %p", priv->name_binding,
+   *            priv->status_binding, priv->connected_binding); */
+
   // Destroy old bindings
   g_clear_object (&priv->name_binding);
   g_clear_object (&priv->status_binding);
@@ -153,13 +156,6 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       priv->status_binding = g_object_bind_property (contact, "status-message",
                                                      priv->right_header_bar, "subtitle",
                                                      G_BINDING_SYNC_CREATE);
-      /* FIXME: This incorrectly enables the send-file action (though
-         only reachable via the keyboard accelerator, since the button
-         stays hidden) even when we are currently in selection
-         mode. */
-      priv->connected_binding = g_object_bind_property (contact, "connected",
-                                                        send_file_action, "enabled",
-                                                        G_BINDING_SYNC_CREATE);
 
       if (neuland_contact_is_request (contact))
         {
@@ -174,9 +170,16 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       else
         {
           GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
-          GVariant *b_variant = g_action_group_get_action_state (G_ACTION_GROUP (window), "selection");
-          gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !g_variant_get_boolean (b_variant));
+          GVariant *b_variant = g_action_group_get_action_state (G_ACTION_GROUP (window),
+                                                                 "selection");
+          gboolean selection = g_variant_get_boolean (b_variant);
 
+          if (!selection)
+            priv->connected_binding = g_object_bind_property (contact, "connected",
+                                                              send_file_action, "enabled",
+                                                              G_BINDING_SYNC_CREATE);
+
+          gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !selection);
           gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
           neuland_contact_reset_unread_messages (contact);
           g_variant_unref (b_variant);
@@ -851,12 +854,17 @@ neuland_window_selection_state_changed (GSimpleAction *action,
     {
       /* Disable/enable actions and show/hide widgets relevant when we
          are showing contacts */
+
+      /* As long as we are in selection mode we don't want the
+         send-file button to be visible or the send-file action to be enabled */
       gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !selection_enabled);
+      g_clear_object (&priv->connected_binding);
       some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "send-file");
-      g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action),
-                                   !selection_enabled
-                                   && priv->active_contact != NULL
-                                   && neuland_contact_get_connected (priv->active_contact));
+      /* On leaving selection mode re-bind to the contact's "connected" porperty */
+      if (!selection_enabled && priv->active_contact != NULL)
+        priv->connected_binding = g_object_bind_property (priv->active_contact, "connected",
+                                                          some_action, "enabled",
+                                                          G_BINDING_SYNC_CREATE);
 
       /* Show check boxes in the contacts list box */
       gtk_container_foreach (GTK_CONTAINER (priv->contacts_list_box),
