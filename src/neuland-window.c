@@ -20,6 +20,7 @@
 #include <string.h>
 #include <glib/gi18n.h>
 
+#include "neuland-utils.h"
 #include "neuland-window.h"
 #include "neuland-contact.h"
 #include "neuland-contact-row.h"
@@ -86,25 +87,6 @@ enum {
 };
 
 static GParamSpec *window_properties[PROP_N] = {NULL, };
-
-void
-list_box_header_func (GtkListBoxRow  *row,
-                      GtkListBoxRow  *before,
-                      gpointer    user_data)
-{
-  GtkWidget *current;
-
-  if (before == NULL)
-    return;
-
-  current = gtk_list_box_row_get_header (row);
-  if (current == NULL)
-    {
-      current = gtk_separator_new (GTK_ORIENTATION_HORIZONTAL);
-      gtk_widget_show (current);
-      gtk_list_box_row_set_header (row, current);
-    }
-}
 
 static GtkWidget *
 neuland_window_get_chat_widget_for_contact (NeulandWindow *window,

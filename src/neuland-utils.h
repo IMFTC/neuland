@@ -19,6 +19,7 @@
  */
 
 #include <glib.h>
+#include <gtk/gtk.h>
 
 void
 neuland_bin_to_hex_string (guint8 *bin, gchar *hex_string, guint bin_size);
@@ -28,3 +29,6 @@ neuland_hex_string_to_bin (const gchar *hex_string, guint8 *bin, guint bin_size)
 
 gboolean
 neuland_use_24h_time_format (void);
+
+void
+list_box_header_func (GtkListBoxRow *row, GtkListBoxRow *before, gpointer user_data);

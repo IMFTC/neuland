@@ -696,6 +696,8 @@ neuland_chat_widget_init (NeulandChatWidget *chat_widget)
   gtk_text_buffer_get_end_iter (priv->text_buffer, &iter);
   priv->scroll_mark = gtk_text_buffer_create_mark (priv->text_buffer, "scroll", &iter, TRUE);
   priv->last_insert_time = NULL;
+
+  gtk_list_box_set_header_func (priv->transfers_list_box, list_box_header_func, NULL, NULL);
 }
 
 GtkWidget *
