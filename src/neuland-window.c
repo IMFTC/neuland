@@ -44,6 +44,8 @@ struct _NeulandWindowPrivate
   GtkLabel        *pending_requests_label;
   GtkButton       *gear_button;
   GtkButton       *send_file_button;
+  GtkWidget       *header_button_accept;
+  GtkWidget       *header_button_discard;
 
   GtkRevealer     *requests_button_revealer;
 
@@ -802,11 +804,25 @@ neuland_window_selection_state_changed (GSimpleAction *action,
     gtk_widget_get_style_context (GTK_WIDGET (window->priv->left_header_bar));
   GtkStyleContext *context_right =
     gtk_widget_get_style_context (GTK_WIDGET (window->priv->right_header_bar));
-
   gboolean selection_enabled = g_variant_get_boolean (parameter);
+  GVariant *variant_b =
+    g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests");
+  gboolean show_requests = g_variant_get_boolean (variant_b);
+  GAction *some_action;
+
   g_debug (selection_enabled ? "selection enabled" : "selection disabled");
 
   gtk_widget_set_sensitive (GTK_WIDGET (priv->chat_stack), !selection_enabled);
+
+  /* Stuff that we want to show/hide enable/disable no matter if we
+     are showing requests or not */
+  gtk_widget_set_visible (GTK_WIDGET (priv->action_bar), selection_enabled);
+  gtk_widget_set_visible (GTK_WIDGET (priv->add_button_box), !selection_enabled);
+  gtk_widget_set_visible (GTK_WIDGET (priv->gear_button), !selection_enabled);
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "show-requests");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), !selection_enabled);
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "add-contact");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), !selection_enabled);
 
   if (selection_enabled)
     {
@@ -819,30 +835,45 @@ neuland_window_selection_state_changed (GSimpleAction *action,
       gtk_style_context_remove_class (context_right, "selection-mode");
     }
 
-  /* Disable/Enable actions would get in the way of selecting. */
-  GAction *other_action;
-  other_action = g_action_map_lookup_action (G_ACTION_MAP (window), "show-requests");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (other_action), !selection_enabled);
-  other_action = g_action_map_lookup_action (G_ACTION_MAP (window), "add-contact");
-  g_simple_action_set_enabled (G_SIMPLE_ACTION (other_action), !selection_enabled);
+  if (show_requests)
+    {
+      /* Disable/enable actions and show/hide widgets relevant when we
+         are showing requests */
+      gint i;
+      gchar *disable_in_selection_mode[] = { "accept-active", "delete-active" };
+      for (i = 0; i < G_N_ELEMENTS (disable_in_selection_mode); i++)
+        {
+          some_action = g_action_map_lookup_action (G_ACTION_MAP (window),
+                                                    disable_in_selection_mode[i]);
+          g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), !selection_enabled);
+        }
 
-  /* Show/hide the action bar at the bottom of the contacts list and hide/show
-     the add and request button. */
-  gtk_widget_set_visible (GTK_WIDGET (priv->action_bar), selection_enabled);
-  gtk_widget_set_visible (GTK_WIDGET (priv->add_button_box), !selection_enabled);
-  gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !selection_enabled);
+      gtk_widget_set_visible (GTK_WIDGET (priv->header_button_discard), !selection_enabled);
+      gtk_widget_set_visible (GTK_WIDGET (priv->header_button_accept), !selection_enabled);
 
-  GVariant *variant_b = g_action_group_get_action_state (G_ACTION_GROUP (window),
-                                                         "show-requests");
-
-  if (g_variant_get_boolean (variant_b))
-    gtk_container_foreach (GTK_CONTAINER (priv->requests_list_box),
-                           (GtkCallback) neuland_contact_row_show_selection, &selection_enabled);
+      /* Show check boxes in the requests list box */
+      gtk_container_foreach (GTK_CONTAINER (priv->requests_list_box),
+                             (GtkCallback) neuland_contact_row_show_selection,
+                             &selection_enabled);
+    }
   else
-    gtk_container_foreach (GTK_CONTAINER (priv->contacts_list_box),
-                           (GtkCallback) neuland_contact_row_show_selection, &selection_enabled);
+    {
+      /* Disable/enable actions and show/hide widgets relevant when we
+         are showing contacts */
+      gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !selection_enabled);
+      some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "send-file");
+      g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action),
+                                   !selection_enabled
+                                   && neuland_contact_get_connected (priv->active_contact));
+
+      /* Show check boxes in the contacts list box */
+      gtk_container_foreach (GTK_CONTAINER (priv->contacts_list_box),
+                             (GtkCallback) neuland_contact_row_show_selection,
+                             &selection_enabled);
+    }
 
   g_simple_action_set_state (action, parameter);
+
   g_variant_unref (variant_b);
 }
 
@@ -928,6 +959,38 @@ send_file_activated (GSimpleAction *action,
 }
 
 static void
+delete_active_activated (GSimpleAction *action,
+                         GVariant *parameter,
+                         gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandWindowPrivate *priv = window->priv;
+  GList *list = NULL;
+
+  g_return_if_fail (priv->active_request != NULL);
+
+  list = g_list_prepend (list, priv->active_request);
+  neuland_tox_remove_contacts (priv->tox, list);
+  g_list_free (list);
+}
+
+static void
+accept_active_activated (GSimpleAction *action,
+                         GVariant *parameter,
+                         gpointer user_data)
+{
+  NeulandWindow *window = NEULAND_WINDOW (user_data);
+  NeulandWindowPrivate *priv = window->priv;
+  GList *list = NULL;
+
+  g_return_if_fail (priv->active_request != NULL);
+
+  list = g_list_prepend (list, priv->active_request);
+  neuland_tox_accept_contact_requests (priv->tox, list);
+  g_list_free (list);
+}
+
+static void
 accept_selected_activated (GSimpleAction *action,
                            GVariant *parameter,
                            gpointer user_data)
@@ -968,10 +1031,22 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
   gboolean show_requests = g_variant_get_boolean (parameter);
+  GAction *some_action;
 
   /* neuland_window_activate_first_contact_or_request() below depends
      on this being already set. */
   g_simple_action_set_state (action, parameter);
+
+  /* Show or hide widgets */
+  gtk_widget_set_visible (priv->header_button_accept, show_requests);
+  gtk_widget_set_visible (priv->header_button_discard, show_requests);
+  gtk_widget_set_visible (GTK_WIDGET (priv->action_bar_accept_button), show_requests);
+
+  /* Enable or disable actions */
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "delete-active");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), show_requests);
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "accept-active");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), show_requests);
 
   if (show_requests)
     {
@@ -1002,8 +1077,6 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
       else
         neuland_window_show_welcome_widget (window);
     }
-
-  gtk_widget_set_visible (GTK_WIDGET (priv->action_bar_accept_button), show_requests);
 }
 
 static GActionEntry win_entries[] = {
@@ -1011,6 +1084,8 @@ static GActionEntry win_entries[] = {
   { "send-file", send_file_activated },
   { "accept-selected", accept_selected_activated },
   { "delete-selected", delete_selected_activated },
+  { "accept-active", accept_active_activated },
+  { "delete-active", delete_active_activated },
   { "change-status", NULL, "i", "0", neuland_window_status_state_changed },
   { "show-requests", NULL, NULL, "false", neuland_window_show_requests_state_changed },
   { "selection", NULL, NULL, "false", neuland_window_selection_state_changed }
@@ -1060,6 +1135,8 @@ neuland_window_class_init (NeulandWindowClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, left_header_bar);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, send_file_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, gear_button);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, header_button_accept);
+  gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, header_button_discard);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, select_button);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, requests_button_revealer);
   gtk_widget_class_bind_template_child_private (widget_class, NeulandWindow, pending_requests_label);
@@ -1140,7 +1217,8 @@ neuland_window_init (NeulandWindow *window)
   gtk_stack_set_visible_child (priv->side_pane_stack, priv->scrolled_window_contacts);
 
   /* Disable some actions */
-  gchar *actions_to_disable[] = { "delete-selected", "accept-selected", "send-file" };
+  gchar *actions_to_disable[] =
+    { "delete-selected", "accept-selected", "send-file", "delete-active", "accept-active" };
   gint i;
   for (i = 0; i < G_N_ELEMENTS (actions_to_disable); i++)
     {

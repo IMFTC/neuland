@@ -192,6 +192,25 @@ Author: Volker Sobek <reklov@live.com>
               </packing>
             </child>
             <child>
+              <object class="GtkButton" id="header_button_discard">
+                <property name="visible">False</property>
+                <property name="no_show_all">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="valign">fill</property>
+                <property name="action_name">win.delete-active</property>
+                <child>
+                  <object class="GtkLabel" id="discard_button_label">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Discard</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="pack_type">start</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkMenuButton" id="gear_button">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -206,6 +225,28 @@ Author: Volker Sobek <reklov@live.com>
                     <property name="can_focus">False</property>
                     <property name="icon_name">emblem-system-symbolic</property>
                     <property name="icon_size">1</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="pack_type">end</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="header_button_accept">
+                <property name="visible">False</property>
+                <property name="no_show_all">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="valign">fill</property>
+                <property name="action-name">win.accept-active</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+                <child>
+                  <object class="GtkLabel" id="accept_button_label">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Accept</property>
                   </object>
                 </child>
               </object>
