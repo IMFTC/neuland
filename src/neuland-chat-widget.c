@@ -166,7 +166,6 @@ insert_text (NeulandChatWidget *widget,
   gchar *prefix;
   gboolean insert_time_stamp;
   gboolean insert_nick;
-
   GDateTime *time_now = g_date_time_new_now_local ();
 
   switch (direction)
@@ -216,7 +215,7 @@ insert_text (NeulandChatWidget *widget,
 
       if (priv->last_insert_time)
         g_date_time_unref (priv->last_insert_time);
-      priv->last_insert_time = time_now;
+      priv->last_insert_time = g_date_time_ref (time_now);
 
       g_free (time_string);
     }
@@ -260,6 +259,8 @@ insert_text (NeulandChatWidget *widget,
   priv->last_direction = direction;
   priv->last_type = type;
   neuland_chat_widget_scroll_to_bottom (widget);
+
+  g_date_time_unref (time_now);
 }
 
 static void
