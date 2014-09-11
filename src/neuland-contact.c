@@ -616,6 +616,7 @@ neuland_contact_set_property (GObject *object,
       contact->priv->status = g_value_get_enum (value);
       break;
     case PROP_STATUS_MESSAGE:
+      g_free (contact->priv->status_message);
       contact->priv->status_message = g_value_dup_string (value);
       break;
     case PROP_UNREAD_MESSAGES:
@@ -794,10 +795,16 @@ neuland_contact_finalize (GObject *object)
   g_debug ("neuland_contact_finalize (%p)", object);
 
   g_free (priv->name);
+  g_free (priv->preferred_name);
   g_free (priv->status_message);
+  g_free (priv->request_message);
   g_free (priv->tox_id);
   g_free (priv->tox_id_hex);
   g_free (priv->last_seen);
+
+  g_hash_table_destroy (priv->file_transfers_all);
+  g_hash_table_destroy (priv->file_transfers_send);
+  g_hash_table_destroy (priv->file_transfers_receive);
 
   G_OBJECT_CLASS (neuland_contact_parent_class)->finalize (object);
 }
