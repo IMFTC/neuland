@@ -45,7 +45,6 @@ struct _NeulandToxPrivate
 
   GHashTable *contacts_ht;  /* key: tox friend number -> value: contact*/
   GHashTable *requests_ht;  /* key: contact -> value: contact  */
-
   GHashTable *file_transfers_sending_ht;
   GHashTable *file_transfers_receiving_ht;
   GHashTable *file_transfers_all_ht;
@@ -312,7 +311,7 @@ on_user_status_idle (gpointer user_data)
   if (contact != NULL)
     g_object_set (contact, "status", data->integer, NULL);
 
-  g_free (data);
+  free_data_integer (data);
 
   return G_SOURCE_REMOVE;
 }
@@ -439,6 +438,8 @@ on_typing_change_idle (gpointer user_data)
 
   if (contact != NULL)
     g_object_set (contact, "is-typing", data->integer, NULL);
+
+  free_data_integer (data);
 
   return G_SOURCE_REMOVE;
 }
@@ -667,6 +668,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
   gboolean resuming = neuland_file_transfer_get_transferred_size (file_transfer) > 0;
   DataUpdateFileTransferIdle *idle_out_data = g_new0 (DataUpdateFileTransferIdle, 1);
   gsize count;
+  gpointer data_buffer = NULL;
 
   g_debug ("Starting thread for file transfer %p \"%s\"", file_transfer, name);
 
@@ -678,7 +680,6 @@ neuland_tox_send_file_transfer (gpointer user_data)
   while (TRUE)
     {
       gsize data_size;
-      gpointer data_buffer;
 
       g_mutex_lock (&priv->mutex);
       data_size = (gsize)tox_file_data_size (priv->tox_struct, contact_number);
@@ -686,7 +687,9 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
       g_assert (data_size > 0);
 
+      g_clear_pointer (&data_buffer, g_free);
       data_buffer = g_malloc0 (data_size);
+
       count = neuland_file_transfer_get_next_data (file_transfer, data_buffer, data_size);
 
       if (count == -1)
@@ -778,6 +781,7 @@ neuland_tox_send_file_transfer (gpointer user_data)
 
   g_object_unref (file_transfer);
   free_data_send_file_transfer (data);
+  g_clear_pointer (&data_buffer, g_free);
 
   g_debug ("Leaving thread for file transfer %p \"%s\"", file_transfer, name);
 
@@ -1500,6 +1504,8 @@ neuland_tox_load_contacts (NeulandTox *tox)
     }
 
   g_mutex_unlock (&priv->mutex);
+
+  g_free (contact_list);
 }
 
 void
@@ -1958,6 +1964,8 @@ neuland_tox_dispose (GObject *object)
 
   g_hash_table_destroy (priv->contacts_ht);
   g_hash_table_destroy (priv->requests_ht);
+  g_hash_table_destroy (priv->file_transfers_sending_ht);
+  g_hash_table_destroy (priv->file_transfers_receiving_ht);
   g_hash_table_destroy (priv->file_transfers_all_ht);
 
   G_OBJECT_CLASS (neuland_tox_parent_class)->dispose (object);
