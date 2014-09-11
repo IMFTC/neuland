@@ -917,30 +917,35 @@ send_file_activated (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
-  NeulandContact *contact = priv->active_contact;
-  g_return_if_fail (priv->active_contact != NULL);
-
-  GtkWidget *file_chooser_dialog =
-    gtk_file_chooser_dialog_new (_("Select file for sending"),
-                                 GTK_WINDOW (window),
-                                 GTK_FILE_CHOOSER_ACTION_OPEN,
-                                 _("_Send"), GTK_RESPONSE_ACCEPT,
-                                 _("_Cancel"), GTK_RESPONSE_REJECT,
-                                 NULL);
-
-  gint response = gtk_dialog_run (GTK_DIALOG (file_chooser_dialog));
-
+  NeulandContact *contact;
+  GtkWidget *file_chooser_dialog;
+  gint response;
   GFile *file = NULL;
+
+  g_return_if_fail (priv->active_contact != NULL);
+  contact = priv->active_contact;
+
+  file_chooser_dialog = gtk_file_chooser_dialog_new (_("Select file for sending"),
+                                                     GTK_WINDOW (window),
+                                                     GTK_FILE_CHOOSER_ACTION_OPEN,
+                                                     _("_Send"), GTK_RESPONSE_ACCEPT,
+                                                     _("_Cancel"), GTK_RESPONSE_REJECT,
+                                                     NULL);
+
+  response = gtk_dialog_run (GTK_DIALOG (file_chooser_dialog));
 
   if (response == GTK_RESPONSE_ACCEPT)
     {
+      NeulandFileTransfer *file_transfer;
+
       file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (file_chooser_dialog));
-      NeulandFileTransfer *file_transfer =
-        neuland_file_transfer_new_sending (neuland_contact_get_number (contact), file);
+      file_transfer = neuland_file_transfer_new_sending (neuland_contact_get_number (contact),
+                                                         file);
       neuland_tox_add_file_transfer (priv->tox, file_transfer);
     }
 
   g_clear_object (&file);
+
   gtk_widget_destroy (file_chooser_dialog);
 }
 
@@ -1080,8 +1085,10 @@ static GActionEntry win_entries[] = {
 static void
 neuland_window_dispose (GObject *object)
 {
-  g_debug ("neuland_window_dispose ...");
   NeulandWindow *window = NEULAND_WINDOW (object);
+
+  g_debug ("neuland_window_dispose ...");
+
   g_clear_object (&window->priv->tox);
 
   G_OBJECT_CLASS (neuland_window_parent_class)->dispose (object);
@@ -1090,9 +1097,10 @@ neuland_window_dispose (GObject *object)
 static void
 neuland_window_finalize (GObject *object)
 {
-  g_debug ("neuland_window_finalize");
   NeulandWindow *window = NEULAND_WINDOW (object);
   NeulandWindowPrivate *priv = window->priv;
+
+  g_debug ("neuland_window_finalize");
 
   g_hash_table_destroy (priv->contact_row_widgets);
   g_hash_table_destroy (priv->chat_widgets);
@@ -1104,9 +1112,10 @@ neuland_window_finalize (GObject *object)
 static void
 neuland_window_class_init (NeulandWindowClass *klass)
 {
-  g_debug ("neuland_window_class_init");
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+
+  g_debug ("neuland_window_class_init");
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/tox/neuland/neuland-window.ui");
 
@@ -1134,6 +1143,7 @@ neuland_window_class_init (NeulandWindowClass *klass)
 
   gobject_class->set_property = neuland_window_set_property;
   gobject_class->get_property = neuland_window_get_property;
+
   gobject_class->dispose = neuland_window_dispose;
   gobject_class->finalize = neuland_window_finalize;
 
@@ -1153,13 +1163,16 @@ neuland_window_class_init (NeulandWindowClass *klass)
 static void
 neuland_window_init (NeulandWindow *window)
 {
-  g_debug ("neuland_window_init");
   GtkBuilder *builder;
+  NeulandWindowPrivate *priv;
+  gint i;
+
+  g_debug ("neuland_window_init");
 
   gtk_widget_init_template (GTK_WIDGET (window));
-  window->priv = neuland_window_get_instance_private (window);
+  priv = neuland_window_get_instance_private (window);
+  window->priv = priv;
 
-  NeulandWindowPrivate *priv = window->priv;
   priv->contact_row_widgets = g_hash_table_new (NULL, NULL);
   priv->chat_widgets = g_hash_table_new (NULL, NULL);
   priv->selected_contacts = g_hash_table_new (NULL, NULL);
@@ -1205,7 +1218,7 @@ neuland_window_init (NeulandWindow *window)
   /* Disable some actions */
   gchar *actions_to_disable[] =
     { "delete-selected", "accept-selected", "send-file", "delete-active", "accept-active" };
-  gint i;
+
   for (i = 0; i < G_N_ELEMENTS (actions_to_disable); i++)
     {
       GAction *action = g_action_map_lookup_action (G_ACTION_MAP (window), actions_to_disable[i]);
@@ -1224,6 +1237,7 @@ neuland_window_new (NeulandTox *tox)
 
   g_debug ("window new ...");
   g_return_if_fail (NEULAND_IS_TOX (tox));
+
   window = g_object_new (NEULAND_TYPE_WINDOW,
                          "neuland-tox", tox,
                          NULL);
