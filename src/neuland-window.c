@@ -174,9 +174,12 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       else
         {
           GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
-          gtk_widget_show (GTK_WIDGET (priv->send_file_button));
+          GVariant *b_variant = g_action_group_get_action_state (G_ACTION_GROUP (window), "selection");
+          gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !g_variant_get_boolean (b_variant));
+
           gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
           neuland_contact_reset_unread_messages (contact);
+          g_variant_unref (b_variant);
         }
     }
   else
