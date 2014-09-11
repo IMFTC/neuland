@@ -171,6 +171,10 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       priv->status_binding = g_object_bind_property (contact, "status-message",
                                                      priv->right_header_bar, "subtitle",
                                                      G_BINDING_SYNC_CREATE);
+      /* FIXME: This incorrectly enables the send-file action (though
+         only reachable via the keyboard accelerator, since the button
+         stays hidden) even when we are currently in selection
+         mode. */
       priv->connected_binding = g_object_bind_property (contact, "connected",
                                                         send_file_action, "enabled",
                                                         G_BINDING_SYNC_CREATE);
