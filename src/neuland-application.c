@@ -131,6 +131,7 @@ neuland_application_open (GApplication  *application,
       gchar *path = g_file_get_path (files[i]);
       g_message ("Creating window for data path \"%s\"", path);
       neuland_application_new_window (NEULAND_APPLICATION (application), path);
+      g_free (path);
     }
 }
 
