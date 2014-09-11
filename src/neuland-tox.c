@@ -59,8 +59,8 @@ typedef struct
 {
   gchar *address;
   guint16 port;
-  gchar *pub_key;
   gboolean is_ipv6;
+  gchar *pub_key;
 } NeulandToxDhtNode;
 
 typedef enum {
@@ -101,8 +101,13 @@ tox_filecontrol_type_to_string (gint32 control_type)
 }
 
 static NeulandToxDhtNode bootstrap_nodes[] = {
-  { "192.254.75.98"  , 33445, "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F", FALSE },
-  { "192.210.149.121", 33445, "F404ABAA1C99A9D37D61AB54898F56793E1DEF8BD46B1038B9D822E8460FAB67", FALSE },
+  {
+    "192.254.75.98", 33445, FALSE,
+    "951C88B7E75C867418ACDB5D273821372BB5BD652740BCDF623A4FA293E75D2F"
+  }, {
+    "192.210.149.121", 33445, FALSE,
+    "F404ABAA1C99A9D37D61AB54898F56793E1DEF8BD46B1038B9D822E8460FAB67"
+  },
 };
 
 enum {
@@ -1127,8 +1132,8 @@ on_file_data_idle (gpointer user_data)
             {
               g_warning ("Failed to append incoming data to file "
                          "transfer %p, going to kill transfer");
-              neuland_file_transfer_set_requested_state (file_transfer,
-                                                         NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
+              neuland_file_transfer_set_requested_state
+                (file_transfer, NEULAND_FILE_TRANSFER_STATE_KILLED_BY_US);
             }
           else
             neuland_file_transfer_add_transferred_size (file_transfer, count);
@@ -1364,7 +1369,8 @@ neuland_tox_set_data_path (NeulandTox *tox, const gchar *data_path)
             priv->data_path = g_strdup (data_path);
           else
             {
-              g_warning ("tox_load () for data path \"%s\" failed with return value %i. Setting data path to NULL.",
+              g_warning ("tox_load () for data path \"%s\" failed with"
+                         " return value %i. Setting data path to NULL.",
                          data_path, ret);
               priv->data_path = NULL;
             }
@@ -1377,7 +1383,8 @@ neuland_tox_set_data_path (NeulandTox *tox, const gchar *data_path)
               /* Tox will start up without a file, creating a new identity.
                  when closing we will try to save the tox data to this
                  location. */
-              g_message ("File \"%s\" not found. Will try to save new data to it on exit.", data_path);
+              g_message ("File \"%s\" not found. Will try to save new data to it on exit.",
+                         data_path);
               priv->data_path = g_strdup (data_path);
               data_path_exists = FALSE;
             }
@@ -1467,8 +1474,8 @@ neuland_tox_load_contacts (NeulandTox *tox)
 
       tox_get_client_id (tox_struct, contact_number, client_id);
 
-      contact =  neuland_contact_new (client_id, contact_number,
-                                                      tox_get_last_online (tox_struct, contact_number));
+      contact =  neuland_contact_new
+        (client_id, contact_number, tox_get_last_online (tox_struct, contact_number));
 
       l = tox_get_name (tox_struct, contact_number, tox_name);
       new_tox_name = g_strndup ((gchar*)tox_name, l);
@@ -2101,7 +2108,8 @@ neuland_tox_bootstrap (NeulandTox *tox)
   for (i = 0; i < G_N_ELEMENTS (bootstrap_nodes); i++)
     {
       NeulandToxDhtNode node = bootstrap_nodes[i];
-      gboolean valid_string = neuland_hex_string_to_bin (node.pub_key, pub_key_bin, TOX_CLIENT_ID_SIZE);
+      gboolean valid_string = neuland_hex_string_to_bin (node.pub_key, pub_key_bin,
+                                                         TOX_CLIENT_ID_SIZE);
 
       g_debug ("Bootsrapping from %s:%u %s", node.address, node.port, node.pub_key);
       if (!valid_string)
