@@ -705,7 +705,7 @@ static void
 neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
 {
   NeulandWindowPrivate *priv;
-  gchar *id;
+  const gchar *id;
 
   g_debug ("neuland_window_set_tox");
 
@@ -713,7 +713,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
   priv->tox = g_object_ref (tox);
   neuland_window_load_contacts (window);
 
-  g_object_get (priv->tox, "tox-id-hex", &id, NULL);
+  id = neuland_tox_get_tox_id_hex (tox);
   g_message ("Tox ID for window %p: %s", window, id);
   gtk_label_set_text (priv->welcome_widget_tox_id_label, id);
 
