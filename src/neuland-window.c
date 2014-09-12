@@ -136,6 +136,8 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
 {
   NeulandWindowPrivate *priv = window->priv;
   GAction *send_file_action;
+  GVariant *b_variant = g_action_group_get_action_state (G_ACTION_GROUP (window), "selection");
+  gboolean selection = g_variant_get_boolean (b_variant);
 
   /* g_message ("bindings: %p %p %p", priv->name_binding,
    *            priv->status_binding, priv->connected_binding); */
@@ -170,9 +172,6 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       else
         {
           GtkWidget *chat_widget = neuland_window_get_chat_widget_for_contact (window, contact);
-          GVariant *b_variant = g_action_group_get_action_state (G_ACTION_GROUP (window),
-                                                                 "selection");
-          gboolean selection = g_variant_get_boolean (b_variant);
 
           if (!selection)
             priv->connected_binding = g_object_bind_property (contact, "connected",
@@ -182,7 +181,6 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
           gtk_widget_set_visible (GTK_WIDGET (priv->send_file_button), !selection);
           gtk_stack_set_visible_child (priv->chat_stack, chat_widget);
           neuland_contact_reset_unread_messages (contact);
-          g_variant_unref (b_variant);
         }
     }
   else
@@ -191,6 +189,8 @@ neuland_window_show_chat_for_contact (NeulandWindow *window,
       g_simple_action_set_enabled (G_SIMPLE_ACTION (send_file_action), FALSE);
       neuland_window_show_welcome_widget (window);
     }
+
+  g_variant_unref (b_variant);
 }
 
 static NeulandContactRow *
