@@ -1369,15 +1369,17 @@ neuland_tox_set_data_path (NeulandTox *tox, const gchar *data_path)
           ret = tox_load (tox_struct, (guint8*)data, length);
           g_mutex_unlock (&priv->mutex);
 
-          if (ret == 0)
-            priv->data_path = g_strdup (data_path);
-          else
-            {
-              g_warning ("tox_load () for data path \"%s\" failed with"
-                         " return value %i. Setting data path to NULL.",
-                         data_path, ret);
-              priv->data_path = NULL;
-            }
+          if (ret == -1)
+            g_message ("tox_load () for data path \"%s\" returned -1; "
+                       "probably old save format",
+                       data_path, ret);
+
+          else if (ret == 1)
+            g_message ("tox_load () for data path \"%s\" returned 1; "
+                       "found encrypted save data",
+                       data_path, ret);
+
+          priv->data_path = g_strdup (data_path);
           g_free (data);
         }
       else
