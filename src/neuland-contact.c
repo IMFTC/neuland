@@ -181,7 +181,7 @@ neuland_contact_set_has_chat_widget (NeulandContact *contact,
 gboolean
 neuland_contact_get_has_chat_widget (NeulandContact *contact)
 {
-  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), NULL);
+  g_return_val_if_fail (NEULAND_IS_CONTACT (contact), FALSE);
 
   return contact->priv->has_chat_widget;
 }
