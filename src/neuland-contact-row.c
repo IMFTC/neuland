@@ -298,7 +298,7 @@ neuland_contact_row_set_selected (NeulandContactRow *contact_row,
 gboolean
 neuland_contact_row_get_selected (NeulandContactRow *contact_row)
 {
-  g_return_val_if_fail (NEULAND_IS_CONTACT_ROW (contact_row), NULL);
+  g_return_val_if_fail (NEULAND_IS_CONTACT_ROW (contact_row), FALSE);
 
   return contact_row->priv->selected;
 }
