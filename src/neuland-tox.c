@@ -1537,7 +1537,7 @@ neuland_tox_add_contact_from_hex_address (NeulandTox *tox,
 
   if (friend_number < 0)
     {
-      g_warning ("Failed to add friend from hex address \"%s\". Tox error number: %i (%s)",
+      g_warning ("Failed to add contact from hex address \"%s\". Tox error number: %i (%s)",
                  hex_address, friend_number, tox_faerr_to_string (friend_number));
       return;
     }
