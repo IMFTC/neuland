@@ -3,12 +3,11 @@
   [[https://raw.githubusercontent.com/IMFTC/neuland/master/screenshot.png]]
   Old screenshot
 
-
 ** About
-   Neuland is a Tox chat client for the GNOME desktop. It is *not*
-   officially part of GNOME or Tox. Neuland is written in C and still
-   in an early stage of development. There has not been a release yet;
-   if you want to test Neuland you have to build it from git.
+   Neuland is a Tox chat client for the GNOME desktop.  It is *not*
+   officially part of GNOME or Tox.  Neuland is written in C and still
+   in an early stage of development.  *There has not been a release
+   yet*; if you want to test Neuland you have to build it from git.
 
    *Contributors are welcome!*
 
@@ -16,18 +15,56 @@
 
    For GNOME see https://www.gnome.org.
 
+** Current Status
+   Neuland is not ready for normal usage yet.  It is very likely that
+   it has bugs that destroy your data or your system.  Therefore, you
+   should only use it if you want to contribute and make it better!
+
+*** DONE Items
+    - Sending contact requests
+    - Receiving and accepting contact requests
+    - Basic chat
+    - File transfer (*KNOWN BUG:* When choosing to replace an existing file,
+      data is appended to that file, instead of replacing it!)
+
+*** TODO Items
+    - Settings (Neuland doesn't save anything at all yet, it merely
+      uses toxcore's save function to load and save toxcore's data.)
+    - Chat log
+    - Support for Avatars
+    - Audio support
+    - Video support
+    - /And much more .../
+
 ** Building Neuland from Source
 
 *** Requirements
-    Neuland requires toxcore from git master and the latest
-    gtk+-3.13.x (which will be released as gtk+-3.14 soon).
+    - toxcore (git master branch)
+    - gtk+-3.14
 
 *** Building and installing
-    Neuland uses Autotools. Compile and install Neuland from a fresh
-    git checkout with:
+    Neuland uses Autotools.  Compile and install it from a fresh git
+    checkout with:
 
     ./autogen.sh && make && make install
 
     If you are using custom locations you can set PKG_CONFIG_PATH and
     pass the usual Autotools configure options such as --prefix to
     autogen.sh (they will be passed on to ./configure).
+
+** Launching Neuland
+   For safety reasons Neuland uses its own configuration file by
+   default, which is =$XDG_CONFIG_HOME/tox/data.neuland=. If you want
+   Neuland use your default tox configuration file instead, you can
+   specify it on the command line:
+   #+BEGIN_SRC shell
+   neuland ~/.config/tox/data
+   #+END_SRC
+   Passing multiple configuration files to neuland will open a
+   separate Neuland window for each configuration file; this is useful
+   for testing. For example:
+   #+BEGIN_SRC shell
+   neuland ~/.config/tox/my_test_data{1,2}
+   #+END_SRC
+   will open one window for my_test_data1 and a second one for
+   my_test_data2.
