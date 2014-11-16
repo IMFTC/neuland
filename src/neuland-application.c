@@ -106,10 +106,21 @@ neuland_application_quit_activated (GSimpleAction *action,
                                     GVariant      *parameter,
                                     gpointer       user_data)
 {
-  g_debug ("neuland_application_quit_activated");
   GApplication *app = user_data;
+  GList *list, *next;
 
-  g_application_quit (app);
+  g_debug ("neuland_application_quit_activated");
+
+  /* list is owned by @app  */
+  list = gtk_application_get_windows (GTK_APPLICATION (app));
+  while (list)
+    {
+      next = list->next;
+
+      gtk_widget_destroy (GTK_WIDGET (list->data));
+
+      list = next;
+    }
 }
 
 
