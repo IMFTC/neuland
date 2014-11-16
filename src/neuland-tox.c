@@ -2010,18 +2010,21 @@ neuland_tox_class_init (NeulandToxClass *klass)
                          NULL,
                          G_PARAM_CONSTRUCT_ONLY |
                          G_PARAM_READWRITE);
+
   properties[PROP_TOX_ID_HEX] =
     g_param_spec_string ("tox-id-hex",
                          "Tox ID hex",
                          "Tox ID as a string of hexadecimal digts",
                          NULL,
                          G_PARAM_READABLE);
+
   properties[PROP_NAME] =
     g_param_spec_string ("name",
                          "Name",
                          "Our own name",
                          NEULAND_DEFAULT_NAME,
                          G_PARAM_READWRITE);
+
   properties[PROP_STATUS] =
     g_param_spec_enum ("status",
                        "Status",
@@ -2030,12 +2033,14 @@ neuland_tox_class_init (NeulandToxClass *klass)
                        NEULAND_CONTACT_STATUS_NONE,
                        G_PARAM_READWRITE |
                        G_PARAM_CONSTRUCT);
+
   properties[PROP_STATUS_MESSAGE] =
     g_param_spec_string ("status-message",
                          "Status message",
                          "Our own status message",
                          NEULAND_DEFAULT_STATUS_MESSAGE,
                          G_PARAM_READWRITE);
+
   properties[PROP_PENDING_REQUESTS] =
     g_param_spec_int64 ("pending-requests",
                         "Pending requests",
@@ -2059,6 +2064,7 @@ neuland_tox_class_init (NeulandToxClass *klass)
                   G_TYPE_NONE,
                   1,
                   NEULAND_TYPE_CONTACT);
+
   signals[REMOVE_CONTACTS] =
     g_signal_new ("remove-contacts",
                   G_TYPE_FROM_CLASS (klass),
@@ -2069,6 +2075,7 @@ neuland_tox_class_init (NeulandToxClass *klass)
                   G_TYPE_NONE,
                   1,
                   G_TYPE_POINTER);
+
   signals[ACCEPT_REQUESTS] =
     g_signal_new ("accept-requests",
                   G_TYPE_FROM_CLASS (klass),
