@@ -585,7 +585,7 @@ neuland_window_load_contacts (NeulandWindow *window)
   GList *contacts;
   GList *l;
 
-  g_debug ("neuland_window_load_contacts ...");
+  g_debug ("neuland_window_load_contacts (%p)", window);
 
   priv = window->priv;
 
@@ -707,7 +707,7 @@ neuland_window_set_tox (NeulandWindow *window, NeulandTox *tox)
   NeulandWindowPrivate *priv;
   const gchar *id;
 
-  g_debug ("neuland_window_set_tox");
+  g_debug ("neuland_window_set_tox (%p)", window);
 
   priv = window->priv;
   priv->tox = g_object_ref (tox);
@@ -751,7 +751,7 @@ neuland_window_set_property (GObject      *object,
                              GParamSpec   *pspec)
 {
   NeulandWindow *window = NEULAND_WINDOW (object);
-  g_debug ("neuland_window_set_property");
+  g_debug ("neuland_window_set_property (%p)", window);
 
   switch (property_id)
     {
@@ -771,7 +771,7 @@ neuland_window_get_property  (GObject    *object,
                               GParamSpec *pspec)
 {
   NeulandWindow *window = NEULAND_WINDOW (object);
-  g_debug ("neuland_window_get_property");
+  g_debug ("neuland_window_get_property (%p)");
 
   switch (property_id)
     {
@@ -802,7 +802,7 @@ neuland_window_selection_state_changed (GSimpleAction *action,
   gboolean show_requests = g_variant_get_boolean (variant_b);
   GAction *some_action;
 
-  g_debug ("neuland_window_selection_state_changed");
+  g_debug ("neuland_window_selection_state_changed (%p)", window);
 
   g_debug (selection_enabled ? "selection enabled" : "selection disabled");
 
@@ -884,7 +884,7 @@ neuland_window_status_state_changed (GSimpleAction *action,
 {
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandContactStatus status = (NeulandContactStatus)g_variant_get_int32 (parameter);
-  g_debug ("Changing own status to %i", status);
+  g_debug ("Changing our own status to %i", status);
 
   neuland_tox_set_status (window->priv->tox, status);
   neuland_contact_row_set_status (NEULAND_CONTACT_ROW (window->priv->me_widget), status);
@@ -1102,7 +1102,7 @@ neuland_window_dispose (GObject *object)
 {
   NeulandWindow *window = NEULAND_WINDOW (object);
 
-  g_debug ("neuland_window_dispose ...");
+  g_debug ("neuland_window_dispose (%p)", window);
 
   g_clear_object (&window->priv->tox);
 
@@ -1115,7 +1115,7 @@ neuland_window_finalize (GObject *object)
   NeulandWindow *window = NEULAND_WINDOW (object);
   NeulandWindowPrivate *priv = window->priv;
 
-  g_debug ("neuland_window_finalize");
+  g_debug ("neuland_window_finalize (%p)", window);
 
   g_hash_table_destroy (priv->contact_row_widgets);
   g_hash_table_destroy (priv->chat_widgets);
@@ -1182,7 +1182,7 @@ neuland_window_init (NeulandWindow *window)
   NeulandWindowPrivate *priv;
   gint i;
 
-  g_debug ("neuland_window_init");
+  g_debug ("neuland_window_init (%p)", window);
 
   gtk_widget_init_template (GTK_WIDGET (window));
   priv = neuland_window_get_instance_private (window);
@@ -1250,12 +1250,12 @@ neuland_window_new (NeulandTox *tox)
 {
   NeulandWindow *window;
 
-  g_debug ("window new ...");
   g_return_if_fail (NEULAND_IS_TOX (tox));
 
   window = g_object_new (NEULAND_TYPE_WINDOW,
                          "neuland-tox", tox,
                          NULL);
+  g_debug ("neuland_window_new  (%p)", window);
 
   return GTK_WIDGET (window);
 }

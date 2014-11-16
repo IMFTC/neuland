@@ -408,7 +408,7 @@ neuland_file_transfer_row_class_init (NeulandFileTransferRowClass *klass)
 static void
 neuland_file_transfer_row_init (NeulandFileTransferRow *file_transfer_row)
 {
-  g_debug ("neuland_file_transfer_row_init");
+  g_debug ("neuland_file_transfer_row_init (%p)", file_transfer_row);
 
   file_transfer_row->priv = neuland_file_transfer_row_get_instance_private (file_transfer_row);
 
@@ -420,13 +420,13 @@ neuland_file_transfer_row_new (NeulandFileTransfer *file_transfer)
 {
   NeulandFileTransferRow *file_transfer_row;
 
-  g_debug ("neuland_file_transfer_row_new");
-
   g_return_val_if_fail (NEULAND_IS_FILE_TRANSFER (file_transfer), NULL);
 
   file_transfer_row = g_object_new (NEULAND_TYPE_FILE_TRANSFER_ROW,
                                     "file-transfer", file_transfer,
                                     NULL);
+
+  g_debug ("neuland_file_transfer_row_new (%p)", file_transfer_row);
 
   return GTK_WIDGET (file_transfer_row);
 }

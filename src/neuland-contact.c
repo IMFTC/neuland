@@ -1015,7 +1015,7 @@ neuland_contact_init (NeulandContact *contact)
 {
   NeulandContactPrivate *priv;
 
-  g_debug ("neuland_contact_init");
+  g_debug ("neuland_contact_init (%p)", contact);
 
   contact->priv = neuland_contact_get_instance_private (contact);
   priv = contact->priv;
