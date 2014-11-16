@@ -27,6 +27,7 @@
       data is appended to that file, instead of replacing it!)
 
 *** *TODO* Items
+    - .desktop file
     - Settings (Neuland doesn't save anything at all yet, it merely
       uses toxcore's save function to load and save toxcore's data.)
     - Chat log
