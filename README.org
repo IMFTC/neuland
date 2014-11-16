@@ -20,14 +20,14 @@
    it has bugs that destroy your data or your system.  Therefore, you
    should only use it if you want to contribute and make it better!
 
-*** DONE Items
+*** *DONE* Items
     - Sending contact requests
     - Receiving and accepting contact requests
     - Basic chat
     - File transfer (*KNOWN BUG:* When choosing to replace an existing file,
       data is appended to that file, instead of replacing it!)
 
-*** TODO Items
+*** *TODO* Items
     - Settings (Neuland doesn't save anything at all yet, it merely
       uses toxcore's save function to load and save toxcore's data.)
     - Chat log
