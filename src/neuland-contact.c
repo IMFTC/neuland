@@ -1007,8 +1007,7 @@ neuland_contact_class_init (NeulandContactClass *klass)
                   g_cclosure_marshal_VOID__OBJECT,
                   G_TYPE_NONE,
                   1,
-                  NEULAND_TYPE_CONTACT);
-
+                  NEULAND_TYPE_FILE_TRANSFER);
 };
 
 static void
