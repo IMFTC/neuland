@@ -45,9 +45,9 @@
 *** Building and installing
     Neuland uses Autotools.  Compile and install it from a fresh git
     checkout with:
-
-    ./autogen.sh && make && make install
-
+    #+BEGIN_SRC shell
+    $ ./autogen.sh && make && make install
+    #+END_SRC
     If you are using custom locations you can set PKG_CONFIG_PATH and
     pass the usual Autotools configure options such as --prefix to
     autogen.sh (they will be passed on to ./configure).
@@ -58,13 +58,13 @@
    Neuland use your default tox configuration file instead, you can
    specify it on the command line:
    #+BEGIN_SRC shell
-   neuland ~/.config/tox/data
+   $ neuland ~/.config/tox/data
    #+END_SRC
    Passing multiple configuration files to neuland will open a
    separate Neuland window for each configuration file; this is useful
    for testing. For example:
    #+BEGIN_SRC shell
-   neuland ~/.config/tox/my_test_data{1,2}
+   $ neuland ~/.config/tox/my_test_data{1,2}
    #+END_SRC
    will open one window for my_test_data1 and a second one for
    my_test_data2.
