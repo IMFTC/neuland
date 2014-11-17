@@ -41,8 +41,8 @@ neuland_SOURCES = \
 	neuland-window.h \
 	neuland-chat-widget.c \
 	neuland-chat-widget.h \
-	neuland-add-dialog.c \
-	neuland-add-dialog.h \
+	neuland-request-create-widget.c \
+	neuland-request-create-widget.h \
 	neuland-me-popover.c \
 	neuland-me-popover.h \
 	neuland-file-transfer.c \

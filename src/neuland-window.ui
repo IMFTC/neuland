@@ -56,12 +56,12 @@ Author: Volker Sobek <reklov@live.com>
               <object class="GtkBox" id="add_button_box">
                 <property name="spacing">6</property>
                 <child>
-                  <object class="GtkButton" id="add_button">
-                    <property name="visible">True</property>
+                  <object class="GtkToggleButton" id="header_button_create_request">
+                    <property name="visible">False</property>
                     <property name="can_focus">True</property>
                     <property name="halign">center</property>
                     <property name="valign">center</property>
-                    <property name="action-name">win.add-contact</property>
+                    <property name="action-name">win.create-request</property>
                     <style>
                       <class name="image-button"/>
                     </style>
@@ -134,7 +134,7 @@ Author: Volker Sobek <reklov@live.com>
               </object>
             </child>
             <child>
-              <object class="GtkToggleButton" id="select_button">
+              <object class="GtkToggleButton" id="header_button_select">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="focus_on_click">False</property>
@@ -169,7 +169,7 @@ Author: Volker Sobek <reklov@live.com>
               <class name="neuland-right-titlebar"/>
             </style>
             <child>
-              <object class="GtkButton" id="send_file_button">
+              <object class="GtkButton" id="header_button_send_file">
                 <property name="visible">False</property>
                 <property name="no_show_all">True</property>
                 <property name="can_focus">True</property>
@@ -192,7 +192,7 @@ Author: Volker Sobek <reklov@live.com>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="header_button_discard">
+              <object class="GtkButton" id="header_button_reject">
                 <property name="visible">False</property>
                 <property name="no_show_all">True</property>
                 <property name="can_focus">True</property>
@@ -200,9 +200,9 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="valign">fill</property>
                 <property name="action_name">win.delete-active</property>
                 <child>
-                  <object class="GtkLabel" id="discard_button_label">
+                  <object class="GtkLabel" id="reject_button_label">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">Discard</property>
+                    <property name="label" translatable="yes">Reject</property>
                   </object>
                 </child>
               </object>
@@ -211,7 +211,26 @@ Author: Volker Sobek <reklov@live.com>
               </packing>
             </child>
             <child>
-              <object class="GtkMenuButton" id="gear_button">
+              <object class="GtkButton" id="header_button_cancel_request">
+                <property name="visible">False</property>
+                <property name="no_show_all">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="valign">fill</property>
+                <property name="action_name">win.cancel-request</property>
+                <child>
+                  <object class="GtkLabel" id="cancel_button_label">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Cancel</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="pack_type">start</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkMenuButton" id="header_button_gear">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="valign">center</property>
@@ -247,6 +266,28 @@ Author: Volker Sobek <reklov@live.com>
                   <object class="GtkLabel" id="accept_button_label">
                     <property name="visible">True</property>
                     <property name="label" translatable="yes">Accept</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="pack_type">end</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="header_button_send_request">
+                <property name="visible">False</property>
+                <property name="no_show_all">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="valign">fill</property>
+                <property name="action-name">win.send-request</property>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+                <child>
+                  <object class="GtkLabel" id="send_request_label">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Send</property>
                   </object>
                 </child>
               </object>
@@ -426,8 +467,8 @@ Author: Volker Sobek <reklov@live.com>
   <object class="GtkSizeGroup" id="sizegroup1">
     <property name="mode">vertical</property>
     <widgets>
-      <widget name="add_button"/>
-      <widget name="select_button"/>
+      <widget name="header_button_create_request"/>
+      <widget name="header_button_select"/>
     </widgets>
   </object>
   <!-- We need both of the following size groups; with just one of
@@ -445,6 +486,15 @@ Author: Volker Sobek <reklov@live.com>
     <widgets>
       <widget name="right_header_bar"/>
       <widget name="chat_stack"/>
+    </widgets>
+  </object>
+  <object class="GtkSizeGroup" id="sizegroup4">
+    <property name="mode">horizontal</property>>
+    <widgets>
+      <widget name="header_button_accept"/>
+      <widget name="header_button_reject"/>
+      <widget name="header_button_send_request"/>
+      <widget name="header_button_cancel_request"/>
     </widgets>
   </object>
 </interface>

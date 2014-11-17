@@ -123,7 +123,6 @@ neuland_application_quit_activated (GSimpleAction *action,
     }
 }
 
-
 static GActionEntry app_entries[] = {
   { "new-transient-identity", neuland_application_new_transient_identity_activated, NULL, NULL, NULL },
   { "about", neuland_application_about_activated, NULL, NULL, NULL },
@@ -191,9 +190,9 @@ neuland_application_startup (GApplication *application)
     const gchar *accelerators[2];
   } accels[] = {
     { "app.new-transient-identity", { "<Primary>t", NULL } },
-    { "app.quit", { "<Primary>q", NULL } },
-    { "win.add-contact", { "<Primary>n", NULL} },
-    { "win.send-file", { "<Primary>s", NULL} }
+    { "app.quit"                  , { "<Primary>q", NULL } },
+    { "win.create-request"        , { "<Primary>n", NULL } },
+    { "win.send-file"             , { "<Primary>s", NULL } }
   };
 
   int i;
@@ -235,7 +234,6 @@ neuland_application_class_init (NeulandApplicationClass *class)
   application_class->open = neuland_application_open;
 
   object_class->finalize = neuland_application_finalize;
-
 }
 
 NeulandApplication *

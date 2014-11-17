@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/org/tox/neuland">
-    <file preprocess="xml-stripblanks">neuland-window.ui</file>
-    <file preprocess="xml-stripblanks">neuland-window-menu.ui</file>
     <file preprocess="xml-stripblanks">neuland-application-menu.ui</file>
+    <file preprocess="xml-stripblanks">neuland-chat-widget.ui</file>
     <file preprocess="xml-stripblanks">neuland-contact-row.ui</file>
     <file preprocess="xml-stripblanks">neuland-file-transfer-row.ui</file>
-    <file preprocess="xml-stripblanks">neuland-chat-widget.ui</file>
     <file preprocess="xml-stripblanks">neuland-me-popover.ui</file>
-    <file preprocess="xml-stripblanks">neuland-add-dialog.ui</file>
-    <file preprocess="xml-stripblanks">neuland-welcome-widget.ui</file>
+    <file preprocess="xml-stripblanks">neuland-request-create-widget.ui</file>
     <file preprocess="xml-stripblanks">neuland-request-widget.ui</file>
+    <file preprocess="xml-stripblanks">neuland-welcome-widget.ui</file>
+    <file preprocess="xml-stripblanks">neuland-window-menu.ui</file>
+    <file preprocess="xml-stripblanks">neuland-window.ui</file>
     <file>neuland.css</file>
   </gresource>
 </gresources>
