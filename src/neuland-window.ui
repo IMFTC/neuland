@@ -198,7 +198,7 @@ Author: Volker Sobek <reklov@live.com>
                 <property name="can_focus">True</property>
                 <property name="vexpand">True</property>
                 <property name="valign">fill</property>
-                <property name="action_name">win.delete-active</property>
+                <property name="action_name">win.reject-active</property>
                 <child>
                   <object class="GtkLabel" id="reject_button_label">
                     <property name="visible">True</property>

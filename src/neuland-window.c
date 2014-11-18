@@ -869,7 +869,7 @@ neuland_window_selection_state_changed (GSimpleAction *action,
     {
       /* showing requests */
       gint i;
-      gchar *disable_in_selection_mode[] = { "accept-active", "delete-active" };
+      gchar *disable_in_selection_mode[] = { "accept-active", "reject-active" };
       for (i = 0; i < G_N_ELEMENTS (disable_in_selection_mode); i++)
         {
           some_action = g_action_map_lookup_action (G_ACTION_MAP (window),
@@ -1126,7 +1126,7 @@ send_file_activated (GSimpleAction *action,
 }
 
 static void
-delete_active_activated (GSimpleAction *action,
+reject_active_activated (GSimpleAction *action,
                          GVariant *parameter,
                          gpointer user_data)
 {
@@ -1206,15 +1206,18 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
   g_simple_action_set_state (action, parameter);
 
   /* Show or hide widgets */
+  gtk_widget_set_visible (priv->header_button_create_request, !show_requests);
   gtk_widget_set_visible (priv->header_button_accept, show_requests);
   gtk_widget_set_visible (priv->header_button_reject, show_requests);
   gtk_widget_set_visible (GTK_WIDGET (priv->action_bar_accept_button), show_requests);
 
   /* Enable or disable actions */
-  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "delete-active");
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "reject-active");
   g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), show_requests);
   some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "accept-active");
   g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), show_requests);
+  some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "create-request");
+  g_simple_action_set_enabled (G_SIMPLE_ACTION (some_action), !show_requests);
 
   if (show_requests)
     {
@@ -1245,7 +1248,7 @@ static GActionEntry win_entries[] = {
   { "accept-selected", accept_selected_activated },
   { "delete-selected", delete_selected_activated },
   { "accept-active", accept_active_activated },
-  { "delete-active", delete_active_activated },
+  { "reject-active", reject_active_activated },
   { "create-request", NULL, NULL, "false", create_request_state_changed },
   { "send-request", send_request_activated },
   { "cancel-request", cancel_request_activated },
@@ -1397,7 +1400,7 @@ neuland_window_init (NeulandWindow *window)
 
   /* Disable some actions */
   gchar *actions_to_disable[] =
-    { "delete-selected", "accept-selected", "send-file", "delete-active", "accept-active",
+    { "delete-selected", "accept-selected", "send-file", "reject-active", "accept-active",
       "cancel-request", "send-request" };
 
   for (i = 0; i < G_N_ELEMENTS (actions_to_disable); i++)
