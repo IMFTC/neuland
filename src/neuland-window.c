@@ -1234,7 +1234,7 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
       if (active_contact != NULL)
         neuland_window_activate_contact (window, active_contact);
       else
-        neuland_window_activate_first_contact_or_request (window);
+        neuland_window_show_welcome_widget (window);
     }
 }
 
