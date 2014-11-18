@@ -627,7 +627,8 @@ neuland_window_load_contacts (NeulandWindow *window)
           neuland_window_add_contact (window, contact);
         }
 
-      neuland_window_activate_contact (window, priv->active_contact);
+      if (priv->active_contact)
+        neuland_window_activate_contact (window, priv->active_contact);
     }
   /*
    * /\* add separator after last row as well *\/
