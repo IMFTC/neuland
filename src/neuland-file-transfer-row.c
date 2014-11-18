@@ -216,7 +216,11 @@ set_file_from_dialog (NeulandFileTransferRow *file_transfer_row)
   response = gtk_dialog_run (GTK_DIALOG (dialog));
 
   if (response == GTK_RESPONSE_ACCEPT)
-    file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
+    {
+      file = gtk_file_chooser_get_file (GTK_FILE_CHOOSER (dialog));
+      /* We ask for overwrite confirmation above. */
+      g_file_delete (file, NULL, NULL);
+    }
 
   gtk_widget_destroy (dialog);
 
