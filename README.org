@@ -55,7 +55,7 @@
 ** Launching Neuland
    For safety reasons Neuland uses its own configuration file by
    default, which is =$XDG_CONFIG_HOME/tox/data.neuland=. If you want
-   Neuland use your default tox configuration file instead, you can
+   Neuland to use your default tox configuration file instead, you can
    specify it on the command line:
    #+BEGIN_SRC shell
    $ neuland ~/.config/tox/data
