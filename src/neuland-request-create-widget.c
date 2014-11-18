@@ -98,7 +98,7 @@ on_tox_id_entry_changed (GObject *gobject,
   g_object_notify_by_pspec (gobject, properties[PROP_VALID_DATA]);
 }
 
-void
+static void
 neuland_request_create_widget_get_property (GObject *object,
                                             guint property_id,
                                             GValue *value,
