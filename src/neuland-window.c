@@ -320,15 +320,25 @@ static void
 neuland_window_activate_contact (NeulandWindow *window,
                                  NeulandContact *contact)
 {
-  GtkWidget *row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
+  GtkWidget *row;
 
-  if (row != NULL)
-    gtk_widget_activate (row);
-  else
+  g_debug ("neuland_window_activate_contact (%p, %p)", window, contact);
+
+  if (contact)
     {
-      g_warning ("No row for contact %p; trying to activate first row!", contact);
-      neuland_window_activate_first_contact_or_request (window);
+      row = GTK_WIDGET (neuland_window_get_row_for_contact (window, contact));
+      if (row)
+        {
+          gtk_widget_activate (row);
+          return;
+        }
+      else
+        g_warning ("No row for contact %p; going to activate first row", contact);
     }
+  else
+    g_debug ("contact NULL activated; going to activate first row");
+
+  neuland_window_activate_first_contact_or_request (window);
 }
 
 /* Move contact row from requests_list_box to contacts_list_box. */
