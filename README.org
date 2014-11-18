@@ -24,8 +24,7 @@
     - Receiving and accepting contact requests
     - Deleting contacts
     - Basic chat
-    - File transfer (*KNOWN BUG:* When choosing to replace an existing file,
-      data is appended to that file, instead of replacing it!)
+    - File transfer
 
 *** *TODO* Items
     - .desktop file
