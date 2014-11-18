@@ -22,6 +22,9 @@
 
 #include "neuland-file-transfer.h"
 
+ /* How often do we want to get an update on the already transferred size? */
+#define TRANSFERRED_SIZE_NOTIFY_PARTS 200.0
+
 struct _NeulandFileTransferPrivate
 {
   NeulandFileTransferDirection direction;
@@ -145,9 +148,7 @@ neuland_file_transfer_add_transferred_size (NeulandFileTransfer *file_transfer,
   priv = file_transfer->priv;
   priv->transferred_size += transferred_size;
 
-  /* Don't spam the signal handlers; only notify about the transferred
-     size every 500th part. */
-  if ((priv->transferred_size - priv->last_notify_size) > (priv->file_size / 500.0) ||
+  if ((priv->transferred_size - priv->last_notify_size) > (priv->file_size / TRANSFERRED_SIZE_NOTIFY_PARTS) ||
       priv->transferred_size == priv->file_size)
     {
       g_debug ("[transfer %p '%s': %10i (%5.1f%%)]",
