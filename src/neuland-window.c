@@ -50,8 +50,8 @@ struct _NeulandWindowPrivate
   GtkButton       *header_button_send_request;
   GtkButton       *header_button_cancel_request;
   /* incoming request */
-  GtkWidget       *header_button_accept;
-  GtkWidget       *header_button_reject;
+  GtkButton       *header_button_accept;
+  GtkButton       *header_button_reject;
 
   GtkRevealer     *requests_button_revealer;
 
@@ -83,7 +83,7 @@ struct _NeulandWindowPrivate
   GtkBox          *add_button_box;
 
   GtkActionBar    *action_bar;
-  GtkActionBar    *action_bar_accept_button;
+  GtkButton       *action_bar_accept_button;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (NeulandWindow, neuland_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -1206,9 +1206,9 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
   g_simple_action_set_state (action, parameter);
 
   /* Show or hide widgets */
-  gtk_widget_set_visible (priv->header_button_create_request, !show_requests);
-  gtk_widget_set_visible (priv->header_button_accept, show_requests);
-  gtk_widget_set_visible (priv->header_button_reject, show_requests);
+  gtk_widget_set_visible (GTK_WIDGET (priv->header_button_create_request), !show_requests);
+  gtk_widget_set_visible (GTK_WIDGET (priv->header_button_accept), show_requests);
+  gtk_widget_set_visible (GTK_WIDGET (priv->header_button_reject), show_requests);
   gtk_widget_set_visible (GTK_WIDGET (priv->action_bar_accept_button), show_requests);
 
   /* Enable or disable actions */
