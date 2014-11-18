@@ -73,6 +73,7 @@ struct _NeulandWindowPrivate
   GBinding        *name_binding;
   GBinding        *status_binding;
   GBinding        *connected_binding;
+  GBinding        *valid_data_binding;
 
   /* Remember the selected contact/request when we toggle between
      contacts and requests. */
@@ -931,11 +932,12 @@ create_request_state_changed (GSimpleAction *action,
   NeulandWindow *window = NEULAND_WINDOW (user_data);
   NeulandWindowPrivate *priv = window->priv;
   gboolean creating_request = g_variant_get_boolean (parameter);
-  gint i;
   GtkStyleContext *context_left =
     gtk_widget_get_style_context (GTK_WIDGET (window->priv->left_header_bar));
   GtkStyleContext *context_right =
     gtk_widget_get_style_context (GTK_WIDGET (window->priv->right_header_bar));
+  GAction *some_action;
+  gint i;
 
   g_debug ("neuland_window_contact_request_state_changed (%p): %s",
            window, creating_request ? "enabled" : "disabled");
@@ -958,12 +960,13 @@ create_request_state_changed (GSimpleAction *action,
         const char *name;
         gboolean enabled;
       } actions [] = {
-        { "send-file", FALSE },
-        { "selection", FALSE },
-        { "send-file", FALSE },
-        { "send-request", TRUE },
+        { "send-file"      , FALSE },
+        { "selection"      , FALSE },
+        { "send-file"      , FALSE },
         /* We should get out of this only by cancel or send  */
-        { "create-request", FALSE }
+        { "create-request" , FALSE },
+        { "send-request"   , TRUE },
+        { "cancel-request" , TRUE },
       };
 
       for (i = 0; i < G_N_ELEMENTS (actions); i++)
@@ -989,20 +992,28 @@ create_request_state_changed (GSimpleAction *action,
       /* Make it obvious that we are in a special mode which should be left again */
       gtk_style_context_add_class (context_left, "selection-mode");
       gtk_style_context_add_class (context_right, "selection-mode");
+
+      some_action = g_action_map_lookup_action (G_ACTION_MAP (window), "send-request");
+      priv->valid_data_binding = g_object_bind_property
+        (priv->request_create_widget, "valid-data", some_action, "enabled", G_BINDING_SYNC_CREATE);
     }
   else
     {
       /* Switch back to showing contacts or requests ... */
-      gboolean showing_requests = g_variant_get_boolean
-        (g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests"));
-      neuland_window_activate_contact (window, showing_requests ? priv->active_request : priv->active_contact);
+      gboolean showing_requests;
 
+      g_clear_object (&priv->valid_data_binding);
+
+      /* TODO: This should rather be somewhere in down the chain in
+         neuland_window_activate_contact() */
       struct {
         const char *name;
         gboolean enabled;
       } actions [] = {
-        { "selection", TRUE },
-        { "create-request", TRUE }
+        { "selection"      , TRUE },
+        { "create-request" , TRUE },
+        { "send-request"   , FALSE },
+        { "cancel-request" , FALSE }
       };
 
       for (i = 0; i < G_N_ELEMENTS (actions); i++)
@@ -1013,6 +1024,11 @@ create_request_state_changed (GSimpleAction *action,
 
       gtk_style_context_remove_class (context_left, "selection-mode");
       gtk_style_context_remove_class (context_right, "selection-mode");
+
+      showing_requests = g_variant_get_boolean
+        (g_action_group_get_action_state (G_ACTION_GROUP (window), "show-requests"));
+      neuland_window_activate_contact (window, showing_requests ?
+                                       priv->active_request : priv->active_contact);
     }
 
   g_simple_action_set_state (action, parameter);
@@ -1334,8 +1350,8 @@ neuland_window_init (NeulandWindow *window)
   g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window);
 
   /* Prepare widget for creating contact requests */
-  priv->request_create_widget = neuland_request_create_widget_new ();
   g_debug ("adding request create_widget");
+  priv->request_create_widget = neuland_request_create_widget_new ();
   gtk_container_add (GTK_CONTAINER (priv->chat_stack), priv->request_create_widget);
 
   /* Prepare welcome widget */
@@ -1368,7 +1384,8 @@ neuland_window_init (NeulandWindow *window)
 
   /* Disable some actions */
   gchar *actions_to_disable[] =
-    { "delete-selected", "accept-selected", "send-file", "delete-active", "accept-active" };
+    { "delete-selected", "accept-selected", "send-file", "delete-active", "accept-active",
+      "cancel-request", "send-request" };
 
   for (i = 0; i < G_N_ELEMENTS (actions_to_disable); i++)
     {

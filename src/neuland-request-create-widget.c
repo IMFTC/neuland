@@ -98,7 +98,7 @@ on_tox_id_entry_changed (GObject *gobject,
   g_object_notify_by_pspec (gobject, properties[PROP_VALID_DATA]);
 }
 
-static void
+void
 neuland_request_create_widget_get_property (GObject *object,
                                             guint property_id,
                                             GValue *value,
@@ -134,10 +134,9 @@ neuland_request_create_widget_class_init (NeulandRequestCreateWidgetClass *klass
   properties[PROP_VALID_DATA] =
     g_param_spec_boolean ("valid-data",
                           "Valid data",
-                          "TRUE if the given Tox ID is valid",
+                          "TRUE if the entered Tox ID is valid",
                           FALSE,
-                          G_PARAM_READABLE |
-                          G_PARAM_CONSTRUCT);
+                          G_PARAM_READABLE);
 
   g_object_class_install_properties (gobject_class,
                                      PROP_N,
@@ -189,6 +188,7 @@ neuland_request_create_widget_new ()
 
   widget = NEULAND_REQUEST_CREATE_WIDGET (g_object_new (NEULAND_TYPE_REQUEST_CREATE_WIDGET,
                                                         NULL));
+  widget->priv->valid_data = FALSE;
 
   return GTK_WIDGET (widget);
 }
