@@ -1206,7 +1206,6 @@ neuland_window_show_requests_state_changed (GSimpleAction *action,
   g_simple_action_set_state (action, parameter);
 
   /* Show or hide widgets */
-  gtk_widget_set_visible (GTK_WIDGET (priv->header_button_create_request), !show_requests);
   gtk_widget_set_visible (GTK_WIDGET (priv->header_button_accept), show_requests);
   gtk_widget_set_visible (GTK_WIDGET (priv->header_button_reject), show_requests);
   gtk_widget_set_visible (GTK_WIDGET (priv->action_bar_accept_button), show_requests);
